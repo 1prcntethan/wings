@@ -2,11 +2,17 @@
 
 **A calisthenics progression app built for people who train with their bodyweight, not a gym membership.**
 
-[![Live App](https://img.shields.io/badge/live-wings-4ecdc4?style=flat-square)](wingssw.com)
+[![Live App](https://img.shields.io/badge/live-wings-db7dd5?style=flat-square)](https://wingssw.com)
 [![Made with React](https://img.shields.io/badge/React-Vite-61DAFB?style=flat-square&logo=react)](https://react.dev)
 [![Deployed on Cloudflare Pages](https://img.shields.io/badge/Cloudflare-Pages-F38020?style=flat-square&logo=cloudflare)](https://pages.cloudflare.com)
+[![Firebase](https://img.shields.io/badge/Firebase-FFCA28?style=flat-square&logo=firebase&logoColor=black)](https://firebase.google.com)
 
-![WINGS app screenshot](./assets/screenshot-hero.png)
+<!-- Swap these for real screenshots or a GIF of the app in use -->
+<p align="center">
+  <img src="./.github/assets/screenshot-hero.png" width="30%" />
+  <img src="./.github/assets/screenshot-progress.png" width="30%" />
+  <img src="./.github/assets/screenshot-skill-detail.png" width="30%" />
+</p>
 
 ---
 
@@ -70,8 +76,7 @@ You'll need your own Firebase project credentials in a `.env.local` file (see `.
 
 ## License
 
-<!-- Pick one: MIT is standard for portfolio/open projects, or "All rights reserved" if you want to keep it closed-source while public -->
-This project is licensed under the MIT License — see [LICENSE](./LICENSE) for details.
+All rights reserved. This code is publicly viewable for portfolio purposes, but is not licensed for reuse, modification, or redistribution without permission.
 
 ## Contact
 
