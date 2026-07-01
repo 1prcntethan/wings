@@ -1,68 +1,78 @@
-WINGS -- Calisthenics Progression Platform
+# WINGS
 
-A structured, interactive skill-tree platform designed to help athletes progress through calisthenics movements using visual progression mapping, gated skill tracking, and performance-based unlocks.
+**A calisthenics progression app built for people who train with their bodyweight, not a gym membership.**
 
-🚀 Overview
+[![Live App](https://img.shields.io/badge/live-wings-4ecdc4?style=flat-square)](https://your-wings-url.pages.dev)
+[![Made with React](https://img.shields.io/badge/React-Vite-61DAFB?style=flat-square&logo=react)](https://react.dev)
+[![Deployed on Cloudflare Pages](https://img.shields.io/badge/Cloudflare-Pages-F38020?style=flat-square&logo=cloudflare)](https://pages.cloudflare.com)
 
-This project solves a core problem in calisthenics training:
+<!-- Swap this for a real screenshot or GIF of the app in use -->
+![WINGS app screenshot](./assets/screenshot-hero.png)
 
-Most beginners don’t know what to train next.
+---
 
-Instead of random YouTube workouts, this platform provides:
+## What it is
 
-Structured skill progression trees
+WINGS is a Progressive Web App for tracking and progressing calisthenics skills — think planches, levers, and muscle-ups — without needing equipment beyond a bar and your own bodyweight. It grew out of my own training and is now used by a real community: **1,200+ monthly active users** and a **peak of 1,000 daily active users**, backed by a **33k-follower Instagram audience**.
 
-Locked/unlocked skill pathways
+Most fitness apps assume gym equipment and generic programming. WINGS is built specifically around bodyweight skill progressions — the kind of structured, prerequisite-based training that calisthenics athletes actually follow.
 
-User-specific progression tracking
+## Features
 
-The goal is to make bodyweight strength training systematic, measurable, and motivating.
+- 🏋️ Skill-based progression tracking (prerequisite chains, not just "workouts")
+- 📱 Installable PWA — works offline, feels native on mobile
+- ⚡ Fast, lightweight — built on Vite for near-instant loads
+- ☁️ Real-time sync via Firebase (progress persists across devices)
+- 🎨 Clean, minimal UI designed to stay out of your way mid-workout
 
-🧠 Core Features
-1. Interactive Skill Tree
+## Tech stack
 
-Clickable progression nodes
+| Layer | Tech |
+|---|---|
+| Frontend | React, Vite |
+| Backend / Data | Firebase (Auth, Firestore) |
+| Hosting | Cloudflare Pages |
+| Delivery | Progressive Web App (installable, offline-capable) |
 
-Prerequisite-based unlocking
+## Why these choices
 
-Visual path structure (inspired by tech skill trees)
+- **Vite over CRA** — faster dev/build cycles, smaller bundle, better DX for a solo-maintained project shipping frequently.
+- **Firebase** — auth + real-time database out of the box meant I could focus engineering time on the training logic instead of backend plumbing.
+- **PWA over native app** — one codebase, no app store review cycle, and calisthenics users are frequently checking progress mid-session where "just open the link" beats "download from store."
+- **Cloudflare Pages** — free tier, global edge caching, and git-based deploys fit a fast-iterating solo project well.
 
-2. Authentication System
+## Traction
 
-Firebase Auth
+| Metric | Value |
+|---|---|
+| Instagram community | 33,000+ followers |
+| Monthly active users | 1,200+ |
+| Peak daily active users | 1,000 |
 
-User-specific progress storage
+## Local development
 
-State persistence across sessions
+Clone and run locally if you want to explore the codebase or contribute:
 
-3. Progress Tracking
+```bash
+git clone https://github.com/1prcntethan/wings.git
+cd wings
+npm install
+npm run dev
+```
 
-Skill completion toggling
+You'll need your own Firebase project credentials in a `.env.local` file (see `.env.example`).
 
-Locked state enforcement
+## Roadmap
 
-Real-time UI updates
+- [ ] Add social/leaderboard features
+- [ ] Expand progression library
+- [ ] Offline-first data sync improvements
 
+## License
 
-🏗 Tech Stack
+<!-- Pick one: MIT is standard for portfolio/open projects, or "All rights reserved" if you want to keep it closed-source while public -->
+This project is licensed under the MIT License — see [LICENSE](./LICENSE) for details.
 
-Frontend
+## Contact
 
-React
-
-CSS
-
-Backend / Infrastructure
-
-Firebase Authentication
-
-Firestore (user progress storage)
-
-Cloudflare 
-
-Design
-
-Figma prototyping
-
-Custom skill progression diagrams
-
+Built by [Ethan Tay](https://github.com/1prcntethan) — [ethan.tay@uw.edu](mailto:ethan.tay@uw.edu) · [LinkedIn](https://linkedin.com/in/ethanjtay)
