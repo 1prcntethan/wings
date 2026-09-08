@@ -9,9 +9,15 @@
 
 <!-- Swap these for real screenshots or a GIF of the app in use -->
 <p align="center">
-  <img src="./.github/assets/screenshot-hero.png" width="30%" />
-  <img src="./.github/assets/screenshot-progress.png" width="30%" />
-  <img src="./.github/assets/screenshot-skill-detail.png" width="30%" />
+  <img src="ex1.png" width="30%" />
+  <img src="ex2.png" width="30%" />
+  <img src="ex3.png" width="30%" />
+</p>
+
+<p align="center">
+  <img src="ex6.png" width="30%" />
+  <img src="ex4.png" width="30%" />
+  <img src="ex5.png" width="30%" />
 </p>
 
 ---
@@ -20,7 +26,7 @@
 
 WINGS is a Progressive Web App for tracking and progressing calisthenics skills — think planches, front levers, and muscle-ups — without needing equipment beyond a bar and your own bodyweight. It grew out of my own training and knowledge, and is now used by a real community: **1,200+ monthly active users** and a **peak of 1,000 daily active users**, backed by a **30k-follower Instagram audience**.
 
-Most fitness apps assume gym equipment and generic programming. WINGS is built specifically around bodyweight skill progressions — the kind of structured, prerequisite-based training that calisthenics athletes actually follow. What seperates this calisthenics app from others is that here, athletes actually learn how to train and create their own workout, not just follow other's workout plans. This is self-learning optimized for calisthenics.
+Most fitness apps are built around gym equipment and generic programming. WINGS is built specifically around bodyweight skill progressions, specifically, calisthenics. The information you'll learn here is the kind of structured, prerequisite-based training that elite calisthenics athletes actually follow. What seperates this calisthenics app from others is that here, athletes will actually learn how to train and create their own workout, not just follow other's workout plans. This is self-learning optimized for calisthenics. Enjoy!
 
 ## Features
 
@@ -41,12 +47,6 @@ Most fitness apps assume gym equipment and generic programming. WINGS is built s
 | Hosting | Cloudflare Pages |
 | Delivery | Website & Progressive Web App (mobile-friendly) |
 
-## Why these choices
-
-- **Vite over CRA** — faster dev/build cycles, smaller bundle, better DX for a solo-maintained project shipping frequently.
-- **Firebase** — auth + real-time database out of the box means more focus on engineering user-facing experience instead of backend plumbing.
-- **PWA over native app** — one codebase, users can access from anywhere, and calisthenics users are frequently learning and self-checking progress mid-session where "just open the guide link" beats "download app and tutorial from store."
-- **Cloudflare Pages** — free tier, global edge caching, and git-based deploys fit a fast-iterating solo project well.
 
 ## Traction
 
@@ -67,7 +67,7 @@ npm install
 npm run dev
 ```
 
-You'll need your own Firebase project credentials in a `.env.local` file (see `.env.example`).
+You'll need your own Firebase project credentials in a `.env.local` file .
 
 ## Roadmap
 
@@ -80,4 +80,4 @@ All rights reserved. This code is publicly viewable for portfolio purposes, but 
 
 ## Contact
 
-Built by [Ethan Tay](https://github.com/1prcntethan) — [ethakari@uw.edu](mailto:ethakariy@uw.edu) · [LinkedIn](https://linkedin.com/in/ethanjtay)
+Built by [Ethan Tay](https://github.com/1prcntethan) — [ethantay1prcnt@gmail.com](mailto:ethantay1prcnt@gmail.com) · [LinkedIn](https://linkedin.com/in/ethanjtay)
