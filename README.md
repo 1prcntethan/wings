@@ -1,6 +1,6 @@
 # WINGS
 
-**A calisthenics progression app built for people who train with their bodyweight, not a gym membership.**
+**A one stop shop for all things related to learning and mastering calisthenics.**
 
 [![Live App](https://img.shields.io/badge/live-wings-db7dd5?style=flat-square)](https://wingssw.com)
 [![Made with React](https://img.shields.io/badge/React-Vite-61DAFB?style=flat-square&logo=react)](https://react.dev)
