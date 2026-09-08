@@ -10,14 +10,14 @@
 <!-- Swap these for real screenshots or a GIF of the app in use -->
 <p align="center">
   <img src="./wings/public/ex1.png" width="30%" />
-  <img src="ex2.png" width="30%" />
-  <img src="ex3.png" width="30%" />
+  <img src="./wings/public/ex2.png" width="30%" />
+  <img src="./wings/public/ex3.png" width="30%" />
 </p>
 
 <p align="center">
-  <img src="ex6.png" width="30%" />
-  <img src="ex4.png" width="30%" />
-  <img src="ex5.png" width="30%" />
+  <img src="./wings/public/ex6.png" width="30%" />
+  <img src="./wings/public/ex4.png" width="30%" />
+  <img src="./wings/public/ex5.png" width="30%" />
 </p>
 
 ---
