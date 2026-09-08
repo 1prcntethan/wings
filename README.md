@@ -9,7 +9,7 @@
 
 <!-- Swap these for real screenshots or a GIF of the app in use -->
 <p align="center">
-  <img src="ex1.png" width="30%" />
+  <img src="./wings/public/ex1.png" width="30%" />
   <img src="ex2.png" width="30%" />
   <img src="ex3.png" width="30%" />
 </p>
