@@ -30,31 +30,31 @@ Most fitness apps are built around gym equipment and generic programming. WINGS 
 
 ## Features
 
-- 🏋️ Skill-based personalized progression tracking (prerequisite chains, grouped by muscle and skill structure)
-- 📱 Installable PWA — mobile responsive, intuitive UI
-- ⚡ Fast, lightweight — built on Vite for near-instant loads
-- ☁️ Real-time sync via Firebase (progress persists across devices)
-- 🔥 Daily streak system to encourage daily progress and user engagement
-- ⚔️ Competitive ranked system based on streak length and learned skill difficulty
-- 🎨 Clean, minimal, aesthetic UI, designed for the user
+- Skill-based personalized progression tracking (prerequisite chains, grouped by muscle and skill structure)
+- Installable PWA — mobile responsive, intuitive UI
+- Real-time sync via Firebase (progress persists across devices)
+- Daily streak system to encourage daily progress and user engagement
+- Competitive ranked system based on streak length and learned skill difficulty
+- Clean, minimal, aesthetic UI, designed for the user
 
 ## Tech stack
 
 | Layer | Tech |
 |---|---|
-| Frontend | React, Vite |
+| Frontend | HTML/CSS, React, Vite |
 | Backend / Data | Firebase (Auth, Firestore) |
 | Hosting | Cloudflare Pages |
-| Delivery | Website & Progressive Web App (mobile-friendly) |
+| Add'l Libraries | React Select, React Flow |
 
 
-## Traction
+## Traction & Audience
 
-| Metric | Value |
+| Audience | Count |
 |---|---|
-| Instagram community | 30,000+ followers |
-| Monthly active users | 1,200+ |
-| Peak daily active users | 1,400 |
+| Instagram community | 33k+ followers |
+| Total view count | 3.5M+ views |
+| Monthly active users | 1,200+ users |
+| Peak daily active users | 1,400 users |
 
 ## Local development
 
@@ -68,11 +68,6 @@ npm run dev
 ```
 
 You'll need your own Firebase project credentials in a `.env.local` file .
-
-## Roadmap
-
-- [ ] Add social/leaderboard features
-- [ ] Expand progression library
 
 ## License
 
