@@ -24,7 +24,7 @@
 
 ## What it is
 
-WINGS is a Progressive Web App for tracking and progressing calisthenics skills — think planches, front levers, and muscle-ups — without needing equipment beyond a bar and your own bodyweight. It grew out of my own training and knowledge, and is now used by a real community: **1,200+ monthly active users** and a **peak of 1,000 daily active users**, backed by a **30k-follower Instagram audience**.
+WINGS is a Progressive Web App for tracking and progressing calisthenics skills — think planches, front levers, and muscle-ups — without needing equipment beyond a bar and your own bodyweight. It grew out of my own training and knowledge, and is now used by a real community: **1,200+ monthly active users** and a **peak of 1,400 daily active users**, backed by a **30k-follower Instagram audience**.
 
 Most fitness apps are built around gym equipment and generic programming. WINGS is built specifically around bodyweight skill progressions, specifically, calisthenics. The information you'll learn here is the kind of structured, prerequisite-based training that elite calisthenics athletes actually follow. What seperates this calisthenics app from others is that here, athletes will actually learn how to train and create their own workout, not just follow other's workout plans. This is self-learning optimized for calisthenics. Enjoy!
 
