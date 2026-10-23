@@ -1,0 +1,346 @@
+rules_version = '2';
+
+// Default is deny. A user can read and write only their own account.
+// Rank is not a stored field. Streak can move by at most one day per write.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{uid} {
+      allow read: if isOwner(uid);
+      allow create: if isOwner(uid) && isNewUser();
+      allow update: if isOwner(uid) && (isSkillUpdate() || isStreakUpdate());
+      allow delete: if false;
+
+      match /workoutLogs/{logId} {
+        allow read: if isOwner(uid);
+        allow create: if isOwner(uid) && isWorkoutLog();
+        allow update, delete: if false;
+      }
+    }
+  }
+}
+
+function isOwner(uid) {
+  return request.auth != null && request.auth.uid == uid;
+}
+
+function isNewUser() {
+  let data = request.resource.data;
+  return data.keys().hasOnly([
+      'schemaVersion',
+      'email',
+      'authUID',
+      'createdAt',
+      'streak',
+      'workout',
+      'rest',
+      'skills'
+    ])
+    && data.schemaVersion == 2
+    && data.email == request.auth.token.email
+    && data.authUID == request.auth.uid
+    && data.createdAt == request.time
+    && data.workout == 0
+    && data.rest == 0
+    && data.streak.keys().hasOnly(['current', 'longest', 'lastLog'])
+    && data.streak.current == 0
+    && data.streak.longest == 0
+    && data.streak.lastLog == null
+    && data.skills.keys().hasOnly(['push', 'pull'])
+    && data.skills.push == null
+    && data.skills.pull == null;
+}
+
+function isSkillUpdate() {
+  let changed = request.resource.data.diff(resource.data).affectedKeys();
+  let skills = request.resource.data.skills;
+  let diff = skills.diff(beforeSkills());
+  return changed.hasOnly(['skills', 'updatedAt'])
+    && request.resource.data.updatedAt == request.time
+    && skills is map
+    && diff.removedKeys().size() == 0
+    && diff.addedKeys().hasOnly(progressIds())
+    && diff.changedKeys().hasOnly(progressIds())
+    && diff.addedKeys().size() + diff.changedKeys().size() == 1
+    && progressValuesOk(skills, diff);
+}
+
+function isStreakUpdate() {
+  let changed = request.resource.data.diff(resource.data).affectedKeys();
+  let next = request.resource.data;
+  let previousStreak = resource.data.get('streak', {
+    'current': 0,
+    'longest': 0,
+    'lastLog': null
+  });
+  let previousWorkout = counter(resource.data, 'workout');
+  let previousRest = counter(resource.data, 'rest');
+  let nextCurrent = next.streak.current;
+  let nextLongest = next.streak.longest;
+  let nextLog = next.streak.lastLog;
+  return changed.hasOnly(['streak', 'workout', 'rest'])
+    && next.streak.keys().hasOnly(['current', 'longest', 'lastLog'])
+    && nextCurrent is int
+    && nextLongest is int
+    && next.workout is int
+    && next.rest is int
+    && previousStreak.current is int
+    && previousStreak.longest is int
+    && plausibleDay(nextLog)
+    && lastLogMovesForward(previousStreak.lastLog, nextLog)
+    && nextCurrent == expectedCurrent(previousStreak, nextLog)
+    && nextLongest == expectedLongest(previousStreak.longest, nextCurrent)
+    && next.workout >= 0
+    && next.rest >= 0
+    && (
+      (next.workout == previousWorkout + 1 && next.rest == previousRest)
+      || (next.rest == previousRest + 1 && next.workout == previousWorkout)
+    );
+}
+
+function isWorkoutLog() {
+  let data = request.resource.data;
+  return request.resource.size() < 20000
+    && data.keys().hasOnly(['date', 'category', 'sections', 'loggedAt'])
+    && data.loggedAt == request.time
+    && data.date is string
+    && data.date.matches('^\\d{4}-\\d{2}-\\d{2}$')
+    && parsedDay(data.date) <= request.time + duration.value(36, 'h')
+    && data.category in ['push', 'pull', 'legs', 'full-body', 'conditioning']
+    && data.sections is map
+    && data.sections.keys().hasOnly(['warmup', 'primary', 'secondary', 'volume'])
+    && data.sections.keys().hasAll(['warmup', 'primary', 'secondary', 'volume'])
+    && data.sections.warmup is list
+    && data.sections.warmup.size() <= 2
+    && data.sections.primary is list
+    && data.sections.primary.size() <= 2
+    && data.sections.secondary is list
+    && data.sections.secondary.size() <= 3
+    && data.sections.volume is list
+    && data.sections.volume.size() <= 3;
+}
+
+function beforeSkills() {
+  return resource.data.keys().hasAny(['skills']) && resource.data.skills is map
+    ? resource.data.skills
+    : {};
+}
+
+function counter(data, key) {
+  return data.keys().hasAny([key]) && data[key] is int ? data[key] : 0;
+}
+
+function parsedDay(dateStr) {
+  return timestamp.date(
+    int(dateStr[0:4]),
+    int(dateStr[5:7]),
+    int(dateStr[8:10])
+  );
+}
+
+function plausibleDay(dateStr) {
+  return dateStr is string
+    && dateStr.matches('^\\d{4}-\\d{2}-\\d{2}$')
+    && parsedDay(dateStr) >= request.time - duration.value(50, 'h')
+    && parsedDay(dateStr) <= request.time + duration.value(36, 'h');
+}
+
+function lastLogMovesForward(previousLog, nextLog) {
+  return previousLog == null || (previousLog is string && nextLog > previousLog);
+}
+
+function expectedCurrent(previousStreak, nextLog) {
+  return previousStreak.lastLog is string && isNextDay(previousStreak.lastLog, nextLog)
+    ? previousStreak.current + 1
+    : 1;
+}
+
+function isNextDay(previousLog, nextLog) {
+  return parsedDay(nextLog) == parsedDay(previousLog) + duration.value(1, 'd');
+}
+
+function expectedLongest(previousLongest, nextCurrent) {
+  return nextCurrent > previousLongest ? nextCurrent : previousLongest;
+}
+
+function progressIds() {
+  return [
+    'assisted-push-up',
+    'push-up',
+    'dip',
+    'elbow-lever',
+    'planche-lean',
+    'pseudo-push-up',
+    'tuck-planche',
+    'tuck-planche-pu',
+    'adv-tuck-planche',
+    'adv-tuck-planche-pu',
+    '90-degree-hold',
+    'back-lever',
+    'super-adv-tuck-pl',
+    'straddle-planche',
+    'straddle-planche-pu',
+    'half-lay-planche',
+    'full-planche',
+    'full-planche-pu',
+    'one-arm-planche',
+    'maltese',
+    'pike-push-up',
+    'crow-pose',
+    'assisted-handstand',
+    'handstand',
+    'elevated-pike-pu',
+    'bent-arm-press-to-hs',
+    'straight-arm-press-to-hs',
+    'bent-arm-stand',
+    'assisted-hspu',
+    'hspu',
+    'deep-hspu',
+    '90-degree-pu',
+    'assisted-oahs',
+    'oahs',
+    'oa-flag',
+    'assisted-inverted-row',
+    'inverted-row',
+    'tuck-fl',
+    'tuck-fl-row',
+    'pike-fl',
+    'pike-fl-row',
+    'adv-tuck-fl',
+    'super-adv-tuck-fl',
+    'adv-tuck-fl-row',
+    'straddle-fl',
+    'straddle-fl-row',
+    'half-lay-fl',
+    'full-front-lever',
+    'full-fl-row',
+    'front-lever-touch',
+    'deadhang',
+    'active-hang',
+    'assisted-pull-up',
+    'pull-up',
+    'scapula pull-up',
+    'chest pull-up',
+    'waist pull-up',
+    'muscle-up',
+    'archer-pull-up',
+    'clean-muscle-up',
+    'assisted-oac',
+    'assisted-oap',
+    'oac-oap',
+    'weighted-pull-ups',
+    'butterfly',
+    'bodyweight-squat',
+    'split-squat',
+    'assisted-pistol-squat',
+    'bulgarian-split-squat',
+    'reverse-nordic-curl',
+    'nordic-curl',
+    'sissy-squat',
+    'pistol-squat',
+    'shrimp-squat',
+    'dragon-pistol-squat',
+    'sit-up',
+    'hollow-body-hold',
+    'l-sit-compression',
+    'l-sit',
+    'dragon-flag',
+    'v-sit',
+    'i-sit',
+    'manna',
+    'human-flag',
+    'victorian'
+  ];
+}
+
+function progressValuesOk(skills, diff) {
+  return valueOk(skills, diff, 'assisted-push-up')
+    && valueOk(skills, diff, 'push-up')
+    && valueOk(skills, diff, 'dip')
+    && valueOk(skills, diff, 'elbow-lever')
+    && valueOk(skills, diff, 'planche-lean')
+    && valueOk(skills, diff, 'pseudo-push-up')
+    && valueOk(skills, diff, 'tuck-planche')
+    && valueOk(skills, diff, 'tuck-planche-pu')
+    && valueOk(skills, diff, 'adv-tuck-planche')
+    && valueOk(skills, diff, 'adv-tuck-planche-pu')
+    && valueOk(skills, diff, '90-degree-hold')
+    && valueOk(skills, diff, 'back-lever')
+    && valueOk(skills, diff, 'super-adv-tuck-pl')
+    && valueOk(skills, diff, 'straddle-planche')
+    && valueOk(skills, diff, 'straddle-planche-pu')
+    && valueOk(skills, diff, 'half-lay-planche')
+    && valueOk(skills, diff, 'full-planche')
+    && valueOk(skills, diff, 'full-planche-pu')
+    && valueOk(skills, diff, 'one-arm-planche')
+    && valueOk(skills, diff, 'maltese')
+    && valueOk(skills, diff, 'pike-push-up')
+    && valueOk(skills, diff, 'crow-pose')
+    && valueOk(skills, diff, 'assisted-handstand')
+    && valueOk(skills, diff, 'handstand')
+    && valueOk(skills, diff, 'elevated-pike-pu')
+    && valueOk(skills, diff, 'bent-arm-press-to-hs')
+    && valueOk(skills, diff, 'straight-arm-press-to-hs')
+    && valueOk(skills, diff, 'bent-arm-stand')
+    && valueOk(skills, diff, 'assisted-hspu')
+    && valueOk(skills, diff, 'hspu')
+    && valueOk(skills, diff, 'deep-hspu')
+    && valueOk(skills, diff, '90-degree-pu')
+    && valueOk(skills, diff, 'assisted-oahs')
+    && valueOk(skills, diff, 'oahs')
+    && valueOk(skills, diff, 'oa-flag')
+    && valueOk(skills, diff, 'assisted-inverted-row')
+    && valueOk(skills, diff, 'inverted-row')
+    && valueOk(skills, diff, 'tuck-fl')
+    && valueOk(skills, diff, 'tuck-fl-row')
+    && valueOk(skills, diff, 'pike-fl')
+    && valueOk(skills, diff, 'pike-fl-row')
+    && valueOk(skills, diff, 'adv-tuck-fl')
+    && valueOk(skills, diff, 'super-adv-tuck-fl')
+    && valueOk(skills, diff, 'adv-tuck-fl-row')
+    && valueOk(skills, diff, 'straddle-fl')
+    && valueOk(skills, diff, 'straddle-fl-row')
+    && valueOk(skills, diff, 'half-lay-fl')
+    && valueOk(skills, diff, 'full-front-lever')
+    && valueOk(skills, diff, 'full-fl-row')
+    && valueOk(skills, diff, 'front-lever-touch')
+    && valueOk(skills, diff, 'deadhang')
+    && valueOk(skills, diff, 'active-hang')
+    && valueOk(skills, diff, 'assisted-pull-up')
+    && valueOk(skills, diff, 'pull-up')
+    && valueOk(skills, diff, 'scapula pull-up')
+    && valueOk(skills, diff, 'chest pull-up')
+    && valueOk(skills, diff, 'waist pull-up')
+    && valueOk(skills, diff, 'muscle-up')
+    && valueOk(skills, diff, 'archer-pull-up')
+    && valueOk(skills, diff, 'clean-muscle-up')
+    && valueOk(skills, diff, 'assisted-oac')
+    && valueOk(skills, diff, 'assisted-oap')
+    && valueOk(skills, diff, 'oac-oap')
+    && valueOk(skills, diff, 'weighted-pull-ups')
+    && valueOk(skills, diff, 'butterfly')
+    && valueOk(skills, diff, 'bodyweight-squat')
+    && valueOk(skills, diff, 'split-squat')
+    && valueOk(skills, diff, 'assisted-pistol-squat')
+    && valueOk(skills, diff, 'bulgarian-split-squat')
+    && valueOk(skills, diff, 'reverse-nordic-curl')
+    && valueOk(skills, diff, 'nordic-curl')
+    && valueOk(skills, diff, 'sissy-squat')
+    && valueOk(skills, diff, 'pistol-squat')
+    && valueOk(skills, diff, 'shrimp-squat')
+    && valueOk(skills, diff, 'dragon-pistol-squat')
+    && valueOk(skills, diff, 'sit-up')
+    && valueOk(skills, diff, 'hollow-body-hold')
+    && valueOk(skills, diff, 'l-sit-compression')
+    && valueOk(skills, diff, 'l-sit')
+    && valueOk(skills, diff, 'dragon-flag')
+    && valueOk(skills, diff, 'v-sit')
+    && valueOk(skills, diff, 'i-sit')
+    && valueOk(skills, diff, 'manna')
+    && valueOk(skills, diff, 'human-flag')
+    && valueOk(skills, diff, 'victorian');
+}
+
+function valueOk(skills, diff, id) {
+  return !diff.affectedKeys().hasAny([id])
+    || (skills[id] is int && skills[id] >= 0 && skills[id] <= 3);
+}

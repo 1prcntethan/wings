@@ -2,11 +2,11 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { useState } from "react";
 import "./navbar.css";
-import { Navigate } from "react-router-dom";
 import { useAuth } from "../config/auth-context.jsx";
 import { doSignOut } from "../config/auth.js";
 import { useLocation } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
+import InstallBanner from "./installbanner";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(true);
@@ -49,12 +49,11 @@ const Navbar = () => {
     }
   };
 
-  console.log(currentUser?.email);
-
   const location = useLocation();
   const navigate = useNavigate();
 
   return (
+    <>
     <div className="navbar">
       <div className="navbar__logo">
         <Link to="/">
@@ -279,6 +278,8 @@ const Navbar = () => {
         <span></span>
       </div>
     </div>
+    <InstallBanner />
+    </>
   );
 };
 

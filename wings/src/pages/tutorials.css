@@ -17,12 +17,12 @@
 .tutorial-selector {
     width: 70%;
     margin: 0 auto;
-    padding: 20px 0;
+    padding: 20px 0 0;
     color: white;
 
     @media (max-width: 768px) {
         width: 90%;
-        padding: 10px 0;
+        padding: 10px 0 0;
     }
 }
 
@@ -41,24 +41,29 @@
 }
 
 /* minimal scrollbar inside the dropdown list */
-.tutorial-select__menu-list {
+.tutorial-select__menu-list,
+.muscle-select__menu-list {
   overflow-y: auto;
 }
 
 /* Webkit scrollbar (Chrome, Edge, Safari) */
-.tutorial-select__menu-list::-webkit-scrollbar {
+.tutorial-select__menu-list::-webkit-scrollbar,
+.muscle-select__menu-list::-webkit-scrollbar {
   width: 9px;
 }
 
-.tutorial-select__menu-list::-webkit-scrollbar-track {
+.tutorial-select__menu-list::-webkit-scrollbar-track,
+.muscle-select__menu-list::-webkit-scrollbar-track {
   background: #333333;
 }
 
-.tutorial-select__menu-list::-webkit-scrollbar-thumb {
+.tutorial-select__menu-list::-webkit-scrollbar-thumb,
+.muscle-select__menu-list::-webkit-scrollbar-thumb {
   background-color: #555;
   border-radius: 5px;
 }
 
-.tutorial-select__menu-list::-webkit-scrollbar-thumb:hover {
+.tutorial-select__menu-list::-webkit-scrollbar-thumb:hover,
+.muscle-select__menu-list::-webkit-scrollbar-thumb:hover {
   background-color: #777;
 }

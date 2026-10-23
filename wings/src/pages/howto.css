@@ -62,16 +62,10 @@
   }
 }
 
-.howto-img{
-    display: flex;
-    margin-right: 40px;
-    width: 90%;
-    justify-self: center;
-
-    @media (max-width: 768px) {
-        width: 100vw;
-        margin-right: 40px;
-        padding: 0;
-    }
-    
+.howto-img {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  margin: 12px 0;
 }

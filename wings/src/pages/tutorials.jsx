@@ -9,6 +9,7 @@ import TutorialListL from "../components/legs-tutorial-list";
 import Footer from "../components/footer";
 import BetaDisclaimer from "../components/betadisclaimer";
 import TutorialListCM from "../components/coremisc-tutorial-list";
+import MuscleFinder from "../components/musclefinder";
 import Select from "react-select";
 import { useNavigate } from "react-router-dom";
 import { skillLinks } from "../utilites/skillLinks";
@@ -138,7 +139,6 @@ const selectStyles = {
   }),
   option: (provided, state) => ({
     ...provided,
-    border: "1px solid rgb(128, 128, 128)",
     borderRadius: "0px",
     boxShadow: "none",
     backgroundColor: state.isFocused ? "#641b547a" : "#333333",
@@ -256,37 +256,39 @@ export function Tutorials() {
           options={options}
           styles={selectStyles}
           onChange={handleChange}
-          placeholder="Search a skill..."
+          placeholder="Search a skill"
           noOptionsMessage={() => "No matching skills found!"}
           classNamePrefix="tutorial-select"
         />
       </div>
-      <LineDivider />
-      <br />
-      <TutorialListHP />
-      <br />
-      <LineDivider />
-      <br />
-      <TutorialListVP />
-      <br />
-      <LineDivider />
-      <br />
-      <TutorialListHPL />
-      <br />
-      <LineDivider />
-      <br />
-      <TutorialListVPL />
-      <br />
-      <LineDivider />
-      <br />
-      <TutorialListL />
-      <br />
-      <LineDivider />
-      <br />
-      <TutorialListCM />
-      <br />
-      <br />
-      <br />
+      <MuscleFinder>
+        <LineDivider />
+        <br />
+        <TutorialListHP />
+        <br />
+        <LineDivider />
+        <br />
+        <TutorialListVP />
+        <br />
+        <LineDivider />
+        <br />
+        <TutorialListHPL />
+        <br />
+        <LineDivider />
+        <br />
+        <TutorialListVPL />
+        <br />
+        <LineDivider />
+        <br />
+        <TutorialListL />
+        <br />
+        <LineDivider />
+        <br />
+        <TutorialListCM />
+        <br />
+        <br />
+        <br />
+      </MuscleFinder>
       <Footer />
     </>
   );

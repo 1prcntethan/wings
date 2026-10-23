@@ -20,11 +20,5 @@ skillDiffMap.set("oac-oap", "A");
 
 export const skillLinkMap = new Map();
 skillLinkMap.set("handstand", "/training/handstandguide");
-// skillDiffMap.set("hspu", "B");
-// skillDiffMap.set("ninety-deg-hold", "B");
-// skillDiffMap.set("full-pl", "S");
-// skillDiffMap.set("pull-up", "D");
-// skillDiffMap.set("muscle-up", "B");
 skillLinkMap.set("full-fl", "/training/frontleverguide");
-// skillDiffMap.set("oac-oap", "A");
 

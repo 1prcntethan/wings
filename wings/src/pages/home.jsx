@@ -3,7 +3,6 @@ import Navbar from "../components/navbar";
 import LineDivider from "../components/line-divider";
 import HomepageHero from "../components/homepage-hero";
 import { Link } from "react-router-dom";
-import { svgIcon } from "../utilites/svg-icons.jsx";
 import Footer from "../components/footer.jsx";
 import BetaDisclaimer from "../components/betadisclaimer.jsx";
 

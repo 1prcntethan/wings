@@ -5,9 +5,14 @@ import BetaDisclaimer from "../components/betadisclaimer";
 import "./dashboard.css";
 import { useAuth } from "../config/auth-context.jsx";
 import { useEffect, useState } from "react";
-import { db } from "../config/firebase.js";
-import { doc, getDoc, updateDoc } from "firebase/firestore";
-import { updateSkill, logWorkout } from "../config/firestore.js";
+import {
+  buildStreakUpdate,
+  formatDate,
+  getFitnessDateObject,
+  getUserDoc,
+  logWorkout,
+  updateSkill,
+} from "../config/firestore.js";
 import { svgIcon } from "../utilites/svg-icons.jsx";
 import {
   skillNameMap,
@@ -17,7 +22,31 @@ import {
 import { Link } from "react-router-dom";
 import { skillTreeIcon } from "../utilites/skilltreeicons.jsx";
 import { skillRP } from "../utilites/skilltorp.js";
-import { formatDate, getFitnessDateObject } from "../config/firestore.js";
+
+function describeRank(totalRP) {
+  if (totalRP >= 920) {
+    return { name: "ethereal", until: "max rank reached.", label: "" };
+  }
+  if (totalRP >= 800) {
+    return { name: "ascendant", until: 920 - totalRP, label: "Rp until next rank" };
+  }
+  if (totalRP >= 630) {
+    return { name: "diamond", until: 800 - totalRP, label: "Rp until next rank" };
+  }
+  if (totalRP >= 430) {
+    return { name: "platinum", until: 630 - totalRP, label: "Rp until next rank" };
+  }
+  if (totalRP >= 260) {
+    return { name: "gold", until: 430 - totalRP, label: "Rp until next rank" };
+  }
+  if (totalRP >= 120) {
+    return { name: "silver", until: 260 - totalRP, label: "Rp until next rank" };
+  }
+  if (totalRP > 0) {
+    return { name: "bronze", until: 120 - totalRP, label: "Rp until next rank" };
+  }
+  return { name: "unranked", until: 1, label: "Rp until next rank" };
+}
 
 export function Dashboard() {
   const { currentUser } = useAuth();
@@ -31,20 +60,31 @@ export function Dashboard() {
     longest: 0,
     lastLog: null,
   });
+  const [status, setStatus] = useState("loading");
+  const [loadError, setLoadError] = useState(null);
+  const [retryCount, setRetryCount] = useState(0);
+  const [logging, setLogging] = useState(false);
+  const [logError, setLogError] = useState(null);
 
   useEffect(() => {
     if (!currentUser) return;
 
-    const ref = doc(db, "users", currentUser.uid);
-    getDoc(ref).then((snap) => {
-      if (snap.exists()) {
-        const data = snap.data();
+    let cancelled = false;
+    setStatus("loading");
+    setLoadError(null);
 
-        setUserSkills(snap.data().skills ?? {});
+    getUserDoc(currentUser.uid)
+      .then((data) => {
+        if (cancelled) return;
+        if (!data) {
+          setLoadError("Couldn't load your progress.");
+          setStatus("error");
+          return;
+        }
 
+        setUserSkills(data.skills ?? {});
         setPush(data.skills?.push || null);
         setPull(data.skills?.pull || null);
-
         setStreak(
           data.streak || {
             current: 0,
@@ -52,12 +92,59 @@ export function Dashboard() {
             lastLog: null,
           },
         );
+        setWorkoutCounter(Number(data.workout) || 0);
+        setRestCounter(Number(data.rest) || 0);
+        setStatus("ready");
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setLoadError("Couldn't load your progress.");
+        setStatus("error");
+      });
 
-        setWorkoutCounter(data.workout);
-        setRestCounter(data.rest);
+    return () => {
+      cancelled = true;
+    };
+  }, [currentUser, retryCount]);
+
+  async function handleLog(type) {
+    if (status !== "ready" || loggedToday || logging) return;
+
+    const previous = {
+      streak,
+      workout: workoutCounter,
+      rest: restCounter,
+    };
+    const predicted = buildStreakUpdate(previous, type);
+    if (!predicted) return;
+
+    setLogError(null);
+    setLogging(true);
+    setStreak(predicted.streak);
+    setWorkoutCounter(predicted.workout);
+    setRestCounter(predicted.rest);
+
+    try {
+      const result = await logWorkout(currentUser.uid, type);
+      if (!result) {
+        setStreak(previous.streak);
+        setWorkoutCounter(previous.workout);
+        setRestCounter(previous.rest);
+        setLogError("Already logged today.");
+        return;
       }
-    });
-  }, [currentUser]);
+      setStreak(result.streak);
+      setWorkoutCounter(result.workout);
+      setRestCounter(result.rest);
+    } catch {
+      setStreak(previous.streak);
+      setWorkoutCounter(previous.workout);
+      setRestCounter(previous.rest);
+      setLogError("Couldn't save that log. Try again.");
+    } finally {
+      setLogging(false);
+    }
+  }
 
   function calculateSkillRP() {
     if (!userSkills) return 0;
@@ -88,43 +175,7 @@ export function Dashboard() {
   const totalSkillRP = Math.round((skillPoints / 1229) * 750);
   const totalStreakRP = Math.round(Math.sqrt(streak.current / 365) * 250);
   const totalRP = totalSkillRP + totalStreakRP;
-  let rankUpRp = 0;
-
-  function calculateRank(totalRP) {
-    if (totalRP >= 920) {
-      rankUpRp = "max rank reached.";
-      return "ethereal";
-    } else if (totalRP >= 800) {
-      rankUpRp = 920 - totalRP;
-      return "ascendant";
-    } else if (totalRP >= 630) {
-      rankUpRp = 800 - totalRP;
-      return "diamond";
-    } else if (totalRP >= 430) {
-      rankUpRp = 630 - totalRP;
-      return "platinum";
-    } else if (totalRP >= 260) {
-      rankUpRp = 430 - totalRP;
-      return "gold";
-    } else if (totalRP >= 120) {
-      rankUpRp = 260 - totalRP;
-      return "silver";
-    } else if (totalRP > 0) {
-      rankUpRp = 120 - totalRP;
-      return "bronze";
-    } else {
-      rankUpRp = 1;
-      return "unranked";
-    }
-  }
-
-  function showNextRankRP(totalRP) {
-    if (totalRP >= 920) {
-      return "";
-    } else {
-      return "Rp until next rank";
-    }
-  }
+  const rank = describeRank(totalRP);
 
   function rankSVG(totalRP) {
     if (totalRP >= 920) {
@@ -156,6 +207,19 @@ export function Dashboard() {
         <div className="dashboard-welcome__email">{currentUser?.email}</div>
       </div>
 
+      {status !== "ready" ? (
+        <p className="log-caption">
+          {status === "loading" ? "Loading your progress..." : loadError}{" "}
+          {status === "error" && (
+            <button
+              className="log-streak"
+              onClick={() => setRetryCount((count) => count + 1)}
+            >
+              retry
+            </button>
+          )}
+        </p>
+      ) : (
       <div className="streak-container">
         <div className="streak-display">
           <div className="streak-info">
@@ -182,29 +246,17 @@ export function Dashboard() {
           <div className="streak-info">
             <button
               className="log-streak"
-              disabled={loggedToday}
-              onClick={async () => {
-                const result = await logWorkout(currentUser.uid, "workout");
-                if (!result) return;
-
-                setStreak(result.streak);
-                setWorkoutCounter(result.workout);
-              }}
+              disabled={loggedToday || logging}
+              onClick={() => handleLog("workout")}
             >
-              {loggedToday ? "logged today" : "log workout"}
+              {loggedToday ? "logged today" : logging ? "saving..." : "log workout"}
             </button>
             <button
               className="log-streak"
-              disabled={loggedToday}
-              onClick={async () => {
-                const result = await logWorkout(currentUser.uid, "rest");
-                if (!result) return;
-
-                setStreak(result.streak);
-                setRestCounter(result.rest);
-              }}
+              disabled={loggedToday || logging}
+              onClick={() => handleLog("rest")}
             >
-              {loggedToday ? "logged today" : "log rest day"}
+              {loggedToday ? "logged today" : logging ? "saving..." : "log rest day"}
             </button>
             <div className="streak-rank-points">+{totalStreakRP} Rp</div>
           </div>
@@ -214,7 +266,9 @@ export function Dashboard() {
           streak alive! Your last log was on {streak.lastLog}. Resets at 4:00am
           daily.
         </p>
+        {logError && <p className="log-caption">{logError}</p>}
       </div>
+      )}
 
       <div className="streak-container">
         <div className="workout-link-display">
@@ -224,6 +278,7 @@ export function Dashboard() {
         </div>
       </div>
       <br />
+      {status === "ready" && (
       <div className="rank-container">
         <div className="rank-display">
           <Link to="/howtouseguide">
@@ -232,7 +287,7 @@ export function Dashboard() {
 
           <div className="rank-top">
             {rankSVG(totalRP)}
-            <div className="rank-rank">{calculateRank(totalRP)}</div>
+            <div className="rank-rank">{rank.name}</div>
             {totalRP} Rp
           </div>
           <div className="rank-divider"></div>
@@ -248,11 +303,12 @@ export function Dashboard() {
               </div>
             </div>
             <div className="rank-up">
-              +{rankUpRp} {showNextRankRP(totalRP)}
+              +{rank.until} {rank.label}
             </div>
           </div>
         </div>
       </div>
+      )}
 
       {/* <div className="dashboard-skill__container">
         <div className="dashboard-skill__push">

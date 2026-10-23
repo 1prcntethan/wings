@@ -46,10 +46,17 @@
 }
 
 .wl-input--name,
-.wl-col--name {
+.wl-col--name,
+.wl-skill-select {
   width: calc(30% - 4px);
   min-width: 0;
   margin-right: 4px;
+}
+
+.wl-skill-select {
+  display: inline-block;
+  vertical-align: middle;
+  box-sizing: border-box;
 }
 
 .wl-input--small,
@@ -116,7 +123,8 @@
   }
 
   .wl-input--name,
-  .wl-col--name {
+  .wl-col--name,
+  .wl-skill-select {
     width: 100%;
     margin-right: 0px;
     margin-top: 10px;

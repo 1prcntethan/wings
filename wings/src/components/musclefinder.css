@@ -1,0 +1,60 @@
+.muscle-finder {
+  width: 70%;
+  margin: 0 auto 28px;
+  color: #f3f3f3;
+}
+
+.muscle-finder__label {
+  margin: 10px 0;
+  font-family: "Fira Sans", sans-serif;
+  font-weight: 300;
+  font-size: 16px;
+  text-align: center;
+}
+
+.muscle-finder__key {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+  font-family: "Fira Sans", sans-serif;
+  font-weight: 200;
+  font-size: 15px;
+}
+
+.muscle-finder__key li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.muscle-swatch {
+  width: 14px;
+  height: 14px;
+  border: 2px solid;
+  border-radius: 2px;
+  box-sizing: border-box;
+}
+
+.muscle-swatch--primary {
+  border-color: #71b81f;
+  background: rgba(113, 184, 31, 0.35);
+}
+
+.muscle-swatch--secondary {
+  border-color: #b66da3;
+  background: rgba(182, 109, 163, 0.4);
+}
+
+.muscle-swatch--stabilizer {
+  border-color: #d0d0d0;
+  background: rgba(255, 255, 255, 0.16);
+}
+
+@media (max-width: 768px) {
+  .muscle-finder {
+    width: 90%;
+  }
+}

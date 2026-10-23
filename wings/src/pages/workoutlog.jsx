@@ -1,21 +1,18 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import CreatableSelect from "react-select/creatable";
 import Navbar from "../components/navbar";
 import Footer from "../components/footer";
 import BetaDisclaimer from "../components/betadisclaimer";
 import "./workoutlog.css";
 import { useAuth } from "../config/auth-context.jsx";
-import { db } from "../config/firebase.js";
+import { skillTitle } from "../utilites/skilltitles.js";
 import {
-  collection,
-  addDoc,
-  query,
-  orderBy,
-  limit,
-  getDocs,
-  serverTimestamp,
-} from "firebase/firestore";
-import { formatDate, getFitnessDateObject } from "../config/firestore.js";
+  formatDate,
+  getFitnessDateObject,
+  getWorkoutLogs,
+  saveWorkoutLog,
+} from "../config/firestore.js";
 
 // ─── section config ────────────────────────────────────────────────────────────
 // Each section has a label, a max number of exercises, and a hint shown in the UI.
@@ -47,8 +44,162 @@ const SECTIONS = [
 ];
 
 // ─── blank exercise factory ────────────────────────────────────────────────────
+const WORKOUT_CATEGORIES = ["push", "pull", "legs", "full-body", "conditioning"];
+
+const skillOptions = [...skillTitle.keys()].map((name) => ({
+  value: name,
+  label: name,
+}));
+
+const skillSelectStyles = {
+  control: (provided, state) => ({
+    ...provided,
+    minHeight: 34,
+    height: 34,
+    width: "100%",
+    backgroundColor: "transparent",
+    border: "1px solid rgba(255, 255, 255, 0.15)",
+    borderRadius: 4,
+    boxShadow: "none",
+    fontSize: "0.85rem",
+    cursor: "text",
+    "&:hover": {
+      border: "1px solid rgba(255, 255, 255, 0.15)",
+    },
+    ...(state.isFocused && {
+      borderColor: "rgba(255, 255, 255, 0.5)",
+      boxShadow: "none",
+    }),
+  }),
+  valueContainer: (provided) => ({
+    ...provided,
+    padding: "0 8px",
+    height: 32,
+  }),
+  input: (provided) => ({
+    ...provided,
+    margin: 0,
+    padding: 0,
+    color: "#f3f3f3",
+    fontFamily: "Fira Sans",
+    fontWeight: 200,
+  }),
+  placeholder: (provided) => ({
+    ...provided,
+    color: "rgba(255, 255, 255, 0.45)",
+    fontFamily: "Fira Sans",
+    fontWeight: 200,
+  }),
+  singleValue: (provided) => ({
+    ...provided,
+    color: "#f3f3f3",
+    fontFamily: "Fira Sans",
+    fontWeight: 200,
+  }),
+  option: (provided, state) => ({
+    ...provided,
+    backgroundColor: state.isFocused ? "#641b547a" : "#333333",
+    color: "white",
+    fontFamily: "Fira Sans",
+    fontWeight: 200,
+    cursor: "pointer",
+  }),
+  menu: (provided) => ({
+    ...provided,
+    backgroundColor: "#333333",
+    borderRadius: 0,
+    boxShadow: "none",
+    zIndex: 30,
+  }),
+  menuPortal: (provided) => ({
+    ...provided,
+    zIndex: 30,
+  }),
+  menuList: (provided) => ({
+    ...provided,
+    backgroundColor: "#333333",
+    padding: 0,
+  }),
+  noOptionsMessage: (provided) => ({
+    ...provided,
+    fontFamily: "Fira Sans",
+    fontWeight: 200,
+  }),
+  dropdownIndicator: (provided) => ({
+    ...provided,
+    padding: 4,
+    color: "rgb(128, 128, 128)",
+    "&:hover": {
+      color: "rgb(128, 128, 128)",
+    },
+  }),
+  clearIndicator: (provided) => ({
+    ...provided,
+    padding: 4,
+    color: "rgb(128, 128, 128)",
+    "&:hover": {
+      color: "rgb(128, 128, 128)",
+    },
+  }),
+  indicatorSeparator: (provided) => ({
+    ...provided,
+    backgroundColor: "rgb(128, 128, 128)",
+  }),
+};
+
 function blankExercise() {
   return { name: "", sets: "", reps: "", holdTime: "", notes: "" };
+}
+
+function validateWorkout(formData) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(formData.date)) return "Enter a valid date.";
+
+  const [year, month, day] = formData.date.split("-").map(Number);
+  const entered = new Date(year, month - 1, day);
+  if (
+    entered.getFullYear() !== year ||
+    entered.getMonth() !== month - 1 ||
+    entered.getDate() !== day
+  ) {
+    return "Enter a valid date.";
+  }
+
+  const today = getFitnessDateObject();
+  today.setHours(0, 0, 0, 0);
+  if (entered > today) return "That date is still in the future.";
+  if (!WORKOUT_CATEGORIES.includes(formData.category)) {
+    return "Pick a workout category.";
+  }
+
+  let named = 0;
+  for (const section of SECTIONS) {
+    for (const exercise of formData.sections?.[section.key] ?? []) {
+      const name = (exercise.name ?? "").trim();
+      const sets = exercise.sets ?? "";
+      const reps = exercise.reps ?? "";
+      const notes = exercise.notes ?? "";
+      const empty = name === "" && sets === "" && reps === "" && notes === "";
+      if (empty) continue;
+      if (!name) return "Every filled row needs an exercise name.";
+      if (name.length > 80) return "Exercise names need to be 80 characters or less.";
+      if (sets !== "") {
+        const setCount = Number(sets);
+        if (!Number.isInteger(setCount) || setCount < 1 || setCount > 99) {
+          return "Sets need to be a whole number from 1 to 99.";
+        }
+      }
+      if (String(reps).length > 20) {
+        return "Reps or hold time need to be 20 characters or less.";
+      }
+      if (String(notes).length > 200) {
+        return "Notes need to be 200 characters or less.";
+      }
+      named += 1;
+    }
+  }
+
+  if (named === 0) return "Add at least one exercise before saving.";
+  return null;
 }
 
 // ─── blank log factory ─────────────────────────────────────────────────────────
@@ -64,37 +215,26 @@ function blankLog() {
   };
 }
 
-// ─── helpers ───────────────────────────────────────────────────────────────────
-async function saveWorkoutLog(uid, workoutData) {
-  const logsRef = collection(db, "users", uid, "workoutLogs");
-  const docRef = await addDoc(logsRef, {
-    ...workoutData,
-    loggedAt: serverTimestamp(),
-  });
-  return docRef.id;
-}
-
-async function getWorkoutLogs(uid, limitCount = 20) {
-  const logsRef = collection(db, "users", uid, "workoutLogs");
-  const q = query(logsRef, orderBy("loggedAt", "desc"), limit(limitCount));
-  const snap = await getDocs(q);
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-}
-
 // ─── sub-components ────────────────────────────────────────────────────────────
 
-// ── ExerciseRow: both inputs show combined placeholder ──────────────────────
-// Replace your existing ExerciseRow with this
-
 function ExerciseRow({ exercise, onChange }) {
+  const name = exercise.name ?? "";
   return (
     <div className="wl-exercise-row">
-      <input
-        className="wl-input wl-input--name"
-        placeholder="exercise name"
-        value={exercise.name}
-        onChange={(e) => onChange("name", e.target.value)}
-      />
+      <div className="wl-skill-select">
+        <CreatableSelect
+          options={skillOptions}
+          value={name ? { value: name, label: name } : null}
+          onChange={(option) => onChange("name", option?.value ?? "")}
+          onCreateOption={(input) => onChange("name", input)}
+          placeholder="type or search a skill"
+          formatCreateLabel={(input) => `use "${input}"`}
+          isClearable
+          menuPortalTarget={document.body}
+          menuPosition="fixed"
+          styles={skillSelectStyles}
+        />
+      </div>
       <input
         className="wl-input wl-input--small"
         placeholder="sets"
@@ -143,7 +283,7 @@ function LogCard({ log, onCopy }) {
   const [open, setOpen] = useState(false);
 
   const hasExercises = (sectionKey) =>
-    log.sections?.[sectionKey]?.some((e) => e.name.trim() !== "");
+    log.sections?.[sectionKey]?.some((e) => (e.name ?? "").trim() !== "");
 
   return (
     <div className="wl-card">
@@ -157,12 +297,13 @@ function LogCard({ log, onCopy }) {
         <div className="wl-card-actions">
           <button
             className="wl-copy-btn"
+            disabled={log.pending}
             onClick={(e) => {
               e.stopPropagation();
               onCopy(log);
             }}
           >
-            copy
+            {log.pending ? "saving" : "copy"}
           </button>
           <span className="wl-card-toggle">{open ? "▲" : "▼"}</span>
         </div>
@@ -175,7 +316,7 @@ function LogCard({ log, onCopy }) {
               <div key={s.key} className="wl-card-section">
                 <div className="wl-card-section-title">{s.label}</div>
                 {log.sections[s.key]
-                  .filter((e) => e.name.trim() !== "")
+                  .filter((e) => (e.name ?? "").trim() !== "")
                   .map((e, i) => (
                     <div key={i} className="wl-card-exercise">
                       <span className="wl-card-ex-name">{e.name}</span>
@@ -202,6 +343,8 @@ export function WorkoutLog() {
 
   const [logs, setLogs] = useState([]);
   const [logsLoading, setLogsLoading] = useState(true);
+  const [logsError, setLogsError] = useState(null);
+  const [reloadLogs, setReloadLogs] = useState(0);
 
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState(blankLog());
@@ -214,12 +357,31 @@ export function WorkoutLog() {
 
   // ── fetch past logs ──────────────────────────────────────────────────────────
   useEffect(() => {
-    if (!currentUser) return;
+    if (!currentUser) {
+      setLogs([]);
+      setLogsLoading(false);
+      setLogsError(null);
+      return;
+    }
+
+    let cancelled = false;
     setLogsLoading(true);
+    setLogsError(null);
     getWorkoutLogs(currentUser.uid)
-      .then(setLogs)
-      .finally(() => setLogsLoading(false));
-  }, [currentUser]);
+      .then((rows) => {
+        if (!cancelled) setLogs(rows);
+      })
+      .catch(() => {
+        if (!cancelled) setLogsError("Couldn't load your workouts.");
+      })
+      .finally(() => {
+        if (!cancelled) setLogsLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [currentUser, reloadLogs]);
 
   // ── field updater ────────────────────────────────────────────────────────────
   function updateExercise(sectionKey, index, field, value) {
@@ -236,26 +398,37 @@ export function WorkoutLog() {
 
   // ── save ─────────────────────────────────────────────────────────────────────
   async function handleSave() {
-    setSaveError(null);
-
-    // require at least one exercise name filled in
-    const hasAny = SECTIONS.some((s) =>
-      formData.sections[s.key].some((e) => e.name.trim() !== ""),
-    );
-    if (!hasAny) {
-      setSaveError("Add at least one exercise before saving.");
+    if (!currentUser) {
+      setSaveError("Sign in to save a workout.");
       return;
     }
 
+    const error = validateWorkout(formData);
+    if (error) {
+      setSaveError(error);
+      return;
+    }
+    if (saving) return;
+
+    const snapshot = formData;
+    const tempId = `pending-${Date.now()}`;
+    setSaveError(null);
     setSaving(true);
+    setLogs((prev) => [{ id: tempId, ...snapshot, pending: true }, ...prev]);
+    setFormData(blankLog());
+    setShowForm(false);
+
     try {
-      const saved = await saveWorkoutLog(currentUser.uid, formData);
-      // prepend to log list
-      setLogs((prev) => [{ id: saved, ...formData }, ...prev]);
-      setFormData(blankLog());
-      setShowForm(false);
-    } catch (err) {
-      console.error(err);
+      const saved = await saveWorkoutLog(currentUser.uid, snapshot);
+      setLogs((prev) =>
+        prev.map((log) =>
+          log.id === tempId ? { id: saved, ...snapshot, pending: false } : log,
+        ),
+      );
+    } catch {
+      setLogs((prev) => prev.filter((log) => log.id !== tempId));
+      setFormData(snapshot);
+      setShowForm(true);
       setSaveError("Failed to save. Please try again.");
     } finally {
       setSaving(false);
@@ -401,6 +574,16 @@ export function WorkoutLog() {
         <div className="wl-logs-header">past workouts</div>
         {logsLoading ? (
           <p style={{ padding: "1rem" }}>loading...</p>
+        ) : logsError ? (
+          <p className="wl-error">
+            {logsError}{" "}
+            <button
+              className="log-workout"
+              onClick={() => setReloadLogs((count) => count + 1)}
+            >
+              retry
+            </button>
+          </p>
         ) : logs.length === 0 ? (
           <p
             style={{

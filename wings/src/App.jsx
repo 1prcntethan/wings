@@ -3,7 +3,6 @@ import { useLocation, Navigate } from "react-router-dom";
 import { HashRouter as HashRouter, Routes, Route } from "react-router-dom";
 import "./App.css";
 import { useAuth } from "./config/auth-context";
-import { SkillTree } from "./pages/skilltree"
 import { LoginPage } from "./pages/loginpage";
 import { CreateAccountPage } from "./pages/createaccount";
 import { ResetPasswordPage } from "./pages/resetpassword";
@@ -16,69 +15,86 @@ import { Terminology } from "./pages/terminology";
 import { SkillVis } from "./pages/skillvis";
 import { Incomplete } from "./pages/incomplete";
 import { HowTo } from "./pages/howto";
+import { Install } from "./pages/install";
 import { About } from "./pages/about";
 import { Disclaimer } from "./pages/disclaimer";
+import { WorkoutLog } from "./pages/workoutlog";
 
 import { Loading } from "./components/loading"
+import BackToTop from "./components/backtotop";
 
-//guide pages
-import { AssistPu } from "./pages/tutorials/assistpu";
-import { Pushup } from "./pages/tutorials/pushup";
-import { Dip } from "./pages/tutorials/dip";
-import { ElbowLever } from"./pages/tutorials/elbowlever";
-import { PlancheLean } from"./pages/tutorials/planchelean";
-import { PseudoPU } from "./pages/tutorials/pseudopu";
-import { TuckPL } from "./pages/tutorials/tuckpl";
-import { AdvTuckPL } from "./pages/tutorials/advtuckpl";
-import { TuckPLPU } from "./pages/tutorials/tuckplpu";
-import { PikePU } from"./pages/tutorials/pikepu";
-import { CrowPose } from"./pages/tutorials/crowpose";
-import { AssistedHS } from"./pages/tutorials/assistedhs";
-import { Handstand } from"./pages/tutorials/handstand";
-import { ElevatedPikePU } from "./pages/tutorials/elevatedpikepu";
-import { BentArmStand } from"./pages/tutorials/bentarmstand";
-import { AssistedHSPU } from"./pages/tutorials/assistedhspu";
-import { HSPU } from"./pages/tutorials/hspu";
-import { AssistedInvRow } from"./pages/tutorials/assistedinvrow";
-import { InvertedRow } from"./pages/tutorials/invertedrow";
-import { TuckFL } from "./pages/tutorials/tuckfl";
-import { TuckFLRow } from"./pages/tutorials/tuckflrow";
-import { PikeFL } from"./pages/tutorials/pikefl";
-import { PikeFLRow } from"./pages/tutorials/pikeflrow";
-import { AdvTuckFL } from "./pages/tutorials/advtuckfl";
-import { Pullup } from "./pages/tutorials/pullup";
-import { SuperAdvTuckFL } from "./pages/tutorials/superadvtuckfl";
-import { AdvTuckFLRow } from "./pages/tutorials/advtuckflrow";
-import { StraddleFL } from "./pages/tutorials/straddlefl";
-import { Deadhang } from "./pages/tutorials/deadhang";
-import { ActiveHang } from "./pages/tutorials/activehang"
-import { AssistPullup } from "./pages/tutorials/assistedpullup";
-import { BeginnerGuide } from "./pages/guides/beginnerguide";
-import { ChestPullup } from"./pages/tutorials/chestpullup";
-import { WaistPullup } from"./pages/tutorials/waistpullup";
-import { StraddleFLRow } from "./pages/tutorials/straddleflrow";
-import { HalflayFL } from "./pages/tutorials/halflayfl";
-import { FrontLever } from "./pages/tutorials/frontlever";
-import { MuscleUp } from"./pages/tutorials/muscleup"
-import { ProgOverload } from "./pages/guides/progoverload";
-import { PushRmp } from "./pages/guides/pushroadmap";
-import { HandstandGuide } from "./pages/guides/handstandguide";
-import { AdvTuckPLPU } from "./pages/tutorials/advtuckplpu";
-import { SuperAdvTuckPL } from "./pages/tutorials/superadvtuckpl";
-import { Situp } from "./pages/tutorials/situp";
-import { HollowBody } from "./pages/tutorials/hollowbody";
-import { LsitComp } from "./pages/tutorials/lsitcomp";
-import { Lsit } from "./pages/tutorials/lsit";
-import { DragonFlag } from "./pages/tutorials/dragonflag";
-import { ScapulaPullup } from "./pages/tutorials/scapulapullup";
-import { NinetyDegHold } from "./pages/tutorials/ninetydeghold";
-import { Squat } from "./pages/tutorials/squat";
-import { SplitSquat } from "./pages/tutorials/splitsquat";
-import { PullRmp } from "./pages/guides/pullroadmap";
-import { BeginnerWorkout } from "./pages/guides/beginnerworkout";
-import { FrontLeverGuide } from "./pages/guides/frontleverguide";
-import { IntermediateWorkout } from "./pages/guides/intermediateworkout";
-import { WorkoutLog } from "./pages/workoutlog";
+function guidePage(page) {
+  return (
+    <>
+      {page}
+      <BackToTop />
+    </>
+  );
+}
+
+function lazyNamed(importer, exportName) {
+  return lazy(() =>
+    importer().then((module) => ({ default: module[exportName] })),
+  );
+}
+
+const SkillTree = lazyNamed(() => import("./pages/skilltree"), "SkillTree");
+const AssistPu = lazyNamed(() => import("./pages/tutorials/assistpu"), "AssistPu");
+const Pushup = lazyNamed(() => import("./pages/tutorials/pushup"), "Pushup");
+const Dip = lazyNamed(() => import("./pages/tutorials/dip"), "Dip");
+const ElbowLever = lazyNamed(() => import("./pages/tutorials/elbowlever"), "ElbowLever");
+const PlancheLean = lazyNamed(() => import("./pages/tutorials/planchelean"), "PlancheLean");
+const PseudoPU = lazyNamed(() => import("./pages/tutorials/pseudopu"), "PseudoPU");
+const TuckPL = lazyNamed(() => import("./pages/tutorials/tuckpl"), "TuckPL");
+const AdvTuckPL = lazyNamed(() => import("./pages/tutorials/advtuckpl"), "AdvTuckPL");
+const TuckPLPU = lazyNamed(() => import("./pages/tutorials/tuckplpu"), "TuckPLPU");
+const PikePU = lazyNamed(() => import("./pages/tutorials/pikepu"), "PikePU");
+const CrowPose = lazyNamed(() => import("./pages/tutorials/crowpose"), "CrowPose");
+const AssistedHS = lazyNamed(() => import("./pages/tutorials/assistedhs"), "AssistedHS");
+const Handstand = lazyNamed(() => import("./pages/tutorials/handstand"), "Handstand");
+const ElevatedPikePU = lazyNamed(() => import("./pages/tutorials/elevatedpikepu"), "ElevatedPikePU");
+const BentArmStand = lazyNamed(() => import("./pages/tutorials/bentarmstand"), "BentArmStand");
+const AssistedHSPU = lazyNamed(() => import("./pages/tutorials/assistedhspu"), "AssistedHSPU");
+const HSPU = lazyNamed(() => import("./pages/tutorials/hspu"), "HSPU");
+const AssistedInvRow = lazyNamed(() => import("./pages/tutorials/assistedinvrow"), "AssistedInvRow");
+const InvertedRow = lazyNamed(() => import("./pages/tutorials/invertedrow"), "InvertedRow");
+const TuckFL = lazyNamed(() => import("./pages/tutorials/tuckfl"), "TuckFL");
+const TuckFLRow = lazyNamed(() => import("./pages/tutorials/tuckflrow"), "TuckFLRow");
+const PikeFL = lazyNamed(() => import("./pages/tutorials/pikefl"), "PikeFL");
+const PikeFLRow = lazyNamed(() => import("./pages/tutorials/pikeflrow"), "PikeFLRow");
+const AdvTuckFL = lazyNamed(() => import("./pages/tutorials/advtuckfl"), "AdvTuckFL");
+const Pullup = lazyNamed(() => import("./pages/tutorials/pullup"), "Pullup");
+const SuperAdvTuckFL = lazyNamed(() => import("./pages/tutorials/superadvtuckfl"), "SuperAdvTuckFL");
+const AdvTuckFLRow = lazyNamed(() => import("./pages/tutorials/advtuckflrow"), "AdvTuckFLRow");
+const StraddleFL = lazyNamed(() => import("./pages/tutorials/straddlefl"), "StraddleFL");
+const Deadhang = lazyNamed(() => import("./pages/tutorials/deadhang"), "Deadhang");
+const ActiveHang = lazyNamed(() => import("./pages/tutorials/activehang"), "ActiveHang");
+const AssistPullup = lazyNamed(() => import("./pages/tutorials/assistedpullup"), "AssistPullup");
+const BeginnerGuide = lazyNamed(() => import("./pages/guides/beginnerguide"), "BeginnerGuide");
+const ChestPullup = lazyNamed(() => import("./pages/tutorials/chestpullup"), "ChestPullup");
+const WaistPullup = lazyNamed(() => import("./pages/tutorials/waistpullup"), "WaistPullup");
+const StraddleFLRow = lazyNamed(() => import("./pages/tutorials/straddleflrow"), "StraddleFLRow");
+const HalflayFL = lazyNamed(() => import("./pages/tutorials/halflayfl"), "HalflayFL");
+const FrontLever = lazyNamed(() => import("./pages/tutorials/frontlever"), "FrontLever");
+const MuscleUp = lazyNamed(() => import("./pages/tutorials/muscleup"), "MuscleUp");
+const ProgOverload = lazyNamed(() => import("./pages/guides/progoverload"), "ProgOverload");
+const PushRmp = lazyNamed(() => import("./pages/guides/pushroadmap"), "PushRmp");
+const HandstandGuide = lazyNamed(() => import("./pages/guides/handstandguide"), "HandstandGuide");
+const AdvTuckPLPU = lazyNamed(() => import("./pages/tutorials/advtuckplpu"), "AdvTuckPLPU");
+const SuperAdvTuckPL = lazyNamed(() => import("./pages/tutorials/superadvtuckpl"), "SuperAdvTuckPL");
+const Situp = lazyNamed(() => import("./pages/tutorials/situp"), "Situp");
+const HollowBody = lazyNamed(() => import("./pages/tutorials/hollowbody"), "HollowBody");
+const LsitComp = lazyNamed(() => import("./pages/tutorials/lsitcomp"), "LsitComp");
+const Lsit = lazyNamed(() => import("./pages/tutorials/lsit"), "Lsit");
+const DragonFlag = lazyNamed(() => import("./pages/tutorials/dragonflag"), "DragonFlag");
+const ScapulaPullup = lazyNamed(() => import("./pages/tutorials/scapulapullup"), "ScapulaPullup");
+const NinetyDegHold = lazyNamed(() => import("./pages/tutorials/ninetydeghold"), "NinetyDegHold");
+const Squat = lazyNamed(() => import("./pages/tutorials/squat"), "Squat");
+const SplitSquat = lazyNamed(() => import("./pages/tutorials/splitsquat"), "SplitSquat");
+const PullRmp = lazyNamed(() => import("./pages/guides/pullroadmap"), "PullRmp");
+const BeginnerWorkout = lazyNamed(() => import("./pages/guides/beginnerworkout"), "BeginnerWorkout");
+const FrontLeverGuide = lazyNamed(() => import("./pages/guides/frontleverguide"), "FrontLeverGuide");
+const IntermediateWorkout = lazyNamed(() => import("./pages/guides/intermediateworkout"), "IntermediateWorkout");
 
 
 function ScrollToTop({ children }) {
@@ -101,6 +117,7 @@ function App() {
   return (
       <HashRouter>
         <ScrollToTop>
+          <Suspense fallback={<Loading />}>
           <Routes>
             <Route path="/" element={<Homepage />} />
             <Route path="/training" element={<Training />} />
@@ -109,6 +126,7 @@ function App() {
             <Route path="/skilltree" element={<SkillTree />} />
             <Route path="/skillvis" element={<SkillVis />} />
             <Route path="/howtouseguide" element={<HowTo />} />
+            <Route path="/install" element={<Install />} />
             <Route path="/about" element={<About />} />
             <Route path="/disclaimer" element={<Disclaimer />} />
             <Route path="/workoutlog" element={<WorkoutLog />} />
@@ -119,17 +137,17 @@ function App() {
             <Route path="/dashboard" element={currentUser ? <Dashboard /> : <Navigate to ="/login" />} />
             <Route path="/resetpassword" element={currentUser ? <Navigate to="/" /> : <ResetPasswordPage />} />
 
-            <Route path="/training/beginnerguide" element={<BeginnerGuide />} />
-            <Route path="/training/progoverload" element={<ProgOverload />} />
-            <Route path="/training/pushrmp" element={<PushRmp />} />
+            <Route path="/training/beginnerguide" element={guidePage(<BeginnerGuide />)} />
+            <Route path="/training/progoverload" element={guidePage(<ProgOverload />)} />
+            <Route path="/training/pushrmp" element={guidePage(<PushRmp />)} />
             <Route
               path="/training/handstandguide"
-              element={<HandstandGuide />}
+              element={guidePage(<HandstandGuide />)}
             />
-            <Route path="/training/pullrmp" element={<PullRmp />} />
-            <Route path="/training/beginnerworkout" element={<BeginnerWorkout />} />
-            <Route path="/training/intermediateworkout" element={<IntermediateWorkout />} />
-            <Route path="/training/frontleverguide" element={<FrontLeverGuide />} />
+            <Route path="/training/pullrmp" element={guidePage(<PullRmp />)} />
+            <Route path="/training/beginnerworkout" element={guidePage(<BeginnerWorkout />)} />
+            <Route path="/training/intermediateworkout" element={guidePage(<IntermediateWorkout />)} />
+            <Route path="/training/frontleverguide" element={guidePage(<FrontLeverGuide />)} />
 
             <Route path="/tutorials/pushup" element={<Pushup />} />
             <Route path="/tutorials/assistedpu" element={<AssistPu />} />
@@ -208,6 +226,7 @@ function App() {
 
             <Route path="*" element={<Navigate to="/tutorials/incomplete" />} />
           </Routes>
+          </Suspense>
         </ScrollToTop>
       </HashRouter>
   );

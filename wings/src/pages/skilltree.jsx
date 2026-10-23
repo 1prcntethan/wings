@@ -16,7 +16,6 @@ import { skillLinks } from "../utilites/skillLinks";
 import { Link } from "react-router-dom";
 import SkillTreeLinkContainer from "../components/skilltreelinkcontainer";
 import { skillTreeIcon } from "../utilites/skilltreeicons";
-import { skillObjects } from "../utilites/skillobject";
 import { skillImage } from "../utilites/skillImage";
 import { skillDiff } from "../utilites/skilldifficulties.js";
 import { skillTime } from "../utilites/skilltime.js";
@@ -27,11 +26,11 @@ import { skillMetric } from "../utilites/skillmetric.js";
 import { skillCategory } from "../utilites/skillcategory.js";
 import { incompleteList } from "../components/hp-tutorial-list.jsx";
 import { useAuth } from "../config/auth-context.jsx";
-import { db } from "../config/firebase.js";
-import { doc, getDoc, updateDoc } from "firebase/firestore";
-import { updateSkill } from "../config/firestore.js";
+import { getUserDoc, updateSkill } from "../config/firestore.js";
 import { skillDB } from "../utilites/skilltodb.js";
 import { skillRP } from "../utilites/skilltorp.js";
+import { shareProgressCard } from "../utilites/progresscard.js";
+import InstallBanner from "../components/installbanner";
 
 const SkillContext = createContext(null);
 
@@ -1191,15 +1190,24 @@ function getColor(type) {
 
 const SkillWindow = () => {
   const { currentUser } = useAuth();
-  const { skill, userSkills, setUserSkills } = useContext(SkillContext);
-  const [progress, setProgress] = useState(0);
+  const {
+    skill,
+    userSkills,
+    setUserSkills,
+    skillsStatus,
+    skillsError,
+    retrySkills,
+  } = useContext(SkillContext);
+  const [saving, setSaving] = useState(false);
+  const [skillError, setSkillError] = useState(null);
+  const [sharing, setSharing] = useState(false);
+  const [shareError, setShareError] = useState(null);
+  const skillEq = skillDB.get(skill);
+  const progress = userSkills?.[skillEq] ?? 0;
 
   useEffect(() => {
-    if (!skill || !userSkills) return;
-
-    const skillEq = skillDB.get(skill);
-    setProgress(userSkills?.[skillEq] ?? 0);
-  }, [skill, userSkills]);
+    setShareError(null);
+  }, [skill, progress]);
 
   return (
     <>
@@ -1232,33 +1240,39 @@ const SkillWindow = () => {
                 <div className="skill-update__select">
                   <select
                     value={progress}
+                    disabled={saving || skillsStatus !== "ready"}
                     onChange={async (e) => {
                       const newProgress = Number(e.target.value);
-                      setProgress(newProgress);
+                      if (![0, 1, 2, 3].includes(newProgress)) return;
+                      if (!skillEq || !currentUser || saving) return;
 
-                      const skillEq = skillDB.get(skill);
-
+                      const previousSkills = userSkills;
+                      setSkillError(null);
+                      setSaving(true);
                       setUserSkills((prev) => ({
                         ...prev,
                         [skillEq]: newProgress,
                       }));
-                      if (currentUser) {
-                        try {
-                          await updateSkill(
-                            currentUser.uid,
-                            skillEq,
-                            newProgress,
-                          );
-                        } catch (error) {
-                          if (error.code === "permission-denied") {
-                            alert(
-                              "Please wait 2 seconds between skill changes.",
-                            );
-                          } else {
-                            console.error(error);
-                            alert("An error occured. Please try again.");
-                          }
+
+                      try {
+                        const saved = await updateSkill(
+                          currentUser.uid,
+                          skillEq,
+                          newProgress,
+                        );
+                        if (saved === false) {
+                          setUserSkills(previousSkills);
+                          setSkillError("Couldn't save that progress. Try again.");
                         }
+                      } catch (error) {
+                        setUserSkills(previousSkills);
+                        setSkillError(
+                          error.code === "permission-denied"
+                            ? "Please wait 2 seconds between skill changes."
+                            : "Couldn't save that progress. Try again.",
+                        );
+                      } finally {
+                        setSaving(false);
                       }
                     }}
                   >
@@ -1280,6 +1294,49 @@ const SkillWindow = () => {
                   Rp
                 </div>
               </div>
+            )}
+            {currentUser && (skillError || skillsStatus === "error") && (
+              <div className="skill-update__error">
+                {skillError || skillsError}{" "}
+                {skillsStatus === "error" && (
+                  <button type="button" onClick={retrySkills}>
+                    retry
+                  </button>
+                )}
+              </div>
+            )}
+
+            {currentUser &&
+              skillsStatus === "ready" &&
+              progress === 3 &&
+              !saving && (
+                <button
+                  type="button"
+                  className="skill-share"
+                  disabled={sharing}
+                  onClick={async () => {
+                    if (sharing) return;
+                    setSharing(true);
+                    setShareError(null);
+                    try {
+                      await shareProgressCard({
+                        title: skillTitle.get(skill) || skill,
+                        difficulty: skillDiff.get(skill) || "",
+                      });
+                    } catch (error) {
+                      if (error?.name !== "AbortError") {
+                        setShareError("Couldn't make that image. Try again.");
+                      }
+                    } finally {
+                      setSharing(false);
+                    }
+                  }}
+                >
+                  {sharing ? "making image..." : "share"}
+                </button>
+              )}
+            {shareError && (
+              <div className="skill-update__error">{shareError}</div>
             )}
 
             <Link
@@ -1431,6 +1488,21 @@ const edgeTypes = {
   skillEdge: SkillEdge,
 };
 
+const canvasPadding = 750;
+const canvasBounds = initialNodes.reduce(
+  (bounds, node) => ({
+    minX: Math.min(bounds.minX, node.position.x),
+    minY: Math.min(bounds.minY, node.position.y),
+    maxX: Math.max(bounds.maxX, node.position.x),
+    maxY: Math.max(bounds.maxY, node.position.y),
+  }),
+  { minX: Infinity, minY: Infinity, maxX: -Infinity, maxY: -Infinity },
+);
+const translateExtent = [
+  [canvasBounds.minX - canvasPadding, canvasBounds.minY - canvasPadding],
+  [canvasBounds.maxX + canvasPadding, canvasBounds.maxY + canvasPadding],
+];
+
 export function SkillTree() {
   const [nodes, setNodes] = useState(initialNodes);
   const [edges, setEdges] = useState(initialEdges);
@@ -1449,26 +1521,61 @@ export function SkillTree() {
   const [skill, setSkill] = useState("Assisted Push-up");
   const { currentUser } = useAuth();
   const [userSkills, setUserSkills] = useState({});
+  const [skillsError, setSkillsError] = useState(null);
+  const [loadedUid, setLoadedUid] = useState(null);
+  const [skillsRetry, setSkillsRetry] = useState(0);
+  const skillsStatus = !currentUser
+    ? "ready"
+    : skillsError
+      ? "error"
+      : loadedUid === currentUser.uid
+        ? "ready"
+        : "loading";
 
   useEffect(() => {
     if (!currentUser) return;
 
-    const ref = doc(db, "users", currentUser.uid);
+    let cancelled = false;
 
-    getDoc(ref).then((snap) => {
-      if (snap.exists()) {
-        console.log(snap.data().skills);
+    getUserDoc(currentUser.uid)
+      .then((data) => {
+        if (cancelled) return;
+        if (!data) {
+          setSkillsError("Couldn't load your progress.");
+          return;
+        }
+        setUserSkills(data.skills ?? {});
+        setSkillsError(null);
+        setLoadedUid(currentUser.uid);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setSkillsError("Couldn't load your progress.");
+      });
 
-        setUserSkills(snap.data().skills ?? {});
-      }
-    });
-  }, [currentUser]);
+    return () => {
+      cancelled = true;
+    };
+  }, [currentUser, skillsRetry]);
 
   return (
     <SkillContext.Provider
-      value={{ skill, setSkill, userSkills, setUserSkills }}
+      value={{
+        skill,
+        setSkill,
+        userSkills,
+        setUserSkills,
+        skillsStatus,
+        skillsError,
+        retrySkills: () => {
+          setSkillsError(null);
+          setLoadedUid(null);
+          setSkillsRetry((count) => count + 1);
+        },
+      }}
     >
-      <div style={{ width: "100vw", height: "100vh" }}>
+      <div className="skill-tree">
+        <InstallBanner />
         <SkillTreeLinkContainer />
         <SkillWindow />
 
@@ -1482,6 +1589,7 @@ export function SkillTree() {
           edgeTypes={edgeTypes}
           minZoom={0.15}
           maxZoom={2}
+          translateExtent={translateExtent}
           defaultViewport={{ x: 1000, y: 1000, zoom: 0.5 }}
           attributionPosition="top-left"
         >

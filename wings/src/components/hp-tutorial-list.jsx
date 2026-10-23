@@ -1,6 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import "./tutorial-list.css";
+import { skillButtonClass, useMuscleRoles } from "../utilites/musclerolecontext.js";
 import { useState } from "react";
 import { skillTitle } from "../utilites/skilltitles";
 import { skillDiff } from "../utilites/skilldifficulties";
@@ -50,9 +51,9 @@ export const incompleteList = [
 
 export default function TutorialListHP() {
   const [title, setTitle] = useState(null);
+  const muscleRoles = useMuscleRoles();
 
   const [activeRow, setActiveRow] = useState("");
-  // const [img, setImg] = useState(img.get(2))
 
   const rowButtons = [
     ["Assisted Push-up", "Push-up", "Dip", "Elbow Lever", "Planche Lean"],
@@ -80,12 +81,6 @@ export default function TutorialListHP() {
   ];
 
   const handleRowClick = (index, buttonTitle) => {
-    // if (activeRow === index) {
-    //     // Toggle off if the same row is clicked again
-    //     setActiveRow(null);
-    // } else
-
-    // Set the active row and title
     setActiveRow(index);
     setTitle(buttonTitle);
   };
@@ -116,7 +111,7 @@ export default function TutorialListHP() {
               {row.map((buttonTitle, buttonIndex) => (
                 <button
                   key={buttonIndex}
-                  className="skill-button"
+                  className={skillButtonClass(muscleRoles, buttonTitle)}
                   onClick={(e) => {
                     e.stopPropagation();
                     handleRowClick(rowIndex, buttonTitle);

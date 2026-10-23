@@ -1,13 +1,8 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import "./homepage-hero.css";
-import { triggerInstallPrompt } from "../main";
 
 const HomepageHero = () => {
-  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
-  const isInStandaloneMode = window.matchMedia(
-    "(display-mode: standalone)",
-  ).matches;
   return (
     <div className="hero">
       <div className="hero-image-column-1">
@@ -1836,20 +1831,7 @@ const HomepageHero = () => {
         <div className="hero-title">W i n g s.</div>
         <p className="hero-caption">
           The ultimate app. Build muscular strength, master flashy skills, and
-          unlock your full potential. <br />{" "}
-          {!isInStandaloneMode &&
-            (isIOS ? (
-              <>
-                tap <strong style={{ color: "rgb(196, 33, 218)" }}>share (3 dots) → "add to home screen" </strong> to install.
-              </>
-            ) : (
-              <button
-                className="install-wings-btn"
-                onClick={triggerInstallPrompt}
-              >
-                Install to home screen
-              </button>
-            ))}
+          unlock your full potential.
         </p>
         <div className="hero-caption">Start your journey today!</div>
         <svg

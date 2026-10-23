@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import "./tutorial-list.css";
+import { skillButtonClass, useMuscleRoles } from "../utilites/musclerolecontext.js";
 import { useState } from 'react';
 import { skillTitle } from '../utilites/skilltitles';
 import { skillDiff } from '../utilites/skilldifficulties';
@@ -13,9 +14,9 @@ import { incompleteList } from './hp-tutorial-list';
 export default function TutorialListVPL() {
 
     const [title, setTitle] = useState(null);
+    const muscleRoles = useMuscleRoles();
 
     const [activeRow, setActiveRow] = useState("");
-    // const [img, setImg] = useState(img.get(2))
 
     const rowButtons= [
         ["Deadhang", "Active Hang", "Assisted Pull-up", "Pull-up", "Scapula Pull-up"],
@@ -25,15 +26,8 @@ export default function TutorialListVPL() {
 
 
     const handleRowClick = (index, buttonTitle) => {
-        // if (activeRow === index) {
-        //     // Toggle off if the same row is clicked again
-        //     setActiveRow(null);
-        // } else 
-        
-            // Set the active row and title
-            setActiveRow(index);
-            setTitle(buttonTitle);
-        
+        setActiveRow(index);
+        setTitle(buttonTitle);
     };
 
     const handleOutsideClick = (dropRef) => {
@@ -62,7 +56,7 @@ export default function TutorialListVPL() {
                     {row.map((buttonTitle, buttonIndex) => (
                         <button 
                             key={buttonIndex} 
-                            className="skill-button" 
+                            className={skillButtonClass(muscleRoles, buttonTitle)} 
                             onClick={(e) => {
                                 e.stopPropagation(); 
                                 handleRowClick(rowIndex, buttonTitle);    
