@@ -8,7 +8,7 @@ import { skillDiff } from '../utilites/skilldifficulties';
 import { skillTime } from '../utilites/skilltime';
 import { skillLinks } from '../utilites/skillLinks';
 import { skillImage } from "../utilites/skillImage";
-import { incompleteList } from './hp-tutorial-list';
+import { incompleteList } from '../utilites/incompleteskills.js';
 
 
 

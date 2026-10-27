@@ -57,27 +57,33 @@ export function BeginnerGuide() {
           Equipment in calisthenics is extremely minimal. Pretty much all push
           skills can be learned on the floor in a cleared area. Pull skills
           require a
-          <Link
-            to="https://www.amazon.com/s?k=pullup+bar&ref=nav_bb_sb"
+          <a
+            href="https://www.amazon.com/s?k=pullup+bar&ref=nav_bb_sb"
             className="guide-external-link"
+            target="_blank"
+            rel="noopener"
           >
             pullup bar
-          </Link>
+          </a>
           or
-          <Link
-            to="https://www.amazon.com/s?k=dip+bar&crid=2XWH0940BI244&sprefix=dip+b%2Caps%2C203&ref=nb_sb_noss_2"
+          <a
+            href="https://www.amazon.com/s?k=dip+bar&crid=2XWH0940BI244&sprefix=dip+b%2Caps%2C203&ref=nb_sb_noss_2"
             className="guide-external-link"
+            target="_blank"
+            rel="noopener"
           >
             dip bar
-          </Link>
+          </a>
           of sorts, but those are usually under $100. If you watch athletes on
           social media, they commonly use
-          <Link
-            to="https://www.amazon.com/s?k=paralletes&dc&ref=a9_asc_1"
+          <a
+            href="https://www.amazon.com/s?k=paralletes&dc&ref=a9_asc_1"
             className="guide-external-link"
+            target="_blank"
+            rel="noopener"
           >
             parallettes.
-          </Link>
+          </a>
           These aren’t necessary, but they do help alleviate wrist strain and
           give extra elevation.
         </div>
@@ -335,12 +341,14 @@ export function BeginnerGuide() {
           That threshold is around{" "}
           <strong>1.2g/lb or 2.65g/kg of bodyweight</strong>.
           <br />
-          <Link
-            to="https://learn.athleanx.com/calculators/protein-calculator"
+          <a
+            href="https://learn.athleanx.com/calculators/protein-calculator"
             className="guide-external-link"
+            target="_blank"
+            rel="noopener"
           >
             AthleanX Protein Calculator
-          </Link>
+          </a>
         </div>
         <div className="guide-text">
           For carbohydrates/fats, aim to eat as <strong>healthy</strong> as
@@ -368,12 +376,14 @@ export function BeginnerGuide() {
           using your BMI. It definitely <strong>isn't</strong> accurate, but it
           gives you a general ballpark of what you should be doing.
           <br />
-          <Link
-            to="https://www.calculator.net/bmi-calculator.html"
+          <a
+            href="https://www.calculator.net/bmi-calculator.html"
             className="guide-external-link"
+            target="_blank"
+            rel="noopener"
           >
             Calculator.net BMI Calculator
-          </Link>
+          </a>
         </div>
       </div>
       <LineDivider />

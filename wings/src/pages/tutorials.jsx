@@ -13,9 +13,15 @@ import MuscleFinder from "../components/musclefinder";
 import Select from "react-select";
 import { useNavigate } from "react-router-dom";
 import { skillLinks } from "../utilites/skillLinks";
+import { incompleteList } from "../utilites/incompleteskills.js";
+
+function normalizeSkillQuery(value) {
+  return value.toLowerCase().replace(/[^a-z0-9]/g, "");
+}
 
 const options = [
   { value: "Assisted Push-up", label: "Assisted Push-up" },
+  { value: "Push-up", label: "Push-up" },
   { value: "Dip", label: "Dip" },
   { value: "Elbow Lever", label: "Elbow Lever" },
   { value: "Planche Lean", label: "Planche Lean" },
@@ -26,7 +32,7 @@ const options = [
   { value: "Adv. Tuck Planche PU", label: "Adv. Tuck Planche PU" },
   { value: "90 Degree Hold", label: "90 Degree Hold" },
   { value: "Back Lever", label: "Back Lever" },
-  { value: "Super Adv. Tuck Planche", label: "Super Adv. Tuck Planche" },
+  { value: "Super Adv. Tuck PL", label: "Super Adv. Tuck Planche" },
   { value: "Straddle Planche", label: "Straddle Planche" },
   { value: "Straddle Planche PU", label: "Straddle Planche PU" },
   { value: "Half Lay Planche", label: "Half Lay Planche" },
@@ -76,15 +82,16 @@ const options = [
 
   // HORIZONTAL PULL SKILLS^^^
 
-  { value: "Dead Hang", label: "Dead Hang" },
+  { value: "Deadhang", label: "Dead Hang" },
   { value: "Active Hang", label: "Active Hang" },
   { value: "Assisted Pull-up", label: "Assisted Pull-up" },
   { value: "Pull-up", label: "Pull-up" },
   { value: "Scapula Pull-up", label: "Scapula Pull-up" },
   { value: "Chest Pull-up", label: "Chest Pull-up" },
   { value: "Waist Pull-up", label: "Waist Pull-up" },
-  { value: "Muscle-up", label: "Muscle-up" },
+  { value: "Muscle-Up", label: "Muscle-up" },
   { value: "Archer Pull-up", label: "Archer Pull-up" },
+  { value: "Clean Muscle-Up", label: "Clean Muscle-Up" },
   { value: "Assisted OAC", label: "Assisted OAC" },
   { value: "Assisted OAP", label: "Assisted OAP" },
   { value: "OAC/OAP", label: "OAC/OAP" },
@@ -193,49 +200,9 @@ const selectStyles = {
 export function Tutorials() {
   const navigate = useNavigate();
 
-  const incompleteSkills = [
-    "Back Lever",
-    "Straddle Planche",
-    "Straddle Planche PU",
-    "Half Lay Planche",
-    "Full Planche",
-    "Full Planche PU",
-    "One Arm Planche",
-    "Maltese",
-    "Full FL Row",
-    "Front Lever Touch",
-    "Bent Arm Press to HS",
-    "Straight Arm Press to HS",
-    "Deep HSPU",
-    "90 Degree PU",
-    "Assisted OAHS",
-    "OAHS",
-    "OA Flag",
-    "Archer Pull-up",
-    "Clean Muscle-Up",
-    "Assisted OAC",
-    "Assisted OAP",
-    "OAC/OAP",
-    "Weighted Pull-ups",
-    "Butterfly",
-    "Assisted Pistol Squat",
-    "Bulgarian Split Squat",
-    "Reverse Nordic Curl",
-    "Nordic Curl",
-    "Sissy Squat",
-    "Pistol Squat",
-    "Shrimp Squat",
-    "Dragon Pistol Squat",
-    "V-sit",
-    "I-sit",
-    "Manna",
-    "Human Flag",
-    "Victorian",
-  ];
-
   const handleChange = (selectedOption) => {
     navigate(
-      incompleteSkills.includes(selectedOption.value)
+      incompleteList.includes(selectedOption.value)
         ? "/tutorials/incomplete"
         : skillLinks.get(selectedOption.value)
     );
@@ -259,6 +226,14 @@ export function Tutorials() {
           placeholder="Search a skill"
           noOptionsMessage={() => "No matching skills found!"}
           classNamePrefix="tutorial-select"
+          filterOption={(option, input) => {
+            if (!input) return true;
+            const query = normalizeSkillQuery(input);
+            return (
+              normalizeSkillQuery(option.label).includes(query) ||
+              normalizeSkillQuery(option.value).includes(query)
+            );
+          }}
         />
       </div>
       <MuscleFinder>

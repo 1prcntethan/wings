@@ -133,12 +133,14 @@ export function HandstandGuide() {
           representation of the fall; it also outlines how to learn the
           handstand in general.
           <br />
-          <Link
-            to="https://www.youtube.com/watch?v=2H2yLngOZdg"
+          <a
+            href="https://www.youtube.com/watch?v=2H2yLngOZdg"
             className="guide-external-link"
+            target="_blank"
+            rel="noopener"
           >
             Watch here!
-          </Link>
+          </a>
         </div>
         <div className="guide-text">
           To practice falling, start with using a wall, in a chest-to-wall

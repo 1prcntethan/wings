@@ -22,7 +22,7 @@ export function SuperAdvTuckFL() {
           <div className="skill-section-title">overview</div>
           <div className="difficulty-muscle">
             <div className="skill-difficulty">
-              <Link to="/Terminology" className="link-text">
+              <Link to="/terminology" className="link-text">
                 Skill Difficulty: A
               </Link>
               <br />
