@@ -24,21 +24,6 @@ const Navbar = () => {
     }
   };
 
-  const navLinks = document.querySelectorAll("#nav-item");
-  navLinks.forEach((link) => {
-    link.addEventListener("click", (event) => {
-      const currentPath = window.location.hash;
-      const targetPath = link.getAttribute("href");
-
-      if (targetPath === currentPath) {
-        toggleMenu();
-        event.preventDefault();
-      }
-
-      document.documentElement.classList.remove("disable-scroll");
-    });
-  });
-
   const { currentUser } = useAuth();
 
   const doLogout = async () => {
@@ -51,6 +36,23 @@ const Navbar = () => {
 
   const location = useLocation();
   const navigate = useNavigate();
+
+  function handleNavClick(event, to) {
+    if (location.pathname === to) {
+      toggleMenu();
+      event.preventDefault();
+    }
+    document.documentElement.classList.remove("disable-scroll");
+  }
+
+  function handleAccountClick() {
+    document.documentElement.classList.remove("disable-scroll");
+    if (location.pathname === "/dashboard") {
+      doLogout();
+    } else {
+      navigate("/dashboard");
+    }
+  }
 
   return (
     <>
@@ -145,40 +147,45 @@ const Navbar = () => {
 
       <div className="navbar__list">
         <div className="navbar__list--items navbar__list--pink">
-          <Link to="/tutorials" id="nav-item">
+          <Link
+            to="/tutorials"
+            className="nav-item"
+            onClick={(event) => handleNavClick(event, "/tutorials")}
+          >
             tutorials
           </Link>
         </div>
         <div className="navbar__list--items navbar__list--green">
-          <Link to="/training" id="nav-item">
+          <Link
+            to="/training"
+            className="nav-item"
+            onClick={(event) => handleNavClick(event, "/training")}
+          >
             training
           </Link>
         </div>
         <div className="navbar__list--items navbar__list--pink">
-          <Link to="/terminology" id="nav-item">
+          <Link
+            to="/terminology"
+            className="nav-item"
+            onClick={(event) => handleNavClick(event, "/terminology")}
+          >
             terminology
           </Link>
         </div>
         <div className="navbar__list--items navbar__list--green">
-          <Link to="/skilltree" id="nav-item">
+          <Link
+            to="/skilltree"
+            className="nav-item"
+            onClick={(event) => handleNavClick(event, "/skilltree")}
+          >
             skill tree
           </Link>
         </div>
         {currentUser ? (
           <div className="navbar__logout--container">
-            <button
-              className="logout-button"
-              onClick={
-                location.pathname === "/dashboard"
-                  ? () => {
-                      doLogout();
-                    }
-                  : () => {
-                      navigate("/dashboard");
-                    }
-              }
-            >
-              <img src="account_icon.svg" className="account-icon-nav" />
+            <button className="logout-button nav-item" onClick={handleAccountClick}>
+              <img src="account_icon.svg" alt="Account" className="account-icon-nav" />
               <div>
                 {location.pathname === "/dashboard" ? "log out" : "dashboard"}
               </div>
@@ -187,7 +194,11 @@ const Navbar = () => {
         ) : (
           <>
             <div className="navbar__logout--container">
-              <Link to="/login" id="nav-item">
+              <Link
+                to="/login"
+                className="nav-item"
+                onClick={(event) => handleNavClick(event, "/login")}
+              >
                 <button className="logout-button">
                   <div>login</div>
                 </button>
@@ -196,35 +207,51 @@ const Navbar = () => {
           </>
         )}
         {/* <div className="navbar__list--items navbar__list--pink">
-              <Link to = "/skillvis" id="nav-item">skillvis</Link>
+              <Link to = "/skillvis" className="nav-item">skillvis</Link>
             </div> */}
       </div>
 
       <div className="mobile__list">
         <ul>
           <li>
-            <Link to="/tutorials" id="nav-item">
+            <Link
+              to="/tutorials"
+              className="nav-item"
+              onClick={(event) => handleNavClick(event, "/tutorials")}
+            >
               <div className="navbar__list--items navbar__list--pink">
                 tutorials
               </div>
             </Link>
           </li>
           <li>
-            <Link to="/training" id="nav-item">
+            <Link
+              to="/training"
+              className="nav-item"
+              onClick={(event) => handleNavClick(event, "/training")}
+            >
               <div className="navbar__list--items navbar__list--green">
                 training
               </div>
             </Link>
           </li>
           <li>
-            <Link to="/terminology" id="nav-item">
+            <Link
+              to="/terminology"
+              className="nav-item"
+              onClick={(event) => handleNavClick(event, "/terminology")}
+            >
               <div className="navbar__list--items navbar__list--pink">
                 terminology
               </div>
             </Link>
           </li>
           <li>
-            <Link to="/skilltree" id="nav-item">
+            <Link
+              to="/skilltree"
+              className="nav-item"
+              onClick={(event) => handleNavClick(event, "/skilltree")}
+            >
               <div className="navbar__list--items navbar__list--green">
                 skill tree
               </div>
@@ -233,20 +260,8 @@ const Navbar = () => {
           <li>
             {currentUser ? (
               <div className="navbar__logout--container">
-                <button
-                  id="nav-item"
-                  className="logout-button"
-                  onClick={
-                    location.pathname === "/dashboard"
-                      ? () => {
-                          doLogout();
-                        }
-                      : () => {
-                          navigate("/dashboard");
-                        }
-                  }
-                >
-                  <img src="account_icon.svg" className="account-icon-nav" />
+                <button className="logout-button nav-item" onClick={handleAccountClick}>
+                  <img src="account_icon.svg" alt="Account" className="account-icon-nav" />
                   <div>
                     {location.pathname === "/dashboard"
                       ? "log out"
@@ -257,7 +272,11 @@ const Navbar = () => {
             ) : (
               <>
                 <div className="navbar__logout--container">
-                  <Link to="/login" id="nav-item">
+                  <Link
+                    to="/login"
+                    className="nav-item"
+                    onClick={(event) => handleNavClick(event, "/login")}
+                  >
                     <button className="logout-button__mobile">
                       <div>login</div>
                     </button>
@@ -267,7 +286,7 @@ const Navbar = () => {
             )}
           </li>
           {/* <div className="navbar__list--items navbar__list--pink">
-              <Link to = "/skillvis" id="nav-item">skillvis</Link>
+              <Link to = "/skillvis" className="nav-item">skillvis</Link>
             </div> */}
         </ul>
       </div>

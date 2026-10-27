@@ -129,7 +129,7 @@
     position: relative;
 }
 
-#show-password {
+.show-password {
     position: absolute;
     display: flex;
     right: 1rem;
@@ -137,8 +137,18 @@
     transform: translateY(-50%);
     width: 20px;
     height: 20px;
+    padding: 0;
+    border: none;
+    background: transparent;
     cursor: pointer;
     align-items: center;
+    justify-content: center;
+}
+
+.show-password img {
+    width: 20px;
+    height: 20px;
+    display: block;
 }
 
 

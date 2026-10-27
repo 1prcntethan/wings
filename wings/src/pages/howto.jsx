@@ -88,8 +88,8 @@ export function HowTo() {
             Skill & Streak point contributions are added together to determine
             your rank.
             <br />
-            Bronze = 0-120, Silver = 120-260, Gold = 260-450, Platinum =
-            450-630, Diamond = 630-800 Ascendant = 800-920, Ethereal = 920-1000.
+            Bronze = 0-120, Silver = 120-260, Gold = 260-430, Platinum =
+            430-630, Diamond = 630-800 Ascendant = 800-920, Ethereal = 920-1000.
           </li>
         </ol>
       </div>

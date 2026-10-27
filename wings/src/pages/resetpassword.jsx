@@ -1,13 +1,4 @@
-import Navbar from "../components/navbar";
-import Footer from "../components/footer.jsx";
-import BetaDisclaimer from "../components/betadisclaimer.jsx";
-import {
-  doCreateUserWithEmailAndPassword,
-  doSignInWithEmailAndPassword,
-  doSignInWithGoogle,
-  doSignOut,
-  doSendPasswordResetEmail,
-} from "../config/auth.js";
+import { doSendPasswordResetEmail } from "../config/auth.js";
 import { auth } from "../config/firebase.js"
 import { useAuth } from "../config/auth-context.jsx";
 import { useState } from "react";
@@ -228,8 +219,9 @@ export function ResetPasswordPage() {
                 {userLoggedIn ? <>change password</> : <>reset password</>}
               </div>
 
+              <form onSubmit={onResetSubmit}>
               <div className="signup-form__input-box">
-                <label className="signup-form__label" for="email">
+                <label className="signup-form__label" htmlFor="email">
                   Email
                 </label>
                 <input
@@ -239,15 +231,17 @@ export function ResetPasswordPage() {
                   value={email}
                   type="email"
                   onChange={(e) => setEmail(e.target.value)}
+                  autoComplete="email"
                 />
               </div>
 
               <div className="signup-form__submit-box">
-                <button className="signup-form__submits" onClick={onResetSubmit}>
+                <button className="signup-form__submits" type="submit">
                   {" "}
                   Send verification email{" "}
                 </button>
               </div>
+              </form>
 
               {/* <button onClick={doLogout}> Log Out </button> */}
 
@@ -260,7 +254,6 @@ export function ResetPasswordPage() {
         <div className="desktop-block">
           <ul>
             <li> track your skills!</li>
-            <li> subscribe for no ads!</li>
             <li> log your workouts!</li>
           </ul>
         </div>

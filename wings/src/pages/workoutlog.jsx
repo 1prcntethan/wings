@@ -11,6 +11,7 @@ import {
   formatDate,
   getFitnessDateObject,
   getWorkoutLogs,
+  logWorkout,
   saveWorkoutLog,
 } from "../config/firestore.js";
 
@@ -450,6 +451,7 @@ export function WorkoutLog() {
   const [formData, setFormData] = useState(blankLog());
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState(null);
+  const [streakWarning, setStreakWarning] = useState(null);
 
   // ── fetch past logs ──────────────────────────────────────────────────────────
   useEffect(() => {
@@ -556,6 +558,7 @@ export function WorkoutLog() {
     const savedShape = sanitizeWorkout(formData);
     const tempId = `pending-${Date.now()}`;
     setSaveError(null);
+    setStreakWarning(null);
     setSaving(true);
     setLogs((prev) => [{ id: tempId, ...savedShape, pending: true }, ...prev]);
     setFormData(blankLog());
@@ -568,6 +571,13 @@ export function WorkoutLog() {
           log.id === tempId ? { id: saved, ...savedShape, pending: false } : log,
         ),
       );
+      if (savedShape.date === formatDate(getFitnessDateObject())) {
+        try {
+          await logWorkout(currentUser.uid, "workout");
+        } catch {
+          setStreakWarning("Workout saved, but the streak didn't update.");
+        }
+      }
     } catch {
       setLogs((prev) => prev.filter((log) => log.id !== tempId));
       setFormData(snapshot);
@@ -709,6 +719,7 @@ export function WorkoutLog() {
       {/* ── past logs ── */}
       <div className="workout-container">
         <div className="wl-logs-header">past workouts</div>
+        {streakWarning && <p className="wl-error">{streakWarning}</p>}
         {!currentUser ? (
           <p className="wl-empty">
             Sign in to save workouts and see them here.{" "}
@@ -745,16 +756,23 @@ export function WorkoutLog() {
       <div className="dashboard-donate">
         <div>
           Enjoying this platform? Support its development. Donate through{" "}
-          <Link to="https://ko-fi.com/wingssw" className="donate-link">
-            Ko-fi
-          </Link>{" "}
-          or{" "}
-          <Link
-            to="https://www.paypal.com/donate/?hosted_button_id=RNREJQ826VL46"
+          <a
+            href="https://ko-fi.com/wingssw"
             className="donate-link"
+            target="_blank"
+            rel="noopener"
+          >
+            Ko-fi
+          </a>{" "}
+          or{" "}
+          <a
+            href="https://www.paypal.com/donate/?hosted_button_id=RNREJQ826VL46"
+            className="donate-link"
+            target="_blank"
+            rel="noopener"
           >
             Paypal
-          </Link>
+          </a>
           !!
         </div>
       </div>

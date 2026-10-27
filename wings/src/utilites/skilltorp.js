@@ -103,3 +103,8 @@ export const skillRP = new Map([
 
   // CORE/MISC SKILLS ^^^
 ]);
+
+export const skillRPDenominator = [...skillRP.values()].reduce(
+  (sum, points) => sum + points,
+  0,
+);
