@@ -4,10 +4,16 @@
 
 /* ── form layout ─────────────────────────────────────── */
 .wl-form {
-  width: 100%;
+  width: min(100%, 720px);
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  box-sizing: border-box;
+  background-color: #252525;
+  border: solid 1px #333333;
+  border-radius: 12px;
+  padding: 1.1rem 1rem 1.25rem;
+  margin-top: 12px;
 }
 
 .wl-form-top {
@@ -21,6 +27,8 @@
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
+  flex: 1;
+  min-width: 0;
 }
 
 .wl-label {
@@ -46,17 +54,38 @@
 }
 
 .wl-input--name,
-.wl-col--name,
-.wl-skill-select {
+.wl-col--name {
   width: calc(30% - 4px);
   min-width: 0;
   margin-right: 4px;
 }
 
 .wl-skill-select {
-  display: inline-block;
-  vertical-align: middle;
+  display: block;
+  width: 100%;
+  min-width: 0;
   box-sizing: border-box;
+}
+
+.wl-skill-select__menu-list {
+  overflow-y: auto;
+}
+
+.wl-skill-select__menu-list::-webkit-scrollbar {
+  width: 9px;
+}
+
+.wl-skill-select__menu-list::-webkit-scrollbar-track {
+  background: #333333;
+}
+
+.wl-skill-select__menu-list::-webkit-scrollbar-thumb {
+  background-color: #555;
+  border-radius: 5px;
+}
+
+.wl-skill-select__menu-list::-webkit-scrollbar-thumb:hover {
+  background-color: #777;
 }
 
 .wl-input--small,
@@ -85,6 +114,141 @@
 
 .wl-input:focus {
   border-color: rgba(255, 255, 255, 0.5);
+}
+
+.wl-input[type="date"] {
+  color-scheme: dark;
+  width: 100%;
+  height: 34px;
+}
+
+.wl-input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+.wl-input[type="number"]::-webkit-outer-spin-button,
+.wl-input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.wl-exercise {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  padding: 0.15rem 0 0.85rem;
+}
+
+.wl-exercise + .wl-exercise {
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  padding-top: 0.85rem;
+}
+
+.wl-exercise-meta {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 0.65rem;
+}
+
+.wl-mini-label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  text-transform: lowercase;
+  opacity: 0.72;
+}
+
+.wl-mini-label .wl-input,
+.wl-exercise > .wl-input {
+  width: 100%;
+  min-width: 0;
+  height: 34px;
+}
+
+.wl-mini-label .wl-input {
+  opacity: 1;
+  text-align: center;
+}
+
+.wl-sets .wl-input,
+.wl-set-grid .wl-input,
+.wl-exercise > .wl-input {
+  font-family: "Fira Sans", sans-serif;
+  font-weight: 100;
+  letter-spacing: 0;
+}
+
+.wl-sets {
+  width: 4.75rem;
+  flex-shrink: 0;
+}
+
+.wl-measure {
+  display: flex;
+  flex: 0 0 auto;
+  height: 34px;
+  box-sizing: border-box;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.wl-measure button {
+  background: transparent;
+  color: inherit;
+  border: 0;
+  min-width: 4.4rem;
+  padding: 0 0.85rem;
+  font-family: "Major Mono Display", monospace;
+  font-size: 0.72rem;
+  cursor: pointer;
+  opacity: 0.55;
+}
+
+.wl-measure button.is-active {
+  background: #b66da3;
+  color: white;
+  opacity: 1;
+}
+
+.wl-set-grid {
+  display: grid;
+  gap: 0.5rem;
+  width: 100%;
+  min-width: 0;
+}
+
+.wl-set-grid--1 {
+  grid-template-columns: minmax(0, 1fr);
+  max-width: calc((100% - 1.5rem) / 4);
+}
+
+.wl-set-grid--2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.wl-set-grid--3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.wl-set-grid--4 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+@media (max-width: 420px) {
+  .wl-set-grid--1 {
+    max-width: calc((100% - 0.5rem) / 2);
+  }
+
+  .wl-set-grid--3,
+  .wl-set-grid--4 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 /* ── exercise rows ───────────────────────────────────── */
@@ -123,8 +287,7 @@
   }
 
   .wl-input--name,
-  .wl-col--name,
-  .wl-skill-select {
+  .wl-col--name {
     width: 100%;
     margin-right: 0px;
     margin-top: 10px;
@@ -171,12 +334,14 @@
 
 .wl-section-header {
   display: flex;
+  flex-wrap: wrap;
   align-items: baseline;
-  gap: 0.6rem;
+  gap: 0.2rem 0.6rem;
   margin-bottom: 0.25rem;
 }
 
 .wl-section-label {
+  order: 1;
   font-size: 0.8rem;
   font-weight: 600;
   text-transform: lowercase;
@@ -184,17 +349,21 @@
 }
 
 .wl-section-hint {
+  order: 3;
   font-size: 0.72rem;
   opacity: 0.45;
   font-style: italic;
-  flex: 1;
+  flex: 1 1 100%;
+  min-width: 0;
 }
 
 .wl-section-limit {
+  order: 2;
   font-size: 0.68rem;
   opacity: 0.4;
   text-transform: lowercase;
   letter-spacing: 0.06em;
+  margin-left: auto;
 }
 
 /* ── error ───────────────────────────────────────────── */
@@ -211,19 +380,33 @@
   opacity: 1;
   margin-top: 30px;
   margin-bottom: 0.75rem;
+  width: min(100%, 720px);
+  padding-left: 1rem;
+  box-sizing: border-box;
 }
 
 .wl-log-list {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  width: 100%;
+  width: min(100%, 720px);
+}
+
+.wl-empty {
+  width: min(100%, 720px);
+  margin: 0;
+  padding: 0.25rem 0 1rem;
+  opacity: 0.8;
+  font-family: "Fira Sans", sans-serif;
+  font-weight: 200;
+  box-sizing: border-box;
 }
 
 /* ── log card ────────────────────────────────────────── */
 .wl-card {
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 6px;
+  background: #252525;
+  border: 1px solid #333333;
+  border-radius: 12px;
   overflow: hidden;
 }
 
@@ -231,7 +414,8 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.65rem 0.9rem;
+  gap: 0.6rem;
+  padding: 0.75rem 1rem;
   cursor: pointer;
   transition: background 0.15s;
 }
@@ -243,7 +427,9 @@
 .wl-card-meta {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+  min-width: 0;
 }
 
 .wl-card-date {
@@ -288,11 +474,17 @@
 }
 
 .wl-card-body {
-  padding: 0 0.9rem 0.75rem;
+  padding: 0.35rem 1rem 0.9rem;
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
   border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.wl-card-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
 }
 
 .wl-card-section-title {
@@ -305,19 +497,41 @@
 }
 
 .wl-card-exercise {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: 0.75rem;
+  row-gap: 0.15rem;
+  align-items: baseline;
 }
 
 .wl-card-ex-name {
+  font-family: "Fira Sans", sans-serif;
   font-size: 0.85rem;
-  font-weight: 500;
+  font-weight: 200;
+  min-width: 0;
 }
 
 .wl-card-ex-detail {
   font-size: 0.75rem;
-  opacity: 0.55;
+  opacity: 0.7;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.wl-card-ex-notes {
+  grid-column: 1 / -1;
+  font-size: 0.75rem;
+  opacity: 0.5;
+}
+
+@media (max-width: 420px) {
+  .wl-card-exercise {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .wl-card-ex-detail {
+    text-align: left;
+  }
 }
 
 /* ── responsive ──────────────────────────────────────── */
@@ -367,14 +581,16 @@
   border: solid 1px #333333;
   border-radius: 12px;
   gap: 20px;
-  width: 75%;
+  width: min(100%, 720px);
+  box-sizing: border-box;
   justify-self: center;
   padding: 30px;
   margin-top: 30px;
 
   @media (max-width: 550px) {
     flex-direction: column;
-    width: calc(100% - 90px);
+    width: 100%;
+    padding: 18px;
   }
 }
 
@@ -399,6 +615,8 @@
   color: white;
   border: 1px solid #333333;
   border-radius: 12px;
+  text-decoration: none;
+  box-sizing: border-box;
   margin: 0;
   padding: 0;
   width: 175px;
@@ -424,9 +642,33 @@
   transform: scale(1.05);
 }
 
+.log-workout:disabled {
+  opacity: 0.55;
+  cursor: default;
+  transform: none;
+}
+
+.wl-form .log-workout {
+  width: auto;
+  min-width: 11.5rem;
+  height: 44px;
+  margin-top: 0.75rem;
+  padding: 0 1.1rem;
+  align-self: flex-end;
+  white-space: nowrap;
+}
+
+@media (max-width: 550px) {
+  .wl-form .log-workout {
+    align-self: stretch;
+    width: 100%;
+  }
+}
+
 .category-selector {
   display: flex;
-  width: 275px;
+  width: 100%;
+  max-width: 275px;
   height: 33px;
   background-color: #111111;
   color: white;
@@ -460,8 +702,26 @@
   background-color: none;
 }
 
+.wl-field .category-selector {
+  width: 100%;
+  max-width: none;
+  height: 34px;
+  align-self: stretch;
+  box-sizing: border-box;
+  background-color: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
+  padding: 0 1.75rem 0 0.6rem;
+  font-size: 0.85rem;
+}
+
+.wl-field .category-selector:focus {
+  outline: none;
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
 .workout-caption {
-  width: 75%;
+  width: min(100%, 720px);
   font-family: Fira Sans;
   font-size: 14px;
   align-content: center;

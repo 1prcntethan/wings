@@ -192,9 +192,8 @@ export function Dashboard() {
       return <img src="silver.svg" className="rank-svg silver"></img>;
     } else if (totalRP > 0) {
       return <img src="bronze.svg" className="rank-svg bronze"></img>;
-    } else {
-      return "unranked";
     }
+    return null;
   }
 
   return (
@@ -263,8 +262,11 @@ export function Dashboard() {
         </div>
         <p className="log-caption">
           *Make sure to log your workout or rest day once per day to keep your
-          streak alive! Your last log was on {streak.lastLog}. Resets at 4:00am
-          daily.
+          streak alive!{" "}
+          {streak.lastLog
+            ? `Your last log was on ${streak.lastLog}. `
+            : "You have not logged a day yet. "}
+          Resets at 4:00am daily.
         </p>
         {logError && <p className="log-caption">{logError}</p>}
       </div>

@@ -1,3 +1,5 @@
+import { registerFileSkillIcons } from "./skillfileicons.jsx";
+
 export const skillTreeIcon = new Map([
   [
     "NA",
@@ -5321,3 +5323,5 @@ export const skillTreeIcon = new Map([
     <img width="150px" height="150px" src="./startingflag.png" alt="Start"></img>,
   ],
 ]);
+
+registerFileSkillIcons(skillTreeIcon, "tree-size");

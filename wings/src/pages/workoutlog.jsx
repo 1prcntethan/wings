@@ -45,6 +45,7 @@ const SECTIONS = [
 
 // ─── blank exercise factory ────────────────────────────────────────────────────
 const WORKOUT_CATEGORIES = ["push", "pull", "legs", "full-body", "conditioning"];
+const MAX_SETS = 4;
 
 const skillOptions = [...skillTitle.keys()].map((name) => ({
   value: name,
@@ -148,7 +149,60 @@ const skillSelectStyles = {
 };
 
 function blankExercise() {
-  return { name: "", sets: "", reps: "", holdTime: "", notes: "" };
+  return { name: "", sets: "", measure: "reps", efforts: [], notes: "" };
+}
+
+function setCount(value) {
+  const count = Number(value);
+  if (!Number.isInteger(count) || count < 1 || count > MAX_SETS) return 0;
+  return count;
+}
+
+function resizeEfforts(efforts, count) {
+  return Array.from({ length: count }, (_, index) => efforts?.[index] ?? "");
+}
+
+function fromSavedExercise(raw) {
+  if (!raw) return blankExercise();
+
+  const sets = raw.sets == null ? "" : String(raw.sets);
+  const count = setCount(sets);
+  let efforts = Array.isArray(raw.efforts)
+    ? raw.efforts.map((value) => String(value ?? ""))
+    : [];
+
+  if (efforts.length === 0 && count > 0) {
+    const legacy = String(raw.reps ?? "").trim();
+    if (/^\d+(\.\d)?$/.test(legacy)) {
+      efforts = Array.from({ length: count }, () => legacy);
+    }
+  }
+
+  return {
+    name: raw.name ?? "",
+    sets,
+    measure: raw.measure === "hold" ? "hold" : "reps",
+    efforts: count > 0 ? resizeEfforts(efforts, count) : efforts,
+    notes: raw.notes ?? "",
+  };
+}
+
+function exerciseDetail(exercise) {
+  const efforts = Array.isArray(exercise.efforts)
+    ? exercise.efforts.map((value) => String(value).trim()).filter(Boolean)
+    : [];
+
+  if (efforts.length > 0) {
+    const unit = exercise.measure === "hold" ? "s" : "";
+    const values = efforts.map((value) => `${value}${unit}`).join(", ");
+    const sets = exercise.sets || efforts.length;
+    return `${sets} × ${values}`;
+  }
+
+  if (exercise.sets && exercise.reps) return `${exercise.sets} × ${exercise.reps}`;
+  if (exercise.sets) return `${exercise.sets} sets`;
+  if (exercise.reps) return String(exercise.reps);
+  return "";
 }
 
 function validateWorkout(formData) {
@@ -176,24 +230,31 @@ function validateWorkout(formData) {
     for (const exercise of formData.sections?.[section.key] ?? []) {
       const name = (exercise.name ?? "").trim();
       const sets = exercise.sets ?? "";
-      const reps = exercise.reps ?? "";
-      const notes = exercise.notes ?? "";
-      const empty = name === "" && sets === "" && reps === "" && notes === "";
+      const notes = (exercise.notes ?? "").trim();
+      const efforts = Array.isArray(exercise.efforts) ? exercise.efforts : [];
+      const effortsBlank = efforts.every((value) => String(value ?? "").trim() === "");
+      const empty = name === "" && sets === "" && notes === "" && effortsBlank;
       if (empty) continue;
       if (!name) return "Every filled row needs an exercise name.";
       if (name.length > 80) return "Exercise names need to be 80 characters or less.";
-      if (sets !== "") {
-        const setCount = Number(sets);
-        if (!Number.isInteger(setCount) || setCount < 1 || setCount > 99) {
-          return "Sets need to be a whole number from 1 to 99.";
+      const count = setCount(sets);
+      if (count === 0) return "Sets need to be a whole number from 1 to 4.";
+      if (exercise.measure !== "reps" && exercise.measure !== "hold") {
+        return "Choose reps or hold for each exercise.";
+      }
+      if (efforts.length !== count) return "Enter a value for each set.";
+      for (const value of efforts) {
+        const entry = String(value ?? "").trim();
+        if (exercise.measure === "hold") {
+          const seconds = Number(entry);
+          if (!/^\d+(\.\d)?$/.test(entry) || seconds <= 0 || seconds > 600) {
+            return "Hold times need to be seconds from 0.1 to 600.";
+          }
+        } else if (!/^\d+$/.test(entry) || Number(entry) < 1 || Number(entry) > 999) {
+          return "Reps need to be a whole number from 1 to 999.";
         }
       }
-      if (String(reps).length > 20) {
-        return "Reps or hold time need to be 20 characters or less.";
-      }
-      if (String(notes).length > 200) {
-        return "Notes need to be 200 characters or less.";
-      }
+      if (notes.length > 200) return "Notes need to be 200 characters or less.";
       named += 1;
     }
   }
@@ -217,10 +278,13 @@ function blankLog() {
 
 // ─── sub-components ────────────────────────────────────────────────────────────
 
-function ExerciseRow({ exercise, onChange }) {
+function ExerciseRow({ exercise, onChange, onEffort }) {
   const name = exercise.name ?? "";
+  const count = setCount(exercise.sets);
+  const hold = exercise.measure === "hold";
+
   return (
-    <div className="wl-exercise-row">
+    <div className="wl-exercise">
       <div className="wl-skill-select">
         <CreatableSelect
           options={skillOptions}
@@ -232,25 +296,60 @@ function ExerciseRow({ exercise, onChange }) {
           isClearable
           menuPortalTarget={document.body}
           menuPosition="fixed"
+          classNamePrefix="wl-skill-select"
           styles={skillSelectStyles}
         />
       </div>
+      <div className="wl-exercise-meta">
+        <label className="wl-mini-label wl-sets">
+          sets
+          <input
+            className="wl-input"
+            placeholder="1–4"
+            type="number"
+            min="1"
+            max={MAX_SETS}
+            inputMode="numeric"
+            value={exercise.sets}
+            onChange={(e) => onChange("sets", e.target.value)}
+          />
+        </label>
+        <div className="wl-measure" role="group" aria-label="reps or hold">
+          <button
+            type="button"
+            className={!hold ? "is-active" : ""}
+            onClick={() => onChange("measure", "reps")}
+          >
+            reps
+          </button>
+          <button
+            type="button"
+            className={hold ? "is-active" : ""}
+            onClick={() => onChange("measure", "hold")}
+          >
+            hold
+          </button>
+        </div>
+      </div>
+      {count > 0 && (
+        <div className={`wl-set-grid wl-set-grid--${count}`}>
+          {Array.from({ length: count }, (_, index) => (
+            <label key={index} className="wl-mini-label">
+              set {index + 1}
+              <input
+                className="wl-input"
+                inputMode={hold ? "decimal" : "numeric"}
+                placeholder={hold ? "sec" : "reps"}
+                aria-label={`set ${index + 1} ${hold ? "hold seconds" : "reps"}`}
+                value={exercise.efforts?.[index] ?? ""}
+                onChange={(e) => onEffort(index, e.target.value)}
+              />
+            </label>
+          ))}
+        </div>
+      )}
       <input
-        className="wl-input wl-input--small"
-        placeholder="sets"
-        type="number"
-        min="1"
-        value={exercise.sets}
-        onChange={(e) => onChange("sets", e.target.value)}
-      />
-      <input
-        className="wl-input wl-input--hold"
-        placeholder="reps / hold (s)"
-        value={exercise.reps}
-        onChange={(e) => onChange("reps", e.target.value)}
-      />
-      <input
-        className="wl-input wl-input--notes"
+        className="wl-input"
         placeholder="notes (optional)"
         value={exercise.notes}
         onChange={(e) => onChange("notes", e.target.value)}
@@ -259,7 +358,7 @@ function ExerciseRow({ exercise, onChange }) {
   );
 }
 
-function SectionBlock({ section, exercises, onChange, isHold }) {
+function SectionBlock({ section, exercises, onChange, onEffort }) {
   return (
     <div className="wl-section">
       <div className="wl-section-header">
@@ -271,8 +370,8 @@ function SectionBlock({ section, exercises, onChange, isHold }) {
         <ExerciseRow
           key={i}
           exercise={ex}
-          isHold={isHold}
           onChange={(field, val) => onChange(section.key, i, field, val)}
+          onEffort={(setIndex, val) => onEffort(section.key, i, setIndex, val)}
         />
       ))}
     </div>
@@ -320,11 +419,12 @@ function LogCard({ log, onCopy }) {
                   .map((e, i) => (
                     <div key={i} className="wl-card-exercise">
                       <span className="wl-card-ex-name">{e.name}</span>
-                      <span className="wl-card-ex-detail">
-                        {e.sets && `${e.sets} sets`}
-                        {e.reps && ` × ${e.reps}`}
-                        {e.notes && ` — ${e.notes}`}
-                      </span>
+                      {exerciseDetail(e) && (
+                        <span className="wl-card-ex-detail">{exerciseDetail(e)}</span>
+                      )}
+                      {e.notes ? (
+                        <span className="wl-card-ex-notes">{e.notes}</span>
+                      ) : null}
                     </div>
                   ))}
               </div>
@@ -350,10 +450,6 @@ export function WorkoutLog() {
   const [formData, setFormData] = useState(blankLog());
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState(null);
-
-  // primary section uses hold time if category is push (isometric heavy)
-  // you can refine this logic — for now primary is always "hold eligible"
-  const primaryIsHold = true;
 
   // ── fetch past logs ──────────────────────────────────────────────────────────
   useEffect(() => {
@@ -386,14 +482,60 @@ export function WorkoutLog() {
   // ── field updater ────────────────────────────────────────────────────────────
   function updateExercise(sectionKey, index, field, value) {
     setFormData((prev) => {
-      const updatedSection = prev.sections[sectionKey].map((ex, i) =>
-        i === index ? { ...ex, [field]: value } : ex,
-      );
+      const updatedSection = prev.sections[sectionKey].map((ex, i) => {
+        if (i !== index) return ex;
+        if (field === "sets") {
+          const count = setCount(value);
+          return { ...ex, sets: value, efforts: resizeEfforts(ex.efforts, count) };
+        }
+        return { ...ex, [field]: value };
+      });
       return {
         ...prev,
         sections: { ...prev.sections, [sectionKey]: updatedSection },
       };
     });
+  }
+
+  function updateEffort(sectionKey, index, setIndex, value) {
+    setFormData((prev) => {
+      const updatedSection = prev.sections[sectionKey].map((ex, i) => {
+        if (i !== index) return ex;
+        const efforts = resizeEfforts(ex.efforts, setCount(ex.sets));
+        efforts[setIndex] = value;
+        return { ...ex, efforts };
+      });
+      return {
+        ...prev,
+        sections: { ...prev.sections, [sectionKey]: updatedSection },
+      };
+    });
+  }
+
+  function sanitizeWorkout(data) {
+    const sections = {};
+    SECTIONS.forEach((section) => {
+      sections[section.key] = (data.sections?.[section.key] ?? [])
+        .filter((exercise) => (exercise.name ?? "").trim() !== "")
+        .map((exercise) => {
+          const efforts = resizeEfforts(exercise.efforts, setCount(exercise.sets)).map((value) =>
+            String(value).trim(),
+          );
+          return {
+            name: exercise.name.trim(),
+            sets: String(setCount(exercise.sets)),
+            measure: exercise.measure === "hold" ? "hold" : "reps",
+            efforts,
+            reps: efforts.join(", "),
+            notes: (exercise.notes ?? "").trim(),
+          };
+        });
+    });
+    return {
+      date: data.date,
+      category: data.category,
+      sections,
+    };
   }
 
   // ── save ─────────────────────────────────────────────────────────────────────
@@ -411,18 +553,19 @@ export function WorkoutLog() {
     if (saving) return;
 
     const snapshot = formData;
+    const savedShape = sanitizeWorkout(formData);
     const tempId = `pending-${Date.now()}`;
     setSaveError(null);
     setSaving(true);
-    setLogs((prev) => [{ id: tempId, ...snapshot, pending: true }, ...prev]);
+    setLogs((prev) => [{ id: tempId, ...savedShape, pending: true }, ...prev]);
     setFormData(blankLog());
     setShowForm(false);
 
     try {
-      const saved = await saveWorkoutLog(currentUser.uid, snapshot);
+      const saved = await saveWorkoutLog(currentUser.uid, savedShape);
       setLogs((prev) =>
         prev.map((log) =>
-          log.id === tempId ? { id: saved, ...snapshot, pending: false } : log,
+          log.id === tempId ? { id: saved, ...savedShape, pending: false } : log,
         ),
       );
     } catch {
@@ -442,9 +585,8 @@ export function WorkoutLog() {
     SECTIONS.forEach((s) => {
       const saved = log.sections?.[s.key] ?? [];
       // pad or trim to current max
-      const padded = Array.from(
-        { length: s.max },
-        (_, i) => saved[i] ?? blankExercise(),
+      const padded = Array.from({ length: s.max }, (_, i) =>
+        fromSavedExercise(saved[i]),
       );
       sections[s.key] = padded;
     });
@@ -480,12 +622,18 @@ export function WorkoutLog() {
           <p style={{ margin: 0, fontFamily: "Fira Sans", fontWeight: "200" }}>
             Log a new workout session with structured exercise tracking.
           </p>
-          <button
-            className="log-workout"
-            onClick={() => setShowForm((s) => !s)}
-          >
-            {showForm ? "cancel" : "+ new workout"}
-          </button>
+          {currentUser ? (
+            <button
+              className="log-workout"
+              onClick={() => setShowForm((s) => !s)}
+            >
+              {showForm ? "cancel" : "+ new workout"}
+            </button>
+          ) : (
+            <Link to="/login" className="log-workout">
+              sign in
+            </Link>
+          )}
         </div>
         <p className="workout-caption" style={{ fontWeight: "200" }}>
           Don't know how to structure your workout? Check out the{" "}
@@ -535,23 +683,13 @@ export function WorkoutLog() {
               </div>
             </div>
 
-            {/* column headers */}
-            <div className="wl-exercise-row wl-exercise-row--header">
-              <span className="wl-col--name">exercise</span>
-              <span className="wl-col--small">sets</span>
-              <span className="wl-col--hold">reps / hold (s)</span>
-              <span className="wl-col--notes">notes</span>
-            </div>
-
-            {/* sections */}
             {SECTIONS.map((s) => (
               <SectionBlock
                 key={s.key}
                 section={s}
                 exercises={formData.sections[s.key]}
                 onChange={updateExercise}
-                // only primary skill uses hold time toggle; others use reps
-                isHold={s.key === "primary" && primaryIsHold}
+                onEffort={updateEffort}
               />
             ))}
 
@@ -561,7 +699,6 @@ export function WorkoutLog() {
               className="log-workout"
               onClick={handleSave}
               disabled={saving}
-              style={{ marginTop: "1rem" }}
             >
               {saving ? "saving..." : "save workout"}
             </button>
@@ -572,8 +709,15 @@ export function WorkoutLog() {
       {/* ── past logs ── */}
       <div className="workout-container">
         <div className="wl-logs-header">past workouts</div>
-        {logsLoading ? (
-          <p style={{ padding: "1rem" }}>loading...</p>
+        {!currentUser ? (
+          <p className="wl-empty">
+            Sign in to save workouts and see them here.{" "}
+            <Link to="/login" className="log-caption-link">
+              Sign in
+            </Link>
+          </p>
+        ) : logsLoading ? (
+          <p className="wl-empty">loading...</p>
         ) : logsError ? (
           <p className="wl-error">
             {logsError}{" "}
@@ -585,14 +729,7 @@ export function WorkoutLog() {
             </button>
           </p>
         ) : logs.length === 0 ? (
-          <p
-            style={{
-              padding: "1rem",
-              opacity: 0.8,
-              fontFamily: "Fira Sans",
-              fontWeight: "200",
-            }}
-          >
+          <p className="wl-empty">
             No workouts logged yet. Hit <i> + new workout </i> to get started.
           </p>
         ) : (

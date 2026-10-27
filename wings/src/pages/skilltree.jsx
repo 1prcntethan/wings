@@ -1433,32 +1433,61 @@ const CaptionNode = ({ data }) => {
   );
 };
 
+const nodeSkillKey = new Map();
+for (const node of initialNodes) {
+  const key = skillDB.get(node.data?.link);
+  if (key) nodeSkillKey.set(node.id, key);
+}
+
+// Lowest progress of the two ends. 0 locked, 1 unlocked, 2 in progress, 3 mastered.
+const EDGE_GLOW = [
+  { stroke: "rgb(73, 73, 73)", glow: "rgb(140, 140, 140)" },
+  { stroke: "#f3f3f3", glow: "rgb(255, 255, 255)" },
+  { stroke: "#B66DA3", glow: "rgb(182, 109, 163)" },
+  { stroke: "#BBCA88", glow: "rgb(113, 184, 31)" },
+];
+
+function progressLevel(userSkills, nodeId) {
+  const key = nodeSkillKey.get(nodeId);
+  const value = key ? userSkills?.[key] : 0;
+  return value === 1 || value === 2 || value === 3 ? value : 0;
+}
+
 const SkillEdge = ({
   id,
+  source,
+  target,
   sourceX,
   sourceY,
   targetX,
   targetY,
-  sourcePosition,
-  targetPosition,
   style = {},
   markerEnd,
 }) => {
+  const { userSkills } = useContext(SkillContext);
+  const level = Math.min(
+    progressLevel(userSkills, source),
+    progressLevel(userSkills, target),
+  );
+  const { stroke, glow } = EDGE_GLOW[level];
   const [path] = getStraightPath({ sourceX, sourceY, targetX, targetY });
 
   const centerX = (sourceX + targetX) / 2;
   const centerY = (sourceY + targetY) / 2;
-
-  const dx = targetX - sourceX;
-  const dy = targetY - sourceY;
-  const angle = Math.atan2(dy, dx) * (180 / Math.PI);
+  const angle =
+    Math.atan2(targetY - sourceY, targetX - sourceX) * (180 / Math.PI);
 
   return (
     <>
       <BaseEdge
         id={id}
         path={path}
-        style={{ stroke: "#ffffff", strokeWidth: 100, ...style }}
+        style={{
+          ...style,
+          stroke,
+          strokeWidth: 2,
+          filter: `drop-shadow(0 0 4px ${glow})`,
+        }}
         markerEnd={markerEnd}
       />
       <svg
@@ -1470,8 +1499,11 @@ const SkillEdge = ({
           pointerEvents: "none",
         }}
       >
-        <g transform={`translate(${centerX}, ${centerY}) rotate(${angle})`}>
-          <polygon points="0,-10 20,0 0,10 " fill="#ffffff" />
+        <g
+          transform={`translate(${centerX}, ${centerY}) rotate(${angle})`}
+          style={{ filter: `drop-shadow(0 0 4px ${glow})` }}
+        >
+          <polygon points="0,-10 20,0 0,10 " fill={stroke} />
         </g>
       </svg>
     </>

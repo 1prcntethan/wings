@@ -1,3 +1,5 @@
+import { registerFileSkillIcons } from "./skillfileicons.jsx";
+
 export const svgIcon = new Map([
   [
     "NA",
@@ -4931,3 +4933,5 @@ export const svgIcon = new Map([
     </svg>,
   ],
 ]);
+
+registerFileSkillIcons(svgIcon, "real-skill");
