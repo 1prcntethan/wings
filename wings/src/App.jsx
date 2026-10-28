@@ -25,6 +25,7 @@ const LoginPage = lazyNamed(() => import("./pages/loginpage"), "LoginPage");
 const CreateAccountPage = lazyNamed(() => import("./pages/createaccount"), "CreateAccountPage");
 const ResetPasswordPage = lazyNamed(() => import("./pages/resetpassword"), "ResetPasswordPage");
 const Dashboard = lazyNamed(() => import("./pages/dashboard"), "Dashboard");
+const Settings = lazyNamed(() => import("./pages/settings"), "Settings");
 const Homepage = lazyNamed(() => import("./pages/home"), "Homepage");
 const Training = lazyNamed(() => import("./pages/training"), "Training");
 const Tutorials = lazyNamed(() => import("./pages/tutorials"), "Tutorials");
@@ -136,6 +137,7 @@ function App() {
             <Route path="/login" element={currentUser ? <Navigate to="/" /> : <LoginPage />} />
             <Route path="/createaccount" element={currentUser ? <Navigate to="/" /> : <CreateAccountPage />} />
             <Route path="/dashboard" element={currentUser ? <Dashboard /> : <Navigate to ="/login" />} />
+            <Route path="/settings" element={currentUser ? <Settings /> : <Navigate to="/" />} />
             <Route path="/resetpassword" element={currentUser ? <Navigate to="/" /> : <ResetPasswordPage />} />
 
             <Route path="/training/beginnerguide" element={guidePage(<BeginnerGuide />)} />

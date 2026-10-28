@@ -10,6 +10,7 @@ import { skillTitle } from "../utilites/skilltitles.js";
 import {
   formatDate,
   getFitnessDateObject,
+  getUserDoc,
   getWorkoutLogs,
   logWorkout,
   saveWorkoutLog,
@@ -452,6 +453,7 @@ export function WorkoutLog() {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState(null);
   const [streakWarning, setStreakWarning] = useState(null);
+  const [username, setUsername] = useState("");
 
   // ── fetch past logs ──────────────────────────────────────────────────────────
   useEffect(() => {
@@ -480,6 +482,24 @@ export function WorkoutLog() {
       cancelled = true;
     };
   }, [currentUser, reloadLogs]);
+
+  useEffect(() => {
+    if (!currentUser) return;
+
+    let cancelled = false;
+    getUserDoc(currentUser.uid)
+      .then((data) => {
+        if (cancelled) return;
+        setUsername(typeof data?.username === "string" ? data.username : "");
+      })
+      .catch(() => {
+        if (!cancelled) setUsername("");
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [currentUser]);
 
   // ── field updater ────────────────────────────────────────────────────────────
   function updateExercise(sectionKey, index, field, value) {
@@ -620,7 +640,9 @@ export function WorkoutLog() {
       <div className="workout-welcome">
         welcome to the wings workout log,
         {"  "}
-        <div className="workout-welcome__email">{currentUser?.email}</div>
+        <div className="workout-welcome__email">
+          {username || currentUser?.email}
+        </div>
       </div>
 
       {/* ── new log button ── */}

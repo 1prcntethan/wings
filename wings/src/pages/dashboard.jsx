@@ -56,6 +56,7 @@ export function Dashboard() {
   const [retryCount, setRetryCount] = useState(0);
   const [logging, setLogging] = useState(false);
   const [logError, setLogError] = useState(null);
+  const [username, setUsername] = useState("");
 
   useEffect(() => {
     if (!currentUser) return;
@@ -83,6 +84,7 @@ export function Dashboard() {
         );
         setWorkoutCounter(Number(data.workout) || 0);
         setRestCounter(Number(data.rest) || 0);
+        setUsername(typeof data.username === "string" ? data.username : "");
         setStatus("ready");
       })
       .catch(() => {
@@ -190,11 +192,11 @@ export function Dashboard() {
     <>
       <Navbar />
       <BetaDisclaimer />
-      <div className="dashboard-welcome">
-        welcome to the wings dashboard,
-        {"  "}
-        <div className="dashboard-welcome__email">{currentUser?.email}</div>
-      </div>
+      <h1 className="dashboard-title">
+        {status === "ready"
+          ? `${username || currentUser?.email}'s Dashboard`
+          : "Dashboard"}
+      </h1>
 
       {status !== "ready" ? (
         <p className="log-caption">

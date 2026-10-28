@@ -11,6 +11,8 @@ import {
   orderBy,
   limit,
   getDocs,
+  deleteDoc,
+  writeBatch,
 } from "firebase/firestore";
 import { db } from "./firebase";
 
@@ -171,4 +173,36 @@ export async function logWorkout(uid, type) {
     transaction.update(ref, updates);
     return updates;
   });
+}
+
+export async function updateUsername(uid, username) {
+  await updateDoc(doc(db, "users", uid), { username });
+}
+
+export async function deleteAccountData(uid) {
+  const logsRef = collection(db, "users", uid, "workoutLogs");
+  const pageSize = 400;
+  let remaining = false;
+
+  for (let page = 0; page < 50; page += 1) {
+    const snap = await getDocs(query(logsRef, limit(pageSize)));
+    if (snap.empty) {
+      remaining = false;
+      break;
+    }
+
+    const batch = writeBatch(db);
+    snap.docs.forEach((entry) => batch.delete(entry.ref));
+    await batch.commit();
+    remaining = snap.size === pageSize;
+    if (!remaining) break;
+  }
+
+  if (remaining) {
+    throw Object.assign(new Error("Couldn't finish deleting workout logs."), {
+      code: "unavailable",
+    });
+  }
+
+  await deleteDoc(doc(db, "users", uid));
 }

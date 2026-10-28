@@ -2,18 +2,21 @@ rules_version = '2';
 
 // Default is deny. A user can read and write only their own account.
 // Rank is not a stored field. Streak can move by at most one day per write.
+// Username is the only profile field a user can change. The owner can delete
+// their account document and their workout logs.
 service cloud.firestore {
   match /databases/{database}/documents {
     match /users/{uid} {
       allow read: if isOwner(uid);
       allow create: if isOwner(uid) && isNewUser();
-      allow update: if isOwner(uid) && (isSkillUpdate() || isStreakUpdate());
-      allow delete: if false;
+      allow update: if isOwner(uid) && (isSkillUpdate() || isStreakUpdate() || isUsernameUpdate());
+      allow delete: if isOwner(uid);
 
       match /workoutLogs/{logId} {
         allow read: if isOwner(uid);
         allow create: if isOwner(uid) && isWorkoutLog();
-        allow update, delete: if false;
+        allow update: if false;
+        allow delete: if isOwner(uid);
       }
     }
   }
@@ -48,6 +51,21 @@ function isNewUser() {
     && data.skills.keys().hasOnly(['push', 'pull'])
     && data.skills.push == null
     && data.skills.pull == null;
+}
+
+function isUsernameUpdate() {
+  let changed = request.resource.data.diff(resource.data).affectedKeys();
+  let name = request.resource.data.username;
+  return changed.hasOnly(['username'])
+    && name is string
+    && (
+      name == ''
+      || (
+        name.size() >= 2
+        && name.size() <= 24
+        && name.matches('^[A-Za-z0-9][A-Za-z0-9 _-]{1,23}$')
+      )
+    );
 }
 
 function isSkillUpdate() {

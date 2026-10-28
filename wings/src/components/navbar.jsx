@@ -3,7 +3,6 @@ import { Link } from "react-router-dom";
 import { useState } from "react";
 import "./navbar.css";
 import { useAuth } from "../config/auth-context.jsx";
-import { doSignOut } from "../config/auth.js";
 import { useLocation } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import InstallBanner from "./installbanner";
@@ -26,14 +25,6 @@ const Navbar = () => {
 
   const { currentUser } = useAuth();
 
-  const doLogout = async () => {
-    try {
-      await doSignOut();
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -45,13 +36,15 @@ const Navbar = () => {
     document.documentElement.classList.remove("disable-scroll");
   }
 
+  const accountLabel =
+    location.pathname === "/dashboard" ? "account" : "dashboard";
+
   function handleAccountClick() {
+    document.querySelector(".spanburger")?.classList.remove("active");
+    document.querySelector(".mobile__list")?.classList.remove("active");
     document.documentElement.classList.remove("disable-scroll");
-    if (location.pathname === "/dashboard") {
-      doLogout();
-    } else {
-      navigate("/dashboard");
-    }
+    setIsOpen(true);
+    navigate(location.pathname === "/dashboard" ? "/settings" : "/dashboard");
   }
 
   return (
@@ -186,9 +179,7 @@ const Navbar = () => {
           <div className="navbar__logout--container">
             <button className="logout-button nav-item" onClick={handleAccountClick}>
               <img src="account_icon.svg" alt="Account" className="account-icon-nav" />
-              <div>
-                {location.pathname === "/dashboard" ? "log out" : "dashboard"}
-              </div>
+              <div>{accountLabel}</div>
             </button>
           </div>
         ) : (
@@ -262,11 +253,7 @@ const Navbar = () => {
               <div className="navbar__logout--container">
                 <button className="logout-button nav-item" onClick={handleAccountClick}>
                   <img src="account_icon.svg" alt="Account" className="account-icon-nav" />
-                  <div>
-                    {location.pathname === "/dashboard"
-                      ? "log out"
-                      : "dashboard"}
-                  </div>
+                  <div>{accountLabel}</div>
                 </button>
               </div>
             ) : (
