@@ -8,6 +8,7 @@ import {
   planError,
   remainingMs,
   serializeDraft,
+  normalizeWorkoutLog,
   sessionFromLog,
   sessionReducer,
   sessionToLog,
@@ -132,6 +133,7 @@ test("ending early keeps completed sets and drops the rest", () => {
     "efforts",
     "reps",
     "notes",
+    "restSec",
   ]);
   assert.equal(log.sections.warmup.length, 1);
   assert.equal(log.sections.warmup[0].name, "Scapula Pull-up");
@@ -143,10 +145,57 @@ test("ending early keeps completed sets and drops the rest", () => {
     efforts: ["6"],
     reps: "6",
     notes: "",
+    restSec: 120,
   });
   assert.equal(log.sections.primary.length, 0);
   assert.equal(log.sections.secondary.length, 0);
-  assert.equal(JSON.stringify(log).includes("restSec"), false);
+  assert.equal(log.sections.warmup[0].restSec, 60);
+  assert.equal(log.sections.volume[0].restSec, 120);
+});
+
+test("old workout logs without rest or newer fields still open", () => {
+  const legacy = {
+    date: "2024-03-01",
+    category: "push",
+    sections: {
+      warmup: [{ name: "arm circles", sets: 2, reps: 15, notes: "easy" }],
+    },
+  };
+  const normalized = normalizeWorkoutLog(legacy);
+  assert.equal(normalized.sections.warmup[0].restSec, null);
+  assert.equal(normalized.sections.warmup[0].measure, "reps");
+  assert.deepEqual(normalized.sections.warmup[0].efforts, []);
+  assert.equal(normalized.sections.warmup[0].reps, "15");
+  assert.equal(normalized.sections.primary.length, 0);
+  assert.equal(normalized.sections.secondary.length, 0);
+  assert.equal(normalized.sections.volume.length, 0);
+
+  const session = sessionFromLog(legacy);
+  assert.equal(session.exercises[0].restSec, 90);
+  assert.deepEqual(session.exercises[0].lastTime, ["15"]);
+
+  const broken = normalizeWorkoutLog({
+    category: 4,
+    sections: { warmup: "nope", primary: [null, "bad", { name: "Dip", sets: "2", reps: "8, 6" }] },
+  });
+  assert.equal(broken.date, "");
+  assert.equal(broken.sections.warmup.length, 0);
+  assert.equal(broken.sections.primary.length, 1);
+  assert.equal(broken.sections.primary[0].restSec, null);
+  assert.doesNotThrow(() => sessionFromLog(null));
+  assert.doesNotThrow(() => sessionFromLog(broken));
+
+  const draft = parseDraft(JSON.stringify({
+    phase: "planning",
+    category: "push",
+    exercises: [{ id: "1", section: "primary", name: "Dip", sets: 2 }],
+    nextId: 2,
+    cursor: null,
+    endsAt: null,
+    startedAt: null,
+  }));
+  assert.equal(draft.exercises[0].restSec, 90);
+  assert.deepEqual(draft.exercises[0].efforts, []);
 });
 
 test("a past log becomes a plan with last time kept off the new efforts", () => {

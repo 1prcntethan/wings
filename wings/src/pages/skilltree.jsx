@@ -1296,7 +1296,7 @@ const SkillWindow = () => {
                     }
                   }}
                 >
-                  {sharing ? "making image..." : "share"}
+                  {sharing ? "Making image..." : "Share"}
                 </button>
               )}
             {shareError && (

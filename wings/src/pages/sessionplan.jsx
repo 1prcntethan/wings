@@ -89,10 +89,13 @@ export function SessionPlan({ session, dispatch, onBack, onDiscard }) {
     <div className="ls-plan">
       <header className="ls-head">
         <button type="button" className="ls-back" onClick={onBack}>
-          back
+          dashboard
         </button>
         <h1>plan workout</h1>
       </header>
+      <p className="ls-plan-note">
+        This page is only the plan. After you start, you log reps and hold times as you finish each set.
+      </p>
 
       <p className="ls-kicker" id="ls-category">
         category

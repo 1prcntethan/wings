@@ -364,19 +364,21 @@
 
 .skill-share {
   margin-top: 15px;
-  border: 1px solid rgba(255, 255, 255, 0.5);
+  border: rgba(255, 255, 255, 0.2) 1px solid;
   border-radius: 4px;
-  background: #252525;
-  color: #f3f3f3;
-  font-family: "Fira Sans", sans-serif;
+  background-color: #b66da3;
+  color: white;
+  font-family: Fira Sans;
   font-weight: 200;
-  font-size: 18px;
-  padding: 10px 16px;
+  font-size: 20px;
+  text-align: center;
+  padding: 10px;
   cursor: pointer;
+  transition: all 0.3s ease-in-out;
 }
 
 .skill-share:hover {
-  background: #333333;
+  background-color: #c98ab8;
 }
 
 .skill-share:disabled {
@@ -388,6 +390,7 @@
   .skill-share {
     align-self: center;
     width: 95%;
+    font-size: 22px;
   }
 }
 

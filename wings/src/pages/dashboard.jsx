@@ -194,8 +194,8 @@ export function Dashboard() {
       <BetaDisclaimer />
       <h1 className="dashboard-title">
         {status === "ready"
-          ? `${username || currentUser?.email}'s Dashboard`
-          : "Dashboard"}
+          ? `${username || currentUser?.email}'s dashboard`
+          : "dashboard"}
       </h1>
 
       {status !== "ready" ? (

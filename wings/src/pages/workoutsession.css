@@ -1,4 +1,5 @@
 .ls-page {
+  position: relative;
   width: min(100%, 760px);
   margin: 0 auto;
   padding: 1.15rem 1rem 2.5rem;
@@ -8,11 +9,11 @@
 
 .ls-page--focus {
   width: min(100%, 440px);
-  min-height: calc(100svh - 62px);
+  min-height: 100svh;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  padding-top: 1.5rem;
+  padding-top: 4.25rem;
   padding-bottom: 2.5rem;
 }
 
@@ -35,8 +36,9 @@
 
 .ls-head {
   display: flex;
-  align-items: center;
-  gap: 0.85rem;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1.15rem;
 }
 
 .ls-head h1,
@@ -71,8 +73,26 @@
   flex: 0 0 auto;
 }
 
-.ls-head h1 {
-  flex: 1;
+.ls-page .ls-head h1 {
+  flex: none;
+  font-size: clamp(1.7rem, 4vw, 2.05rem);
+}
+
+.ls-plan-note {
+  max-width: 38rem;
+  margin: 0.9rem 0 0;
+  font-family: "Fira Sans", sans-serif;
+  font-weight: 300;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: rgba(243, 243, 243, 0.82);
+}
+
+.ls-exit {
+  position: absolute;
+  top: 1.15rem;
+  left: 1rem;
+  z-index: 2;
 }
 
 .ls-kicker {
@@ -146,7 +166,6 @@
 }
 
 .ls-card,
-.ls-confirm,
 .ls-summary li {
   background: #252525;
   border: 1px solid #333;
@@ -524,18 +543,107 @@
 }
 
 .ls-confirm {
-  margin-top: 1rem;
-  padding: 0.95rem;
-  text-align: left;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  text-align: center;
+  background: transparent;
+  border: none;
 }
 
 .ls-confirm p {
-  margin: 0 0 0.8rem;
-  line-height: 1.4;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.ls-confirm .ls-actions {
+  margin-top: 1.35rem;
 }
 
 .ls-confirm .ls-ghost {
-  margin-top: 0.5rem;
+  margin-top: 0;
+}
+
+.ls-live--quiet,
+.ls-live--done {
+  min-height: calc(100svh - 2rem);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: safe center;
+  box-sizing: border-box;
+  padding: 4.75rem 0 3rem;
+}
+
+.ls-live h1.ls-display,
+.ls-sheet h1.ls-display {
+  font-family: "Major Mono Display", monospace;
+  font-weight: 400;
+  font-size: clamp(1.85rem, 5.6vw, 2.6rem);
+  line-height: 1.25;
+  letter-spacing: 0;
+  text-transform: lowercase;
+  max-width: 9ch;
+  margin: 0 auto;
+}
+
+.ls-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.9rem;
+  width: min(100%, 16.5rem);
+  margin: 2rem auto 0;
+}
+
+.ls-actions .ls-primary,
+.ls-actions .ls-ghost {
+  width: 100%;
+  margin-top: 0;
+}
+
+.ls-live--quiet .ls-empty,
+.ls-live--done .ls-empty {
+  max-width: 26rem;
+  margin: 1.4rem 0 0;
+  font-size: 1.05rem;
+  line-height: 1.5;
+}
+
+.ls-live--done .ls-duration {
+  margin-top: 1.15rem;
+}
+
+.ls-live--done .ls-summary {
+  width: min(100%, 28rem);
+  margin-top: 1.75rem;
+}
+
+.ls-sheet {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  padding: 1.5rem;
+  background-color: #1b1b1b;
+}
+
+.ls-sheet-card {
+  width: min(100%, 22rem);
+  text-align: center;
+}
+
+.ls-sheet-card p {
+  max-width: 28rem;
+  margin: 1.25rem auto 0;
+  font-family: "Fira Sans", sans-serif;
+  font-weight: 300;
+  font-size: 1.05rem;
+  line-height: 1.5;
+  color: rgba(243, 243, 243, 0.84);
 }
 
 .ls-duration {

@@ -6,6 +6,8 @@
   font-size: 28px;
   font-weight: 400;
   text-align: left;
+  text-transform: lowercase;
+  overflow-wrap: anywhere;
 }
 
 @media (max-width: 550px) {

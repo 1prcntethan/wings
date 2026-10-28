@@ -7,7 +7,16 @@ import BetaDisclaimer from "../components/betadisclaimer";
 import "./workoutlog.css";
 import { useAuth } from "../config/auth-context.jsx";
 import { skillTitle } from "../utilites/skilltitles.js";
-import { DRAFT_KEY, parseDraft } from "../utilites/livesession.js";
+import {
+  DEFAULT_REST,
+  DRAFT_KEY,
+  REST_STEPS,
+  formatClock,
+  normalizeWorkoutLog,
+  parseDraft,
+  restSeconds,
+} from "../utilites/livesession.js";
+import { shareWorkoutCard } from "../utilites/progresscard.js";
 import {
   formatDate,
   getFitnessDateObject,
@@ -152,7 +161,7 @@ const skillSelectStyles = {
 };
 
 function blankExercise() {
-  return { name: "", sets: "", measure: "reps", efforts: [], notes: "" };
+  return { name: "", sets: "", measure: "reps", efforts: [], notes: "", restSec: DEFAULT_REST };
 }
 
 function setCount(value) {
@@ -166,7 +175,7 @@ function resizeEfforts(efforts, count) {
 }
 
 function fromSavedExercise(raw) {
-  if (!raw) return blankExercise();
+  if (!raw || typeof raw !== "object") return blankExercise();
 
   const sets = raw.sets == null ? "" : String(raw.sets);
   const count = setCount(sets);
@@ -182,12 +191,19 @@ function fromSavedExercise(raw) {
   }
 
   return {
-    name: raw.name ?? "",
+    name: raw.name == null ? "" : String(raw.name),
     sets,
     measure: raw.measure === "hold" ? "hold" : "reps",
     efforts: count > 0 ? resizeEfforts(efforts, count) : efforts,
-    notes: raw.notes ?? "",
+    notes: raw.notes == null ? "" : String(raw.notes),
+    restSec: restSeconds(raw.restSec) ?? DEFAULT_REST,
   };
+}
+
+function restDetail(exercise) {
+  const seconds = restSeconds(exercise?.restSec);
+  if (seconds == null) return "";
+  return `rest ${formatClock(seconds * 1000)}`;
 }
 
 function exerciseDetail(exercise) {
@@ -230,8 +246,10 @@ function validateWorkout(formData) {
 
   let named = 0;
   for (const section of SECTIONS) {
-    for (const exercise of formData.sections?.[section.key] ?? []) {
-      const name = (exercise.name ?? "").trim();
+    const rows = formData.sections?.[section.key];
+    for (const exercise of Array.isArray(rows) ? rows : []) {
+      if (!exercise || typeof exercise !== "object") continue;
+      const name = String(exercise.name ?? "").trim();
       const sets = exercise.sets ?? "";
       const notes = (exercise.notes ?? "").trim();
       const efforts = Array.isArray(exercise.efforts) ? exercise.efforts : [];
@@ -258,6 +276,9 @@ function validateWorkout(formData) {
         }
       }
       if (notes.length > 200) return "Notes need to be 200 characters or less.";
+      if (restSeconds(exercise.restSec) == null) {
+        return "Rest needs to be from 1:00 to 6:00, in 30 second steps.";
+      }
       named += 1;
     }
   }
@@ -316,6 +337,21 @@ function ExerciseRow({ exercise, onChange, onEffort }) {
             value={exercise.sets}
             onChange={(e) => onChange("sets", e.target.value)}
           />
+        </label>
+        <label className="wl-mini-label wl-rest">
+          rest
+          <select
+            className="wl-input"
+            aria-label="rest"
+            value={restSeconds(exercise.restSec) ?? DEFAULT_REST}
+            onChange={(e) => onChange("restSec", Number(e.target.value))}
+          >
+            {REST_STEPS.map((seconds) => (
+              <option key={seconds} value={seconds}>
+                {formatClock(seconds * 1000)}
+              </option>
+            ))}
+          </select>
         </label>
         <div className="wl-measure" role="group" aria-label="reps or hold">
           <button
@@ -383,9 +419,13 @@ function SectionBlock({ section, exercises, onChange, onEffort }) {
 
 function LogCard({ log, onCopy, onStart, startDisabled }) {
   const [open, setOpen] = useState(false);
+  const [sharing, setSharing] = useState(false);
+  const [shareError, setShareError] = useState(null);
 
-  const hasExercises = (sectionKey) =>
-    log.sections?.[sectionKey]?.some((e) => (e.name ?? "").trim() !== "");
+  const hasExercises = (sectionKey) => {
+    const rows = log.sections?.[sectionKey];
+    return Array.isArray(rows) && rows.some((e) => String(e?.name ?? "").trim() !== "");
+  };
 
   return (
     <div className="wl-card">
@@ -419,9 +459,33 @@ function LogCard({ log, onCopy, onStart, startDisabled }) {
           >
             {log.pending ? "saving" : "copy"}
           </button>
+          <button
+            type="button"
+            className="wl-copy-btn"
+            disabled={sharing}
+            onClick={async (e) => {
+              e.stopPropagation();
+              if (sharing) return;
+              setSharing(true);
+              setShareError(null);
+              try {
+                await shareWorkoutCard(log);
+              } catch (error) {
+                if (error?.name !== "AbortError") {
+                  setShareError("Couldn't make that image. Try again.");
+                }
+              } finally {
+                setSharing(false);
+              }
+            }}
+          >
+            {sharing ? "…" : "share"}
+          </button>
           <span className="wl-card-toggle">{open ? "▲" : "▼"}</span>
         </div>
       </div>
+
+      {shareError && <p className="wl-card-share-error">{shareError}</p>}
 
       {open && (
         <div className="wl-card-body">
@@ -429,19 +493,22 @@ function LogCard({ log, onCopy, onStart, startDisabled }) {
             hasExercises(s.key) ? (
               <div key={s.key} className="wl-card-section">
                 <div className="wl-card-section-title">{s.label}</div>
-                {log.sections[s.key]
-                  .filter((e) => (e.name ?? "").trim() !== "")
-                  .map((e, i) => (
+                {(Array.isArray(log.sections?.[s.key]) ? log.sections[s.key] : [])
+                  .filter((e) => String(e?.name ?? "").trim() !== "")
+                  .map((e, i) => {
+                    const detail = [exerciseDetail(e), restDetail(e)].filter(Boolean).join(" · ");
+                    return (
                     <div key={i} className="wl-card-exercise">
                       <span className="wl-card-ex-name">{e.name}</span>
-                      {exerciseDetail(e) && (
-                        <span className="wl-card-ex-detail">{exerciseDetail(e)}</span>
+                      {detail && (
+                        <span className="wl-card-ex-detail">{detail}</span>
                       )}
                       {e.notes ? (
                         <span className="wl-card-ex-notes">{e.notes}</span>
                       ) : null}
                     </div>
-                  ))}
+                    );
+                  })}
               </div>
             ) : null,
           )}
@@ -493,7 +560,7 @@ export function WorkoutLog() {
     setLogsError(null);
     getWorkoutLogs(currentUser.uid)
       .then((rows) => {
-        if (!cancelled) setLogs(rows);
+        if (!cancelled) setLogs(rows.map((row) => normalizeWorkoutLog(row)));
       })
       .catch(() => {
         if (!cancelled) setLogsError("Couldn't load your workouts.");
@@ -561,19 +628,21 @@ export function WorkoutLog() {
   function sanitizeWorkout(data) {
     const sections = {};
     SECTIONS.forEach((section) => {
-      sections[section.key] = (data.sections?.[section.key] ?? [])
-        .filter((exercise) => (exercise.name ?? "").trim() !== "")
+      const rows = data.sections?.[section.key];
+      sections[section.key] = (Array.isArray(rows) ? rows : [])
+        .filter((exercise) => String(exercise?.name ?? "").trim() !== "")
         .map((exercise) => {
           const efforts = resizeEfforts(exercise.efforts, setCount(exercise.sets)).map((value) =>
             String(value).trim(),
           );
           return {
-            name: exercise.name.trim(),
+            name: String(exercise.name ?? "").trim(),
             sets: String(setCount(exercise.sets)),
             measure: exercise.measure === "hold" ? "hold" : "reps",
             efforts,
             reps: efforts.join(", "),
             notes: (exercise.notes ?? "").trim(),
+            restSec: restSeconds(exercise.restSec) ?? DEFAULT_REST,
           };
         });
     });
@@ -652,7 +721,7 @@ export function WorkoutLog() {
     // in case section slots have changed since the log was saved
     const sections = {};
     SECTIONS.forEach((s) => {
-      const saved = log.sections?.[s.key] ?? [];
+      const saved = Array.isArray(log.sections?.[s.key]) ? log.sections[s.key] : [];
       // pad or trim to current max
       const padded = Array.from({ length: s.max }, (_, i) =>
         fromSavedExercise(saved[i]),
@@ -662,7 +731,7 @@ export function WorkoutLog() {
 
     setFormData({
       date: formatDate(getFitnessDateObject()), // today's date, not the old one
-      category: log.category,
+      category: WORKOUT_CATEGORIES.includes(log.category) ? log.category : "push",
       sections,
     });
     setShowForm(true);
@@ -676,25 +745,18 @@ export function WorkoutLog() {
       <Navbar />
       <BetaDisclaimer />
 
-      <div className="workout-welcome">
-        welcome to the wings workout log,
-        {"  "}
-        <div className="workout-welcome__email">
-          {username || currentUser?.email}
-        </div>
-      </div>
+      <h1 className="workout-welcome">
+        {username || currentUser?.email}'s workout log
+      </h1>
 
-      {/* ── new log button ── */}
       <div className="workout-container">
-        <div
-          className="workout-display"
-          style={{ justifyContent: "space-between", alignItems: "center" }}
-        >
-          <p style={{ margin: 0, fontFamily: "Fira Sans", fontWeight: "200" }}>
-            Log a new workout session with structured exercise tracking.
-          </p>
-          <div className="wl-log-actions">
-            {currentUser && (
+        <div className="wl-choices">
+          <section className="wl-choice">
+            <h2>start session</h2>
+            <p>
+              Use this when you are about to train. Plan the exercises, hold time, and rest time for each set. Workout will log automatically when you finish.
+            </p>
+            {currentUser ? (
               <button
                 type="button"
                 className="log-workout wl-start-session"
@@ -703,7 +765,18 @@ export function WorkoutLog() {
               >
                 start session
               </button>
+            ) : (
+              <Link to="/login" className="log-workout">
+                sign in
+              </Link>
             )}
+          </section>
+          <section className="wl-choice">
+            <h2>new workout</h2>
+            <p>
+              Use this after you have already trained. Write down the exercises and
+              the reps or holds you did.
+            </p>
             {currentUser ? (
               <button
                 type="button"
@@ -717,7 +790,7 @@ export function WorkoutLog() {
                 sign in
               </Link>
             )}
-          </div>
+          </section>
         </div>
         <p className="workout-caption" style={{ fontWeight: "200" }}>
           Don't know how to structure your workout? Check out the{" "}

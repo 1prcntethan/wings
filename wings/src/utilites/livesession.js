@@ -42,6 +42,49 @@ export function defaultMeasure(metric) {
   return metric === "Isometric" ? "hold" : "reps";
 }
 
+// Older logs have no rest. null means it was never recorded, so the card
+// does not invent one. A new session still needs a number to count down.
+export function restSeconds(value) {
+  const seconds = Number(value);
+  return REST_STEPS.includes(seconds) ? seconds : null;
+}
+
+export function normalizeWorkoutLog(raw) {
+  const source = raw && typeof raw === "object" ? raw : {};
+  const sections = {};
+  const stored = source.sections && typeof source.sections === "object" ? source.sections : {};
+  for (const section of SECTION_ORDER) {
+    const list = stored[section];
+    sections[section] = Array.isArray(list)
+      ? list.map(normalizeStoredExercise).filter(Boolean)
+      : [];
+  }
+  const category = typeof source.category === "string" ? source.category : "";
+  return {
+    id: source.id,
+    date: typeof source.date === "string" ? source.date : "",
+    category,
+    sections,
+    pending: Boolean(source.pending),
+  };
+}
+
+function normalizeStoredExercise(raw) {
+  if (!raw || typeof raw !== "object") return null;
+  const efforts = Array.isArray(raw.efforts)
+    ? raw.efforts.map((value) => String(value ?? "").trim()).filter((value) => value !== "")
+    : [];
+  return {
+    name: raw.name == null ? "" : String(raw.name),
+    sets: raw.sets == null || raw.sets === "" ? "" : String(raw.sets),
+    measure: raw.measure === "hold" ? "hold" : "reps",
+    efforts,
+    reps: raw.reps == null ? "" : String(raw.reps),
+    notes: raw.notes == null ? "" : String(raw.notes),
+    restSec: restSeconds(raw.restSec),
+  };
+}
+
 export function remainingMs(endsAt, now) {
   if (typeof endsAt !== "number" || typeof now !== "number") return 0;
   return Math.max(0, endsAt - now);
@@ -134,7 +177,9 @@ export function sessionFromLog(log) {
   const exercises = [];
   let nextId = 1;
   for (const section of SECTION_ORDER) {
-    for (const raw of log?.sections?.[section] ?? []) {
+    const list = log?.sections?.[section];
+    if (!Array.isArray(list)) continue;
+    for (const raw of list) {
       const name = String(raw?.name ?? "").trim().slice(0, 80);
       const sets = plannedSets(raw);
       if (!name || sets === 0) continue;
@@ -145,7 +190,7 @@ export function sessionFromLog(log) {
         sets,
         measure: raw?.measure === "hold" ? "hold" : "reps",
         notes: String(raw?.notes ?? "").slice(0, 200),
-        restSec: DEFAULT_REST,
+        restSec: restSeconds(raw?.restSec) ?? DEFAULT_REST,
         lastTime: savedEfforts(raw),
         efforts: [],
       });
@@ -327,6 +372,7 @@ export function sessionToLog(state, date) {
       efforts,
       reps: efforts.join(", "),
       notes: exercise.notes.trim(),
+      restSec: restSeconds(exercise.restSec) ?? DEFAULT_REST,
     });
   }
   return {
@@ -340,6 +386,27 @@ export function serializeDraft(state) {
   return JSON.stringify(state);
 }
 
+function normalizeDraftExercise(exercise) {
+  if (!exercise || typeof exercise !== "object") return null;
+  const sets = Number(exercise.sets);
+  return {
+    ...exercise,
+    id: exercise.id == null ? "" : String(exercise.id),
+    section: SECTION_ORDER.includes(exercise.section) ? exercise.section : "volume",
+    name: typeof exercise.name === "string" ? exercise.name : "",
+    sets: Number.isInteger(sets) && sets >= 1 && sets <= MAX_SETS ? sets : 1,
+    measure: exercise.measure === "hold" ? "hold" : "reps",
+    notes: typeof exercise.notes === "string" ? exercise.notes : "",
+    restSec: restSeconds(exercise.restSec) ?? DEFAULT_REST,
+    lastTime: Array.isArray(exercise.lastTime)
+      ? exercise.lastTime.map((value) => String(value ?? ""))
+      : null,
+    efforts: Array.isArray(exercise.efforts)
+      ? exercise.efforts.map((value) => String(value ?? ""))
+      : [],
+  };
+}
+
 export function parseDraft(raw) {
   if (typeof raw !== "string" || raw === "") return null;
   try {
@@ -348,7 +415,10 @@ export function parseDraft(raw) {
     if (!PHASES.includes(data.phase)) return null;
     if (!CATEGORIES.includes(data.category)) return null;
     if (!Array.isArray(data.exercises)) return null;
-    return data;
+    return {
+      ...data,
+      exercises: data.exercises.map(normalizeDraftExercise).filter(Boolean),
+    };
   } catch {
     return null;
   }

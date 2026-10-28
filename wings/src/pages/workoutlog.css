@@ -147,9 +147,29 @@
 
 .wl-exercise-meta {
   display: flex;
+  flex-wrap: wrap;
   align-items: flex-end;
   justify-content: space-between;
   gap: 0.65rem;
+}
+
+.wl-rest {
+  width: 5.5rem;
+  flex-shrink: 0;
+}
+
+.wl-rest select.wl-input {
+  color-scheme: dark;
+  background-color: #111111;
+  color: #f3f3f3;
+  font-family: "Fira Sans", sans-serif;
+  font-weight: 200;
+}
+
+.wl-rest option {
+  background-color: #111111;
+  color: #f3f3f3;
+  font-weight: 200;
 }
 
 .wl-mini-label {
@@ -550,47 +570,70 @@
 }
 
 .workout-welcome {
-  display: flex;
-  flex-direction: row;
-  font-size: 24px;
-  padding: 20px;
-
-  @media (max-width: 1000px) {
-    font-size: 20px;
-  }
-  @media (max-width: 768px) {
-    font-size: 16px;
-    flex-direction: column;
-  }
-}
-
-.workout-welcome__email {
-  font-family: Fira Sans;
-  font-weight: 200;
-
-  @media (max-width: 768px) {
-    margin-top: 10px;
-  }
-}
-
-.workout-display {
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  background-color: #252525;
-  border: solid 1px #333333;
-  border-radius: 12px;
-  gap: 20px;
-  width: min(100%, 720px);
   box-sizing: border-box;
-  justify-self: center;
-  padding: 30px;
-  margin-top: 30px;
+  width: min(720px, calc(100% - 60px));
+  margin: 48px auto 8px;
+  font-size: 28px;
+  font-weight: 400;
+  line-height: 1.35;
+  text-align: left;
+  text-transform: lowercase;
+  overflow-wrap: anywhere;
+}
 
-  @media (max-width: 550px) {
-    flex-direction: column;
-    width: 100%;
-    padding: 18px;
+.wl-choices {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  width: min(100%, 720px);
+  margin-top: 28px;
+}
+
+.wl-choice {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 14px;
+  box-sizing: border-box;
+  min-height: 100%;
+  padding: 22px 22px 20px;
+  background: #252525;
+  border: 1px solid #333;
+  border-radius: 12px;
+}
+
+.wl-choice h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 400;
+}
+
+.wl-choice p {
+  margin: 0;
+  flex: 1;
+  font-family: "Fira Sans", sans-serif;
+  font-weight: 300;
+  font-size: 0.98rem;
+  line-height: 1.5;
+  color: rgba(243, 243, 243, 0.84);
+}
+
+.wl-choice .log-workout {
+  width: 100%;
+  align-self: stretch;
+  margin-top: 6px;
+}
+
+@media (max-width: 768px) {
+  .workout-welcome {
+    width: calc(100% - 30px);
+    font-size: 22px;
+  }
+}
+
+@media (max-width: 640px) {
+  .wl-choices {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -763,6 +806,7 @@
 
 .workout-caption {
   width: min(100%, 720px);
+  margin-top: 22px;
   font-family: Fira Sans;
   font-size: 14px;
   align-content: center;
@@ -772,6 +816,32 @@
     font-size: 12px;
     margin-top: 20px;
   }
+}
+
+.dashboard-donate {
+  display: flex;
+  font-size: 18px;
+  font-family: Fira Sans;
+  font-weight: 200;
+  width: auto;
+  line-height: 140%;
+  padding: 40px;
+}
+
+@media (max-width: 1100px) {
+  .dashboard-donate {
+    width: 80%;
+    text-align: center;
+    padding: 30px;
+    font-size: 16px;
+  }
+}
+
+.donate-link {
+  color: rgb(196, 33, 218);
+  text-decoration: none;
+  margin-left: 3px;
+  margin-right: 3px;
 }
 
 .log-caption-link {
@@ -786,7 +856,18 @@
 .wl-card-actions {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.45rem 0.75rem;
+}
+
+.wl-card-share-error {
+  margin: 0;
+  padding: 0 1rem 0.75rem;
+  color: #ff6b6b;
+  font-family: "Fira Sans", sans-serif;
+  font-size: 0.8rem;
+  font-weight: 200;
 }
 
 .wl-copy-btn {

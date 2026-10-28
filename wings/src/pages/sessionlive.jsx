@@ -5,6 +5,7 @@ import {
   effortError,
   formatClock,
   remainingMs,
+  restSeconds,
 } from "../utilites/livesession.js";
 
 function stepEntry(measure, entry, direction) {
@@ -27,9 +28,8 @@ export function SessionLive({ session, dispatch, now, onSave, saving, saveError,
   if (session.phase === "summary") {
     const done = session.exercises.filter((exercise) => exercise.efforts.length > 0);
     return (
-      <div className="ls-live">
-        <p className="ls-kicker">session</p>
-        <h1>workout done</h1>
+      <div className="ls-live ls-live--done">
+        <h1 className="ls-display">workout done</h1>
         <p className="ls-duration">{formatClock(durationMs(session, now))}</p>
         {done.length === 0 ? (
           <p className="ls-empty">Nothing was completed, so there is nothing to save.</p>
@@ -42,33 +42,38 @@ export function SessionLive({ session, dispatch, now, onSave, saving, saveError,
                   <span>{SECTION_LABELS[exercise.section]}</span>
                 </div>
                 <p className="ls-efforts">
-                  {exercise.efforts.join("  ·  ")}
+                  {(Array.isArray(exercise.efforts) ? exercise.efforts : []).join("  ·  ")}
                   {exercise.measure === "hold" ? "s" : ""}
+                  {restSeconds(exercise.restSec) != null
+                    ? ` · rest ${formatClock(restSeconds(exercise.restSec) * 1000)}`
+                    : ""}
                 </p>
               </li>
             ))}
           </ul>
         )}
         {saveError && <p className="ls-error">{saveError}</p>}
-        {done.length > 0 && (
-          <button type="button" className="ls-primary" disabled={saving} onClick={onSave}>
-            {saving ? "saving..." : "save workout"}
-          </button>
-        )}
-        {confirmDiscard ? (
-          <Confirm
-            message="Discard this session? Completed sets will not be saved."
-            yes="discard"
-            no="keep it"
-            disabled={saving}
-            onYes={onDiscard}
-            onNo={() => setConfirmDiscard(false)}
-          />
-        ) : (
-          <button type="button" className="ls-quiet" disabled={saving} onClick={() => setConfirmDiscard(true)}>
-            discard
-          </button>
-        )}
+        <div className="ls-actions">
+          {done.length > 0 && (
+            <button type="button" className="ls-primary" disabled={saving} onClick={onSave}>
+              {saving ? "saving..." : "save workout"}
+            </button>
+          )}
+          {confirmDiscard ? (
+            <Confirm
+              message="Discard this session? Completed sets will not be saved."
+              yes="discard"
+              no="keep it"
+              disabled={saving}
+              onYes={onDiscard}
+              onNo={() => setConfirmDiscard(false)}
+            />
+          ) : (
+            <button type="button" className="ls-ghost" disabled={saving} onClick={() => setConfirmDiscard(true)}>
+              discard
+            </button>
+          )}
+        </div>
       </div>
     );
   }
@@ -214,12 +219,14 @@ function Confirm({ message, yes, no, onYes, onNo, disabled = false }) {
   return (
     <div className="ls-confirm">
       <p>{message}</p>
-      <button type="button" className="ls-primary" disabled={disabled} onClick={onYes}>
-        {yes}
-      </button>
-      <button type="button" className="ls-ghost" onClick={onNo}>
-        {no}
-      </button>
+      <div className="ls-actions">
+        <button type="button" className="ls-primary" disabled={disabled} onClick={onYes}>
+          {yes}
+        </button>
+        <button type="button" className="ls-ghost" onClick={onNo}>
+          {no}
+        </button>
+      </div>
     </div>
   );
 }

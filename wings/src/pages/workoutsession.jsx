@@ -1,8 +1,5 @@
 import { useEffect, useReducer, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import Navbar from "../components/navbar";
-import Footer from "../components/footer";
-import BetaDisclaimer from "../components/betadisclaimer";
 import { useAuth } from "../config/auth-context.jsx";
 import { formatDate, getFitnessDateObject, saveWorkoutLog } from "../config/firestore.js";
 import {
@@ -45,6 +42,7 @@ export function WorkoutSession() {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState(null);
   const [confirmDiscard, setConfirmDiscard] = useState(false);
+  const [confirmLeave, setConfirmLeave] = useState(false);
   const savingLock = useRef(false);
 
   useEffect(() => {
@@ -116,6 +114,15 @@ export function WorkoutSession() {
     dispatch(action);
   }
 
+  useEffect(() => {
+    if (!confirmLeave) return undefined;
+    function onKey(event) {
+      if (event.key === "Escape") setConfirmLeave(false);
+    }
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [confirmLeave]);
+
   function discard() {
     try {
       localStorage.removeItem(DRAFT_KEY);
@@ -148,35 +155,47 @@ export function WorkoutSession() {
     }
   }
 
+  const showExit =
+    Boolean(currentUser) && (session.phase !== "planning" || confirmDiscard);
+
   return (
     <>
-      <Navbar />
-      {session.phase === "planning" && <BetaDisclaimer />}
       <main
         className={
-          session.phase === "exercising" || session.phase === "resting" ? "ls-page ls-page--focus" : "ls-page"
+          session.phase === "exercising" || session.phase === "resting"
+            ? "ls-page ls-page--focus"
+            : "ls-page"
         }
       >
+        {showExit && (
+          <button type="button" className="ls-back ls-exit" onClick={() => setConfirmLeave(true)}>
+            dashboard
+          </button>
+        )}
         {!currentUser ? (
-          <div className="ls-live">
-            <h1>live workout</h1>
+          <div className="ls-live ls-live--quiet">
+            <h1 className="ls-display">live workout</h1>
             <p className="ls-empty">Sign in to plan and save a workout.</p>
-            <Link to="/login" className="ls-primary">
-              sign in
-            </Link>
+            <div className="ls-actions">
+              <Link to="/login" className="ls-primary">
+                sign in
+              </Link>
+            </div>
           </div>
         ) : session.phase === "planning" ? (
           <>
             {confirmDiscard ? (
-              <div className="ls-live">
-                <h1>discard session?</h1>
+              <div className="ls-live ls-live--quiet">
+                <h1 className="ls-display">discard session?</h1>
                 <p className="ls-empty">This plan will be removed from this device.</p>
-                <button type="button" className="ls-primary" onClick={discard}>
-                  discard
-                </button>
-                <button type="button" className="ls-ghost" onClick={() => setConfirmDiscard(false)}>
-                  keep planning
-                </button>
+                <div className="ls-actions">
+                  <button type="button" className="ls-primary" onClick={discard}>
+                    discard
+                  </button>
+                  <button type="button" className="ls-ghost" onClick={() => setConfirmDiscard(false)}>
+                    keep planning
+                  </button>
+                </div>
               </div>
             ) : (
               <>
@@ -184,7 +203,7 @@ export function WorkoutSession() {
                 <SessionPlan
                   session={session}
                   dispatch={dispatchSession}
-                  onBack={() => navigate("/workoutlog")}
+                  onBack={() => setConfirmLeave(true)}
                   onDiscard={() => setConfirmDiscard(true)}
                 />
               </>
@@ -202,8 +221,25 @@ export function WorkoutSession() {
             onDiscard={discard}
           />
         )}
+        {confirmLeave && (
+          <div className="ls-sheet" role="dialog" aria-modal="true" aria-labelledby="ls-leave-title">
+            <div className="ls-sheet-card">
+              <h1 id="ls-leave-title" className="ls-display">
+                leave workout?
+              </h1>
+              <p>This workout stays on this device. You can come back to it from the workout log.</p>
+              <div className="ls-actions">
+                <button type="button" className="ls-primary" onClick={() => navigate("/dashboard")}>
+                  go to dashboard
+                </button>
+                <button type="button" className="ls-ghost" autoFocus onClick={() => setConfirmLeave(false)}>
+                  stay
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </main>
-      {(session.phase === "planning" || session.phase === "summary") && <Footer />}
     </>
   );
 }
