@@ -1,15 +1,12 @@
 import "./skilltree.css";
-import React, { useEffect, useState, useCallback, useContext } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import {
   ReactFlow,
-  applyNodeChanges,
-  applyEdgeChanges,
   Controls,
   BaseEdge,
   getStraightPath,
   Handle,
   Position,
-  Panel,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { skillLinks } from "../utilites/skillLinks";
@@ -24,55 +21,15 @@ import { createContext } from "react";
 import { skillTitle } from "../utilites/skilltitles.js";
 import { skillMetric } from "../utilites/skillmetric.js";
 import { skillCategory } from "../utilites/skillcategory.js";
-import { incompleteList } from "../components/hp-tutorial-list.jsx";
+import { incompleteList } from "../utilites/incompleteskills.js";
 import { useAuth } from "../config/auth-context.jsx";
 import { getUserDoc, updateSkill } from "../config/firestore.js";
 import { skillDB } from "../utilites/skilltodb.js";
-import { skillRP } from "../utilites/skilltorp.js";
+import { skillRP, skillRPDenominator } from "../utilites/skilltorp.js";
 import { shareProgressCard } from "../utilites/progresscard.js";
 import InstallBanner from "../components/installbanner";
 
 const SkillContext = createContext(null);
-
-const incompleteSkills = [
-  "Back Lever",
-  "Straddle Planche",
-  "Straddle Planche PU",
-  "Half Lay Planche",
-  "Full Planche",
-  "Full Planche PU",
-  "One Arm Planche",
-  "Maltese",
-  "Full FL Row",
-  "Front Lever Touch",
-  "Bent Arm Press to HS",
-  "Straight Arm Press to HS",
-  "Deep HSPU",
-  "90 Degree PU",
-  "Assisted OAHS",
-  "OAHS",
-  "OA Flag",
-  "Archer Pull-up",
-  "Clean Muscle-Up",
-  "Assisted OAC",
-  "Assisted OAP",
-  "OAC/OAP",
-  "Weighted Pull-ups",
-  "Butterfly",
-  "Assisted Pistol Squat",
-  "Bulgarian Split Squat",
-  "Reverse Nordic Curl",
-  "Nordic Curl",
-  "Sissy Squat",
-  "Pistol Squat",
-  "Shrimp Squat",
-  "Dragon Pistol Squat",
-  "V-sit",
-  "I-sit",
-  "Manna",
-  "Human Flag",
-  "Victorian",
-];
 
 const initialNodes = [
   {
@@ -1188,6 +1145,13 @@ function getColor(type) {
   }
 }
 
+function progressName(type) {
+  if (type === 1) return "unlocked";
+  if (type === 2) return "in progress";
+  if (type === 3) return "mastered";
+  return "locked";
+}
+
 const SkillWindow = () => {
   const { currentUser } = useAuth();
   const {
@@ -1289,7 +1253,7 @@ const SkillWindow = () => {
                       skillDB.get(skill) ? (skillDB?.get(skill) ?? 0) : 0,
                     ) *
                       (progress / 3) *
-                      (750 / 1229),
+                      (750 / skillRPDenominator),
                   )}{" "}
                   Rp
                 </div>
@@ -1365,22 +1329,19 @@ const SkillWindow = () => {
 
 const SkillNode = ({ data }) => {
   const { setSkill, userSkills } = useContext(SkillContext);
+  const tracked = Boolean(skillDB.get(data.link));
+  const statusLabel = progressName(userSkills?.[skillDB.get(data.link)]);
 
   return (
     <>
-      <div
+      <button
+        type="button"
+        className="skill-node"
+        aria-label={tracked ? `${data.link}, ${statusLabel}` : data.link}
         onClick={() => {
           setSkill(data.link);
           toggleContainer(data.link);
         }}
-        to={
-          incompleteSkills.includes(data.link)
-            ? "/tutorials/incomplete"
-            : skillLinks.get(data.link)
-        }
-        className="skill-node"
-        minwidth="10vw"
-        minheight="10vh"
       >
         <Handle
           type="target"
@@ -1405,14 +1366,15 @@ const SkillNode = ({ data }) => {
           }}
         />
         {skillTreeIcon.get(data.svg)}
-        <div
-          className={
-            skillDB.get(data.link)
-              ? getColor(userSkills?.[skillDB.get(data.link)])
-              : ""
-          }
-        ></div>
-      </div>
+        {tracked && (
+          <div
+            className={getColor(userSkills?.[skillDB.get(data.link)])}
+            role="img"
+            aria-label={statusLabel}
+            title={statusLabel}
+          ></div>
+        )}
+      </button>
     </>
   );
 };
@@ -1536,20 +1498,8 @@ const translateExtent = [
 ];
 
 export function SkillTree() {
-  const [nodes, setNodes] = useState(initialNodes);
-  const [edges, setEdges] = useState(initialEdges);
-
-  const onNodesChange = useCallback(
-    (changes) =>
-      setNodes((nodesSnapshot) => applyNodeChanges(changes, nodesSnapshot)),
-    [],
-  );
-  const onEdgesChange = useCallback(
-    (changes) =>
-      setEdges((edgesSnapshot) => applyEdgeChanges(changes, edgesSnapshot)),
-    [],
-  );
-
+  const [nodes] = useState(initialNodes);
+  const [edges] = useState(initialEdges);
   const [skill, setSkill] = useState("Assisted Push-up");
   const { currentUser } = useAuth();
   const [userSkills, setUserSkills] = useState({});
@@ -1614,8 +1564,6 @@ export function SkillTree() {
         <ReactFlow
           nodes={nodes}
           edges={edges}
-          // onNodesChange={onNodesChange}
-          // onEdgesChange={onEdgesChange}
           nodeTypes={nodeTypes}
           nodesDraggable={false}
           edgeTypes={edgeTypes}

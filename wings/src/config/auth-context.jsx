@@ -5,6 +5,8 @@ import { ensureUserDoc } from "./firestore";
 
 const AuthContext = createContext();
 
+// Hook and provider share this file so auth state stays in one place.
+// eslint-disable-next-line react-refresh/only-export-components
 export function useAuth() {
   return useContext(AuthContext);
 }

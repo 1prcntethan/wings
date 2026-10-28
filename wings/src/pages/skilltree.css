@@ -24,6 +24,9 @@
   border: solid transparent 1px;
   box-shadow: none;
   cursor: pointer;
+  padding: 0;
+  color: inherit;
+  font: inherit;
   transition: transform 0.2s ease;
 }
 

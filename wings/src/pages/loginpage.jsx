@@ -1,7 +1,6 @@
 import {
   doSignInWithEmailAndPassword,
   doSignInWithGoogle,
-  doSignOut,
 } from "../config/auth.js";
 import { useAuth } from "../config/auth-context.jsx";
 import { useState } from "react";
@@ -261,8 +260,9 @@ export const LoginPage = () => {
                 {userLoggedIn ? <>welcome</> : <>Welcome back!</>}
               </div>
 
+              <form onSubmit={onSignInSubmit}>
               <div className="signup-form__input-box">
-                <label className="signup-form__label" for="email">
+                <label className="signup-form__label" htmlFor="email">
                   Email
                 </label>
                 <input
@@ -275,7 +275,7 @@ export const LoginPage = () => {
                   autoComplete="email"
                 />
                 <div className="password-label-wrapper">
-                  <label className="signup-form__label" for="password">
+                  <label className="signup-form__label" htmlFor="password">
                     Password
                   </label>
                   <Link to="/resetpassword" className="forgot-password-link">
@@ -290,34 +290,42 @@ export const LoginPage = () => {
                     type={showPassword ? "text" : "password"}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
+                    autoComplete="current-password"
                   />
-                  <img
-                    id="show-password"
-                    src={
-                      showPassword
-                        ? "eye_no_visibility.svg"
-                        : "eye_visibility.svg"
-                    }
-                    alt="show password"
+                  <button
+                    type="button"
+                    className="show-password"
                     onClick={togglePasswordVisibility}
-                  />
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                  >
+                    <img
+                      src={
+                        showPassword
+                          ? "eye_no_visibility.svg"
+                          : "eye_visibility.svg"
+                      }
+                      alt=""
+                    />
+                  </button>
                 </div>
               </div>
 
               <div className="signup-form__submit-box">
-                <button className="signup-form__submits" onClick={onSignInSubmit}>
+                <button className="signup-form__submits" type="submit">
                   {" "}
                   Sign In{" "}
                 </button>
                 <p> OR </p>
                 <button
                   className="signup-form__submits"
+                  type="button"
                   onClick={onGoogleSignIn}
                 >
                   {" "}
                   Sign in with Google{" "}
                 </button>
               </div>
+              </form>
 
               {/* <button onClick={doLogout}> Log Out </button> */}
 
@@ -330,7 +338,6 @@ export const LoginPage = () => {
         <div className="desktop-block">
           <ul>
             <li> track your skills!</li>
-            <li> subscribe for no ads!</li>
             <li> log your workouts!</li>
           </ul>
         </div>

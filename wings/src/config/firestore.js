@@ -3,6 +3,7 @@ import {
   getDoc,
   updateDoc,
   setDoc,
+  runTransaction,
   serverTimestamp,
   collection,
   addDoc,
@@ -10,6 +11,8 @@ import {
   orderBy,
   limit,
   getDocs,
+  deleteDoc,
+  writeBatch,
 } from "firebase/firestore";
 import { db } from "./firebase";
 
@@ -65,7 +68,7 @@ export function updateUserData(user) {
     skills: {
       push: null,
       pull: null,
-      // 0 is locked, 1 is unlocked, 2 is mastered.
+      // Progress is 0–3: 0 locked, 1 unlocked, 2 in progress, 3 mastered.
     },
   };
 }
@@ -108,6 +111,24 @@ export function formatDate(date) {
   return `${year}-${month}-${day}`;
 }
 
+function shiftDate(date, days) {
+  const next = new Date(date);
+  next.setDate(next.getDate() + days);
+  return next;
+}
+
+// A streak is still alive on the fitness day after lastLog. Anything older shows as 0.
+export function displayedStreak(streak, todayDate = getFitnessDateObject()) {
+  const current = Number(streak?.current) || 0;
+  const lastLog = streak?.lastLog || null;
+  if (!lastLog || current <= 0) return 0;
+
+  const today = formatDate(todayDate);
+  const yesterday = formatDate(shiftDate(todayDate, -1));
+  if (lastLog === today || lastLog === yesterday) return current;
+  return 0;
+}
+
 export function buildStreakUpdate(data, type) {
   const streak = data.streak || {
     current: 0,
@@ -123,9 +144,7 @@ export function buildStreakUpdate(data, type) {
 
   if (streak.lastLog === today) return null;
 
-  const yesterdayDate = new Date(todayDate);
-  yesterdayDate.setDate(yesterdayDate.getDate() - 1);
-  const yesterdayStr = formatDate(yesterdayDate);
+  const yesterdayStr = formatDate(shiftDate(todayDate, -1));
 
   const newCurrent = streak.lastLog === yesterdayStr ? streak.current + 1 : 1;
   const newLongest = Math.max(streak.longest, newCurrent);
@@ -143,12 +162,47 @@ export function buildStreakUpdate(data, type) {
 
 export async function logWorkout(uid, type) {
   const ref = doc(db, "users", uid);
-  const snap = await getDoc(ref);
-  if (!snap.exists()) return;
 
-  const updates = buildStreakUpdate(snap.data(), type);
-  if (!updates) return null;
+  return runTransaction(db, async (transaction) => {
+    const snap = await transaction.get(ref);
+    if (!snap.exists()) return null;
 
-  await updateDoc(ref, updates);
-  return updates;
+    const updates = buildStreakUpdate(snap.data(), type);
+    if (!updates) return null;
+
+    transaction.update(ref, updates);
+    return updates;
+  });
+}
+
+export async function updateUsername(uid, username) {
+  await updateDoc(doc(db, "users", uid), { username });
+}
+
+export async function deleteAccountData(uid) {
+  const logsRef = collection(db, "users", uid, "workoutLogs");
+  const pageSize = 400;
+  let remaining = false;
+
+  for (let page = 0; page < 50; page += 1) {
+    const snap = await getDocs(query(logsRef, limit(pageSize)));
+    if (snap.empty) {
+      remaining = false;
+      break;
+    }
+
+    const batch = writeBatch(db);
+    snap.docs.forEach((entry) => batch.delete(entry.ref));
+    await batch.commit();
+    remaining = snap.size === pageSize;
+    if (!remaining) break;
+  }
+
+  if (remaining) {
+    throw Object.assign(new Error("Couldn't finish deleting workout logs."), {
+      code: "unavailable",
+    });
+  }
+
+  await deleteDoc(doc(db, "users", uid));
 }

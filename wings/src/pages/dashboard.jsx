@@ -7,21 +7,14 @@ import { useAuth } from "../config/auth-context.jsx";
 import { useEffect, useState } from "react";
 import {
   buildStreakUpdate,
+  displayedStreak,
   formatDate,
   getFitnessDateObject,
   getUserDoc,
   logWorkout,
-  updateSkill,
 } from "../config/firestore.js";
-import { svgIcon } from "../utilites/svg-icons.jsx";
-import {
-  skillNameMap,
-  skillDiffMap,
-  skillLinkMap,
-} from "../utilites/targetskills.js";
 import { Link } from "react-router-dom";
-import { skillTreeIcon } from "../utilites/skilltreeicons.jsx";
-import { skillRP } from "../utilites/skilltorp.js";
+import { skillRP, skillRPDenominator } from "../utilites/skilltorp.js";
 
 function describeRank(totalRP) {
   if (totalRP >= 920) {
@@ -51,8 +44,6 @@ function describeRank(totalRP) {
 export function Dashboard() {
   const { currentUser } = useAuth();
   const [userSkills, setUserSkills] = useState(null);
-  const [push, setPush] = useState(null);
-  const [pull, setPull] = useState(null);
   const [workoutCounter, setWorkoutCounter] = useState(0);
   const [restCounter, setRestCounter] = useState(0);
   const [streak, setStreak] = useState({
@@ -65,6 +56,7 @@ export function Dashboard() {
   const [retryCount, setRetryCount] = useState(0);
   const [logging, setLogging] = useState(false);
   const [logError, setLogError] = useState(null);
+  const [username, setUsername] = useState("");
 
   useEffect(() => {
     if (!currentUser) return;
@@ -83,8 +75,6 @@ export function Dashboard() {
         }
 
         setUserSkills(data.skills ?? {});
-        setPush(data.skills?.push || null);
-        setPull(data.skills?.pull || null);
         setStreak(
           data.streak || {
             current: 0,
@@ -94,6 +84,7 @@ export function Dashboard() {
         );
         setWorkoutCounter(Number(data.workout) || 0);
         setRestCounter(Number(data.rest) || 0);
+        setUsername(typeof data.username === "string" ? data.username : "");
         setStatus("ready");
       })
       .catch(() => {
@@ -166,32 +157,33 @@ export function Dashboard() {
   }
 
   const today = formatDate(getFitnessDateObject());
+  const visibleStreak = displayedStreak(streak);
 
   const loggedToday = streak.lastLog === today;
   const totalDays = workoutCounter + restCounter;
   const workoutPercentage =
     totalDays > 0 ? Math.round((workoutCounter / totalDays) * 100) : 0;
   const skillPoints = calculateSkillRP();
-  const totalSkillRP = Math.round((skillPoints / 1229) * 750);
-  const totalStreakRP = Math.round(Math.sqrt(streak.current / 365) * 250);
+  const totalSkillRP = Math.round((skillPoints / skillRPDenominator) * 750);
+  const totalStreakRP = Math.round(Math.sqrt(visibleStreak / 365) * 250);
   const totalRP = totalSkillRP + totalStreakRP;
   const rank = describeRank(totalRP);
 
   function rankSVG(totalRP) {
     if (totalRP >= 920) {
-      return <img src="ethereal.svg" className="rank-svg ethereal"></img>;
+      return <img src="ethereal.svg" alt="Ethereal rank" className="rank-svg ethereal"></img>;
     } else if (totalRP >= 800) {
-      return <img src="ascended.svg" className="rank-svg asc"></img>;
+      return <img src="ascended.svg" alt="Ascendant rank" className="rank-svg asc"></img>;
     } else if (totalRP >= 630) {
-      return <img src="diamond.svg" className="rank-svg diamond"></img>;
+      return <img src="diamond.svg" alt="Diamond rank" className="rank-svg diamond"></img>;
     } else if (totalRP >= 430) {
-      return <img src="platinum.svg" className="rank-svg plat"></img>;
+      return <img src="platinum.svg" alt="Platinum rank" className="rank-svg plat"></img>;
     } else if (totalRP >= 260) {
-      return <img src="gold.svg" className="rank-svg gold"></img>;
+      return <img src="gold.svg" alt="Gold rank" className="rank-svg gold"></img>;
     } else if (totalRP >= 120) {
-      return <img src="silver.svg" className="rank-svg silver"></img>;
+      return <img src="silver.svg" alt="Silver rank" className="rank-svg silver"></img>;
     } else if (totalRP > 0) {
-      return <img src="bronze.svg" className="rank-svg bronze"></img>;
+      return <img src="bronze.svg" alt="Bronze rank" className="rank-svg bronze"></img>;
     }
     return null;
   }
@@ -200,11 +192,11 @@ export function Dashboard() {
     <>
       <Navbar />
       <BetaDisclaimer />
-      <div className="dashboard-welcome">
-        welcome to the wings dashboard,
-        {"  "}
-        <div className="dashboard-welcome__email">{currentUser?.email}</div>
-      </div>
+      <h1 className="dashboard-title">
+        {status === "ready"
+          ? `${username || currentUser?.email}'s Dashboard`
+          : "Dashboard"}
+      </h1>
 
       {status !== "ready" ? (
         <p className="log-caption">
@@ -223,7 +215,7 @@ export function Dashboard() {
         <div className="streak-display">
           <div className="streak-info">
             <div className="streak-counter">
-              streak: {streak.current} {streak.current > 0 ? "🔥" : ""}
+              streak: {visibleStreak} {visibleStreak > 0 ? "🔥" : ""}
             </div>
             <div className="streak-data">
               <div className="streak-data__left">Longest streak: </div>
@@ -284,7 +276,7 @@ export function Dashboard() {
       <div className="rank-container">
         <div className="rank-display">
           <Link to="/howtouseguide">
-            <img src="info.svg" id="rank-info"></img>
+            <img src="info.svg" id="rank-info" alt="How rank is calculated"></img>
           </Link>
 
           <div className="rank-top">
@@ -395,16 +387,23 @@ export function Dashboard() {
       <div className="dashboard-donate">
         <div>
           Enjoying this platform? Support its development. Donate through
-          <Link to="https://ko-fi.com/wingssw" className="donate-link">
-            Ko-fi
-          </Link>
-          or
-          <Link
-            to="https://www.paypal.com/donate/?hosted_button_id=RNREJQ826VL46"
+          <a
+            href="https://ko-fi.com/wingssw"
             className="donate-link"
+            target="_blank"
+            rel="noopener"
+          >
+            Ko-fi
+          </a>
+          or
+          <a
+            href="https://www.paypal.com/donate/?hosted_button_id=RNREJQ826VL46"
+            className="donate-link"
+            target="_blank"
+            rel="noopener"
           >
             Paypal
-          </Link>
+          </a>
           !!
         </div>
       </div>

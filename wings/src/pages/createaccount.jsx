@@ -1,11 +1,6 @@
-import Navbar from "../components/navbar";
-import Footer from "../components/footer.jsx";
-import BetaDisclaimer from "../components/betadisclaimer.jsx";
 import {
   doCreateUserWithEmailAndPassword,
-  doSignInWithEmailAndPassword,
   doSignInWithGoogle,
-  doSignOut,
 } from "../config/auth.js";
 import { useAuth } from "../config/auth-context.jsx";
 import { useState } from "react";
@@ -269,8 +264,9 @@ export function CreateAccountPage() {
                 {userLoggedIn ? <>welcome</> : <>get started!</>}
               </div>
 
+              <form onSubmit={onSignUpSubmit}>
               <div className="signup-form__input-box">
-                <label className="signup-form__label" for="email">
+                <label className="signup-form__label" htmlFor="email">
                   Email
                 </label>
                 <input
@@ -280,9 +276,10 @@ export function CreateAccountPage() {
                   value={email}
                   type="email"
                   onChange={(e) => setEmail(e.target.value)}
+                  autoComplete="email"
                 />
                 <div className="password-label-wrapper">
-                  <label className="signup-form__label" for="password">
+                  <label className="signup-form__label" htmlFor="password">
                     Password
                   </label>
                 </div>
@@ -294,34 +291,42 @@ export function CreateAccountPage() {
                     type={showPassword ? "text" : "password"}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
+                    autoComplete="new-password"
                   />
-                  <img
-                    id="show-password"
-                    src={
-                      showPassword
-                        ? "eye_no_visibility.svg"
-                        : "eye_visibility.svg"
-                    }
-                    alt="show password"
+                  <button
+                    type="button"
+                    className="show-password"
                     onClick={togglePasswordVisibility}
-                  />
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                  >
+                    <img
+                      src={
+                        showPassword
+                          ? "eye_no_visibility.svg"
+                          : "eye_visibility.svg"
+                      }
+                      alt=""
+                    />
+                  </button>
                 </div>
               </div>
 
               <div className="signup-form__submit-box">
-                <button className="signup-form__submits" onClick={onSignUpSubmit}>
+                <button className="signup-form__submits" type="submit">
                   {" "}
                   Create Account{" "}
                 </button>
                 <p> OR </p>
                 <button
                   className="signup-form__submits"
+                  type="button"
                   onClick={onGoogleSignIn}
                 >
                   {" "}
                   Create Account with Google{" "}
                 </button>
               </div>
+              </form>
 
               {/* <button onClick={doLogout}> Log Out </button> */}
 
@@ -334,7 +339,6 @@ export function CreateAccountPage() {
         <div className="desktop-block">
           <ul>
             <li> track your skills!</li>
-            <li> subscribe for no ads!</li>
             <li> log your workouts!</li>
           </ul>
         </div>

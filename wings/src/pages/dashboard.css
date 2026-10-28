@@ -1,24 +1,17 @@
-.dashboard-welcome {
-  display: flex;
-  flex-direction: row;
-  font-size: 24px;
-  padding: 20px;
-
-  @media (max-width: 1000px) {
-    font-size: 20px;
-  }
-  @media (max-width: 768px) {
-    font-size: 16px;
-    flex-direction: column;
-  }
+.dashboard-title {
+  box-sizing: border-box;
+  /* Streak cards are content-box: 75% plus 30px padding and a 1px border. */
+  width: calc(75% + 62px);
+  margin: 48px auto 4px;
+  font-size: 28px;
+  font-weight: 400;
+  text-align: left;
 }
 
-.dashboard-welcome__email {
-  font-family: Fira Sans;
-  font-weight: 200;
-
-  @media (max-width: 768px) {
-    margin-top: 10px;
+@media (max-width: 550px) {
+  .dashboard-title {
+    width: calc(100% - 28px);
+    font-size: 24px;
   }
 }
 

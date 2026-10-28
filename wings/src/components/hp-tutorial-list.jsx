@@ -8,46 +8,7 @@ import { skillDiff } from "../utilites/skilldifficulties";
 import { skillTime } from "../utilites/skilltime";
 import { skillLinks } from "../utilites/skillLinks";
 import { skillImage } from "../utilites/skillImage";
-
-export const incompleteList = [
-  "Back Lever",
-  "Straddle Planche",
-  "Straddle Planche PU",
-  "Half Lay Planche",
-  "Full Planche",
-  "Full Planche PU",
-  "One Arm Planche",
-  "Maltese",
-  "Full FL Row",
-  "Front Lever Touch",
-  "Assisted Pistol Squat",
-  "Bulgarian Split Squat",
-  "Reverse Nordic Curl",
-  "Nordic Curl",
-  "Sissy Squat",
-  "Pistol Squat",
-  "Shrimp Squat",
-  "Dragon Pistol Squat",
-  "Bent Arm Press to HS",
-  "Straight Arm Press to HS",
-  "Deep HSPU",
-  "90 Degree PU",
-  "Assisted OAHS",
-  "OAHS",
-  "OA Flag",
-  "Archer Pull-up",
-  "Clean Muscle-Up",
-  "Assisted OAC",
-  "Assisted OAP",
-  "OAC/OAP",
-  "Weighted Pull-ups",
-  "Butterfly",
-  "V-sit",
-  "I-sit",
-  "Manna",
-  "Human Flag",
-  "Victorian",
-];
+import { incompleteList } from "../utilites/incompleteskills.js";
 
 export default function TutorialListHP() {
   const [title, setTitle] = useState(null);

@@ -3,23 +3,6 @@ import { useLocation, Navigate } from "react-router-dom";
 import { HashRouter as HashRouter, Routes, Route } from "react-router-dom";
 import "./App.css";
 import { useAuth } from "./config/auth-context";
-import { LoginPage } from "./pages/loginpage";
-import { CreateAccountPage } from "./pages/createaccount";
-import { ResetPasswordPage } from "./pages/resetpassword";
-import { Dashboard } from "./pages/dashboard";
-
-import { Homepage } from "./pages/home";
-import { Training } from "./pages/training";
-import { Tutorials } from "./pages/tutorials";
-import { Terminology } from "./pages/terminology";
-import { SkillVis } from "./pages/skillvis";
-import { Incomplete } from "./pages/incomplete";
-import { HowTo } from "./pages/howto";
-import { Install } from "./pages/install";
-import { About } from "./pages/about";
-import { Disclaimer } from "./pages/disclaimer";
-import { WorkoutLog } from "./pages/workoutlog";
-
 import { Loading } from "./components/loading"
 import BackToTop from "./components/backtotop";
 
@@ -38,6 +21,22 @@ function lazyNamed(importer, exportName) {
   );
 }
 
+const LoginPage = lazyNamed(() => import("./pages/loginpage"), "LoginPage");
+const CreateAccountPage = lazyNamed(() => import("./pages/createaccount"), "CreateAccountPage");
+const ResetPasswordPage = lazyNamed(() => import("./pages/resetpassword"), "ResetPasswordPage");
+const Dashboard = lazyNamed(() => import("./pages/dashboard"), "Dashboard");
+const Settings = lazyNamed(() => import("./pages/settings"), "Settings");
+const Homepage = lazyNamed(() => import("./pages/home"), "Homepage");
+const Training = lazyNamed(() => import("./pages/training"), "Training");
+const Tutorials = lazyNamed(() => import("./pages/tutorials"), "Tutorials");
+const Terminology = lazyNamed(() => import("./pages/terminology"), "Terminology");
+const SkillVis = lazyNamed(() => import("./pages/skillvis"), "SkillVis");
+const Incomplete = lazyNamed(() => import("./pages/incomplete"), "Incomplete");
+const HowTo = lazyNamed(() => import("./pages/howto"), "HowTo");
+const Install = lazyNamed(() => import("./pages/install"), "Install");
+const About = lazyNamed(() => import("./pages/about"), "About");
+const Disclaimer = lazyNamed(() => import("./pages/disclaimer"), "Disclaimer");
+const WorkoutLog = lazyNamed(() => import("./pages/workoutlog"), "WorkoutLog");
 const SkillTree = lazyNamed(() => import("./pages/skilltree"), "SkillTree");
 const WorkoutSession = lazyNamed(() => import("./pages/workoutsession"), "WorkoutSession");
 const AssistPu = lazyNamed(() => import("./pages/tutorials/assistpu"), "AssistPu");
@@ -130,13 +129,20 @@ function App() {
             <Route path="/install" element={<Install />} />
             <Route path="/about" element={<About />} />
             <Route path="/disclaimer" element={<Disclaimer />} />
-            <Route path="/workoutlog" element={<WorkoutLog />} />
-            <Route path="/workoutlog/session" element={<WorkoutSession />} />
+            <Route
+              path="/workoutlog"
+              element={currentUser ? <WorkoutLog /> : <Navigate to="/login" />}
+            />
+            <Route
+              path="/workoutlog/session"
+              element={currentUser ? <WorkoutSession /> : <Navigate to="/login" />}
+            />
             <Route path="/tutorials/incomplete" element={<Incomplete />} />
 
             <Route path="/login" element={currentUser ? <Navigate to="/" /> : <LoginPage />} />
             <Route path="/createaccount" element={currentUser ? <Navigate to="/" /> : <CreateAccountPage />} />
             <Route path="/dashboard" element={currentUser ? <Dashboard /> : <Navigate to ="/login" />} />
+            <Route path="/settings" element={currentUser ? <Settings /> : <Navigate to="/" />} />
             <Route path="/resetpassword" element={currentUser ? <Navigate to="/" /> : <ResetPasswordPage />} />
 
             <Route path="/training/beginnerguide" element={guidePage(<BeginnerGuide />)} />
