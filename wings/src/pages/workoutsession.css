@@ -1,0 +1,652 @@
+.ls-page {
+  width: min(100%, 760px);
+  margin: 0 auto;
+  padding: 1.15rem 1rem 2.5rem;
+  box-sizing: border-box;
+  color: #f3f3f3;
+}
+
+.ls-page--focus {
+  width: min(100%, 440px);
+  min-height: calc(100svh - 62px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding-top: 1.5rem;
+  padding-bottom: 2.5rem;
+}
+
+.ls-page button {
+  font-family: "Major Mono Display", monospace;
+  font-weight: 400;
+  letter-spacing: 0.03em;
+  cursor: pointer;
+}
+
+.ls-page button:hover {
+  border-color: inherit;
+}
+
+.ls-page button:focus-visible,
+.ls-page input:focus-visible {
+  outline: 2px solid rgba(182, 109, 163, 0.9);
+  outline-offset: 2px;
+}
+
+.ls-head {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.ls-head h1,
+.ls-live h1 {
+  margin: 0;
+  font-family: "Major Mono Display", monospace;
+  font-size: 1.2rem;
+  font-weight: 400;
+  line-height: 1.3;
+  text-transform: lowercase;
+}
+
+.ls-back,
+.ls-quiet,
+.ls-remove {
+  width: auto;
+  min-height: 44px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: rgba(243, 243, 243, 0.62);
+  font-size: 0.75rem;
+}
+
+.ls-back:hover,
+.ls-quiet:hover,
+.ls-remove:hover {
+  color: #f3f3f3;
+}
+
+.ls-head .ls-back {
+  flex: 0 0 auto;
+}
+
+.ls-head h1 {
+  flex: 1;
+}
+
+.ls-kicker {
+  margin: 1.15rem 0 0.45rem;
+  font-family: "Major Mono Display", monospace;
+  font-size: 0.7rem;
+  font-weight: 400;
+  letter-spacing: 0.07em;
+  text-transform: lowercase;
+  color: rgba(243, 243, 243, 0.58);
+}
+
+.ls-cats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.ls-cats button {
+  min-height: 36px;
+  padding: 0 0.8rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: transparent;
+  color: rgba(243, 243, 243, 0.78);
+  font-size: 0.68rem;
+}
+
+.ls-cats button.is-active {
+  background: #b66da3;
+  border-color: #b66da3;
+  color: white;
+}
+
+.ls-section {
+  margin-top: 1.35rem;
+}
+
+.ls-section h2 {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin: 0 0 0.65rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid #333;
+  font-family: "Major Mono Display", monospace;
+  font-size: 0.74rem;
+  font-weight: 400;
+  letter-spacing: 0.05em;
+  text-transform: lowercase;
+}
+
+.ls-section h2 span,
+.ls-last,
+.ls-notes-read,
+.ls-empty,
+.ls-duration,
+.ls-unit,
+.ls-confirm p,
+.ls-sum-top span,
+.ls-efforts {
+  font-family: "Fira Sans", sans-serif;
+  font-weight: 300;
+}
+
+.ls-section h2 span {
+  color: rgba(243, 243, 243, 0.45);
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.ls-card,
+.ls-confirm,
+.ls-summary li {
+  background: #252525;
+  border: 1px solid #333;
+  border-radius: 12px;
+}
+
+.ls-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  margin-bottom: 0.65rem;
+  padding: 0.85rem;
+}
+
+.ls-last,
+.ls-notes-read,
+.ls-empty,
+.ls-unit,
+.ls-duration {
+  margin: 0;
+  color: rgba(243, 243, 243, 0.66);
+  font-size: 0.92rem;
+}
+
+.ls-controls {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.65rem 0.75rem;
+  align-items: end;
+}
+
+.ls-stepper {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  min-width: 0;
+  font-family: "Major Mono Display", monospace;
+  font-size: 0.66rem;
+  letter-spacing: 0.06em;
+  text-transform: lowercase;
+  color: rgba(243, 243, 243, 0.58);
+}
+
+.ls-stepper-box {
+  display: flex;
+  align-items: center;
+  height: 44px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  overflow: hidden;
+  background: #1e1e1e;
+}
+
+.ls-stepper-box button {
+  width: 44px;
+  height: 44px;
+  flex: 0 0 44px;
+  padding: 0;
+  border: none;
+  background: #2c2c2c;
+  color: #f3f3f3;
+  font-size: 1.15rem;
+  line-height: 1;
+}
+
+.ls-stepper-box strong {
+  flex: 1;
+  min-width: 0;
+  text-align: center;
+  font-family: "Fira Sans", sans-serif;
+  font-weight: 300;
+  font-size: 1.05rem;
+  letter-spacing: 0;
+  color: #f3f3f3;
+  font-variant-numeric: tabular-nums;
+}
+
+.ls-measure {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-column: 1 / -1;
+  height: 44px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.ls-measure button {
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: rgba(243, 243, 243, 0.5);
+  font-size: 0.72rem;
+}
+
+.ls-measure button.is-active {
+  background: #b66da3;
+  color: white;
+}
+
+.ls-notes {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 44px;
+  padding: 0 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  background: transparent;
+  color: #f3f3f3;
+  font-family: "Fira Sans", sans-serif;
+  font-size: 1rem;
+  font-weight: 300;
+}
+
+.ls-notes::placeholder {
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.ls-card-foot {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: -0.25rem;
+}
+
+.ls-remove {
+  min-height: 36px;
+}
+
+.ls-add {
+  width: 100%;
+  min-height: 44px;
+  padding: 0 0.75rem;
+  border: 1px dashed rgba(255, 255, 255, 0.22);
+  border-radius: 10px;
+  background: transparent;
+  color: rgba(243, 243, 243, 0.78);
+  font-size: 0.75rem;
+}
+
+.ls-add:hover:not(:disabled) {
+  border-color: rgba(182, 109, 163, 0.7);
+  color: #f3f3f3;
+}
+
+.ls-dock {
+  margin-top: 1.35rem;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.ls-dock-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.ls-primary,
+.ls-ghost {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 50px;
+  padding: 0 1rem;
+  border-radius: 12px;
+  font-size: 0.92rem;
+  text-decoration: none;
+}
+
+.ls-primary {
+  border: 1px solid #333;
+  background: #b66da3;
+  color: white;
+}
+
+.ls-primary:hover:not(:disabled) {
+  background: #c47db4;
+}
+
+.ls-ghost {
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: transparent;
+  color: rgba(243, 243, 243, 0.82);
+}
+
+.ls-primary:disabled,
+.ls-add:disabled,
+.ls-ghost:disabled,
+.ls-stepper-box button:disabled,
+.ls-quiet:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.ls-error {
+  margin: 0 0 0.55rem;
+  text-align: center;
+  color: #e6b3b3;
+  font-family: "Fira Sans", sans-serif;
+  font-weight: 300;
+}
+
+.ls-live {
+  width: min(100%, 32rem);
+  margin: 0 auto;
+  text-align: center;
+}
+
+.ls-live h1 {
+  font-family: "Fira Sans", sans-serif;
+  font-weight: 300;
+  font-size: clamp(1.7rem, 7vw, 2.2rem);
+  line-height: 1.2;
+  text-transform: none;
+  letter-spacing: 0;
+  overflow-wrap: anywhere;
+}
+
+.ls-live .ls-kicker {
+  margin-top: 0;
+}
+
+.ls-setline {
+  margin: 0.35rem 0 0;
+  font-family: "Major Mono Display", monospace;
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  color: rgba(243, 243, 243, 0.7);
+}
+
+.ls-pips {
+  display: flex;
+  justify-content: center;
+  gap: 0.4rem;
+  margin: 0.7rem 0 0.35rem;
+}
+
+.ls-pips span {
+  width: 2.1rem;
+  max-width: 22%;
+  height: 4px;
+  border-radius: 99px;
+  background: #3a3a3a;
+}
+
+.ls-pips .is-done {
+  background: #bbca88;
+}
+
+.ls-pips .is-now {
+  background: #b66da3;
+}
+
+.ls-live .ls-last,
+.ls-notes-read {
+  margin-top: 0.45rem;
+}
+
+.ls-dial {
+  display: grid;
+  grid-template-columns: 56px 1fr 56px;
+  height: 76px;
+  margin-top: 1.15rem;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 14px;
+  overflow: hidden;
+  background: #252525;
+}
+
+.ls-dial button {
+  padding: 0;
+  border: none;
+  background: #2c2c2c;
+  color: #f3f3f3;
+  font-size: 1.6rem;
+  line-height: 1;
+}
+
+.ls-dial input {
+  width: 100%;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  color: #f3f3f3;
+  text-align: center;
+  font-family: "Fira Sans", sans-serif;
+  font-weight: 300;
+  font-size: 2.4rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.ls-dial input::placeholder {
+  color: rgba(255, 255, 255, 0.22);
+}
+
+.ls-dial input:focus {
+  outline: none;
+}
+
+.ls-unit {
+  margin: 0.4rem 0 1rem;
+  font-size: 0.8rem;
+  letter-spacing: 0.04em;
+}
+
+.ls-live .ls-primary {
+  margin-top: 0.35rem;
+}
+
+.ls-quiet {
+  display: block;
+  margin: 0.15rem auto 0;
+}
+
+.ls-ring {
+  --p: 1;
+  width: min(232px, 68vw);
+  aspect-ratio: 1;
+  margin: 1rem auto 0.4rem;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: conic-gradient(from -90deg, #b66da3 calc(var(--p) * 100%), #2e2e2e 0);
+}
+
+.ls-ring-face {
+  width: 78%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: #1b1b1b;
+}
+
+.ls-clock {
+  margin: 0;
+  font-family: "Fira Sans", sans-serif;
+  font-weight: 300;
+  font-size: clamp(3rem, 12vw, 4.1rem);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.ls-clock-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.ls-next {
+  margin: 0.35rem 0 1.2rem;
+  font-family: "Fira Sans", sans-serif;
+  font-weight: 300;
+  font-size: 1.15rem;
+}
+
+.ls-next span {
+  display: block;
+  margin-top: 0.15rem;
+  font-family: "Major Mono Display", monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  text-transform: lowercase;
+  color: rgba(243, 243, 243, 0.55);
+}
+
+.ls-next span:first-child {
+  margin-bottom: 0.3rem;
+}
+
+.ls-confirm {
+  margin-top: 1rem;
+  padding: 0.95rem;
+  text-align: left;
+}
+
+.ls-confirm p {
+  margin: 0 0 0.8rem;
+  line-height: 1.4;
+}
+
+.ls-confirm .ls-ghost {
+  margin-top: 0.5rem;
+}
+
+.ls-duration {
+  margin-top: 0.35rem;
+  font-size: 1.35rem;
+  color: #f3f3f3;
+  font-variant-numeric: tabular-nums;
+}
+
+.ls-summary {
+  list-style: none;
+  margin: 1.1rem 0 0.4rem;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  text-align: left;
+}
+
+.ls-summary li {
+  padding: 0.8rem 0.9rem;
+}
+
+.ls-sum-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.ls-sum-top strong {
+  font-family: "Fira Sans", sans-serif;
+  font-weight: 400;
+  font-size: 1.02rem;
+}
+
+.ls-sum-top span {
+  flex: 0 0 auto;
+  font-size: 0.75rem;
+  color: rgba(243, 243, 243, 0.5);
+}
+
+.ls-efforts {
+  margin: 0.3rem 0 0;
+  font-size: 0.95rem;
+  color: #f3f3f3;
+}
+
+.ls-live .ls-empty {
+  margin: 0.8rem 0 1rem;
+}
+
+.ls-skill-select__menu-list {
+  scrollbar-width: thin;
+  scrollbar-color: #555 #333;
+}
+
+.ls-skill-select__menu-list::-webkit-scrollbar {
+  width: 9px;
+}
+
+.ls-skill-select__menu-list::-webkit-scrollbar-track {
+  background: #333;
+}
+
+.ls-skill-select__menu-list::-webkit-scrollbar-thumb {
+  background: #555;
+  border-radius: 5px;
+}
+
+@media (min-width: 640px) {
+  .ls-page {
+    padding-left: 1.25rem;
+    padding-right: 1.25rem;
+  }
+
+  .ls-controls {
+    grid-template-columns: auto auto minmax(11rem, 1fr);
+  }
+
+  .ls-measure {
+    grid-column: auto;
+  }
+
+  .ls-stepper-box {
+    min-width: 9.5rem;
+  }
+
+  .ls-dock-actions {
+    flex-direction: row-reverse;
+    align-items: stretch;
+  }
+
+  .ls-dock-actions .ls-primary {
+    flex: 1;
+  }
+
+  .ls-dock-actions .ls-ghost {
+    width: auto;
+    min-width: 8.5rem;
+  }
+}
+
+@media (max-width: 380px) {
+  .ls-stepper-box button {
+    width: 40px;
+    flex-basis: 40px;
+  }
+
+  .ls-dial {
+    grid-template-columns: 48px 1fr 48px;
+    height: 68px;
+  }
+}

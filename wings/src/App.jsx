@@ -39,6 +39,7 @@ function lazyNamed(importer, exportName) {
 }
 
 const SkillTree = lazyNamed(() => import("./pages/skilltree"), "SkillTree");
+const WorkoutSession = lazyNamed(() => import("./pages/workoutsession"), "WorkoutSession");
 const AssistPu = lazyNamed(() => import("./pages/tutorials/assistpu"), "AssistPu");
 const Pushup = lazyNamed(() => import("./pages/tutorials/pushup"), "Pushup");
 const Dip = lazyNamed(() => import("./pages/tutorials/dip"), "Dip");
@@ -130,6 +131,7 @@ function App() {
             <Route path="/about" element={<About />} />
             <Route path="/disclaimer" element={<Disclaimer />} />
             <Route path="/workoutlog" element={<WorkoutLog />} />
+            <Route path="/workoutlog/session" element={<WorkoutSession />} />
             <Route path="/tutorials/incomplete" element={<Incomplete />} />
 
             <Route path="/login" element={currentUser ? <Navigate to="/" /> : <LoginPage />} />

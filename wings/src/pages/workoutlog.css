@@ -648,6 +648,47 @@
   transform: none;
 }
 
+.wl-log-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+.wl-start-session {
+  background: transparent;
+  color: #f3f3f3;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+}
+
+.wl-resume {
+  width: min(100%, 720px);
+  box-sizing: border-box;
+  margin-top: 1.25rem;
+  padding: 1rem;
+  background: #252525;
+  border: 1px solid #333;
+  border-radius: 12px;
+}
+
+.wl-resume p {
+  margin: 0 0 0.75rem;
+  font-family: "Fira Sans", sans-serif;
+  font-weight: 200;
+}
+
+@media (max-width: 550px) {
+  .wl-log-actions {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .wl-log-actions .log-workout {
+    width: 100%;
+    align-self: stretch;
+  }
+}
+
 .wl-form .log-workout {
   width: auto;
   min-width: 11.5rem;

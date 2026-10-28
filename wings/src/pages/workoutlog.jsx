@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import CreatableSelect from "react-select/creatable";
 import Navbar from "../components/navbar";
 import Footer from "../components/footer";
@@ -7,6 +7,7 @@ import BetaDisclaimer from "../components/betadisclaimer";
 import "./workoutlog.css";
 import { useAuth } from "../config/auth-context.jsx";
 import { skillTitle } from "../utilites/skilltitles.js";
+import { DRAFT_KEY, parseDraft } from "../utilites/livesession.js";
 import {
   formatDate,
   getFitnessDateObject,
@@ -378,7 +379,7 @@ function SectionBlock({ section, exercises, onChange, onEffort }) {
   );
 }
 
-function LogCard({ log, onCopy }) {
+function LogCard({ log, onCopy, onStart, startDisabled }) {
   const [open, setOpen] = useState(false);
 
   const hasExercises = (sectionKey) =>
@@ -395,6 +396,18 @@ function LogCard({ log, onCopy }) {
         </div>
         <div className="wl-card-actions">
           <button
+            type="button"
+            className="wl-copy-btn"
+            disabled={log.pending || startDisabled}
+            onClick={(e) => {
+              e.stopPropagation();
+              onStart(log);
+            }}
+          >
+            start
+          </button>
+          <button
+            type="button"
             className="wl-copy-btn"
             disabled={log.pending}
             onClick={(e) => {
@@ -440,6 +453,9 @@ function LogCard({ log, onCopy }) {
 
 export function WorkoutLog() {
   const { currentUser } = useAuth();
+  const navigate = useNavigate();
+  const [sessionDraft, setSessionDraft] = useState(null);
+  const [confirmDiscardDraft, setConfirmDiscardDraft] = useState(false);
 
   const [logs, setLogs] = useState([]);
   const [logsLoading, setLogsLoading] = useState(true);
@@ -450,6 +466,14 @@ export function WorkoutLog() {
   const [formData, setFormData] = useState(blankLog());
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState(null);
+
+  useEffect(() => {
+    try {
+      setSessionDraft(parseDraft(localStorage.getItem(DRAFT_KEY)));
+    } catch {
+      setSessionDraft(null);
+    }
+  }, []);
 
   // ── fetch past logs ──────────────────────────────────────────────────────────
   useEffect(() => {
@@ -578,6 +602,21 @@ export function WorkoutLog() {
     }
   }
 
+  function handleStart(log) {
+    if (sessionDraft) return;
+    navigate("/workoutlog/session", { state: { fresh: true, log } });
+  }
+
+  function discardDraft() {
+    try {
+      localStorage.removeItem(DRAFT_KEY);
+    } catch {
+      // The banner still closes. A leftover draft can be discarded again.
+    }
+    setSessionDraft(null);
+    setConfirmDiscardDraft(false);
+  }
+
   function handleCopy(log) {
     // rebuild sections to match current SECTIONS config
     // in case section slots have changed since the log was saved
@@ -622,18 +661,31 @@ export function WorkoutLog() {
           <p style={{ margin: 0, fontFamily: "Fira Sans", fontWeight: "200" }}>
             Log a new workout session with structured exercise tracking.
           </p>
-          {currentUser ? (
-            <button
-              className="log-workout"
-              onClick={() => setShowForm((s) => !s)}
-            >
-              {showForm ? "cancel" : "+ new workout"}
-            </button>
-          ) : (
-            <Link to="/login" className="log-workout">
-              sign in
-            </Link>
-          )}
+          <div className="wl-log-actions">
+            {currentUser && (
+              <button
+                type="button"
+                className="log-workout wl-start-session"
+                disabled={Boolean(sessionDraft)}
+                onClick={() => navigate("/workoutlog/session", { state: { fresh: true } })}
+              >
+                start session
+              </button>
+            )}
+            {currentUser ? (
+              <button
+                type="button"
+                className="log-workout"
+                onClick={() => setShowForm((s) => !s)}
+              >
+                {showForm ? "cancel" : "+ new workout"}
+              </button>
+            ) : (
+              <Link to="/login" className="log-workout">
+                sign in
+              </Link>
+            )}
+          </div>
         </div>
         <p className="workout-caption" style={{ fontWeight: "200" }}>
           Don't know how to structure your workout? Check out the{" "}
@@ -706,6 +758,50 @@ export function WorkoutLog() {
         </div>
       )}
 
+      {currentUser && sessionDraft && (
+        <div className="workout-container">
+          <div className="wl-resume">
+            {confirmDiscardDraft ? (
+              <>
+                <p>Discard the workout in progress?</p>
+                <div className="wl-log-actions">
+                  <button type="button" className="log-workout" onClick={discardDraft}>
+                    discard
+                  </button>
+                  <button
+                    type="button"
+                    className="log-workout wl-start-session"
+                    onClick={() => setConfirmDiscardDraft(false)}
+                  >
+                    keep it
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <p>You have a workout in progress.</p>
+                <div className="wl-log-actions">
+                  <button
+                    type="button"
+                    className="log-workout"
+                    onClick={() => navigate("/workoutlog/session")}
+                  >
+                    resume
+                  </button>
+                  <button
+                    type="button"
+                    className="log-workout wl-start-session"
+                    onClick={() => setConfirmDiscardDraft(true)}
+                  >
+                    discard
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* ── past logs ── */}
       <div className="workout-container">
         <div className="wl-logs-header">past workouts</div>
@@ -735,7 +831,13 @@ export function WorkoutLog() {
         ) : (
           <div className="wl-log-list">
             {logs.map((log) => (
-              <LogCard key={log.id} log={log} onCopy={handleCopy} />
+              <LogCard
+                key={log.id}
+                log={log}
+                onCopy={handleCopy}
+                onStart={handleStart}
+                startDisabled={Boolean(sessionDraft)}
+              />
             ))}
           </div>
         )}
