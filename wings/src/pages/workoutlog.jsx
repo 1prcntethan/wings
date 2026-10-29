@@ -759,7 +759,7 @@ export function WorkoutLog() {
             {currentUser ? (
               <button
                 type="button"
-                className="log-workout wl-start-session"
+                className="log-workout"
                 disabled={Boolean(sessionDraft)}
                 onClick={() => navigate("/workoutlog/session", { state: { fresh: true } })}
               >
