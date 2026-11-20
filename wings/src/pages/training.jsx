@@ -42,21 +42,21 @@ export function Training() {
               </Link>
             </div>
             <div className="item">
-              <Link to="/tutorials/incomplete" className="guide-link">
+              <Link to="/training/gymvscalisthenics" className="guide-link">
                 <button className="guide-button">
                   Gym vs Calisthenics
                 </button>
               </Link>
             </div>
             <div className="item">
-              <Link to="/tutorials/incomplete" className="guide-link">
+              <Link to="/training/fullbodyvssplit" className="guide-link">
                 <button className="guide-button">
                   Full Body vs Split Training
                 </button>
               </Link>
             </div>
             <div className="item">
-              <Link to="/tutorials/incomplete" className="guide-link">
+              <Link to="/training/restandrecovery" className="guide-link">
                 <button className="guide-button">
                   Rest & Recovery
                 </button>
@@ -188,7 +188,7 @@ export function Training() {
           <div className="training-header">nutrition</div>
           <div className="training-column">
             <div className="item">
-              <Link to="/tutorials/incomplete" className="guide-link">
+              <Link to="/training/generalnutrition" className="guide-link">
                 <button className="guide-button">
                   General Nutrition Guide
                 </button>

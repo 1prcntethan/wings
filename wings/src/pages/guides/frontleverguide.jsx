@@ -210,6 +210,28 @@ export function FrontLeverGuide() {
           </Link>
           .
         </div>
+        <div className="guide-text">
+          Again, your goal for the{" "}
+          <Link to="/tutorials/superadvtuckfl" className="guide-external-link">
+            Super Adv. Tuck FL
+          </Link>{" "}
+          is 15 seconds, but as like before, the longer the better. Once you
+          hit this milestone, you can try for{" "}
+          <Link to="/tutorials/straddlefl" className="guide-external-link">
+            Straddle FL
+          </Link>
+          . Some people can go straight to this, with no problems. But if you
+          find it extremely difficult, try the{" "}
+          <Link to="/tutorials/superadvtuckfl" className="guide-external-link">
+            Super Adv. Tuck FL
+          </Link>
+          , but straddled (open legs). From here, keep training using flatter
+          and flatter hip angles, until you are basically in the{" "}
+          <Link to="/tutorials/straddlefl" className="guide-external-link">
+            Straddle FL
+          </Link>
+          .
+        </div>
       </div>
       <LineDivider />
       <div className="guide-container">
