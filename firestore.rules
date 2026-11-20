@@ -17,7 +17,7 @@ service cloud.firestore {
       match /workoutLogs/{logId} {
         allow read: if isOwner(uid);
         allow create: if isOwner(uid) && isWorkoutLog();
-        allow update: if false;
+        allow update: if isOwner(uid) && isWorkoutLog();
         allow delete: if isOwner(uid);
       }
     }

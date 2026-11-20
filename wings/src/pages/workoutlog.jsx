@@ -19,6 +19,7 @@ import WorkoutHistory from "../components/workoutloghistory.jsx";
 import {
   creditWorkoutStreak,
   deleteWorkoutLog,
+  updateWorkoutLog,
   formatDate,
   getFitnessDateObject,
   getUserDoc,
@@ -679,19 +680,24 @@ export function WorkoutLog() {
 
     const snapshot = formData;
     const savedShape = sanitizeWorkout(formData);
-    const tempId = `pending-${Date.now()}`;
+    const replacingId = editingId;
+    const tempId = replacingId || `pending-${Date.now()}`;
     setSaveError(null);
     setStreakWarning(null);
     setSaving(true);
+    forgetLog(tempId);
     rememberLog({ id: tempId, ...savedShape, pending: true });
     setFormData(blankLog());
     setEditingId(null);
     setShowForm(false);
 
     try {
-      const saved = await saveWorkoutLog(currentUser.uid, savedShape);
+      const savedId = replacingId
+        ? replacingId
+        : await saveWorkoutLog(currentUser.uid, savedShape);
+      if (replacingId) await updateWorkoutLog(currentUser.uid, replacingId, savedShape);
       forgetLog(tempId);
-      rememberLog({ id: saved, ...savedShape, pending: false });
+      rememberLog({ id: savedId, ...savedShape, pending: false });
       try {
         await creditWorkoutStreak(currentUser.uid, savedShape.date);
       } catch {
@@ -700,6 +706,7 @@ export function WorkoutLog() {
       setStatsRetry((count) => count + 1);
     } catch {
       forgetLog(tempId);
+      setEditingId(replacingId);
       setFormData(snapshot);
       setShowForm(true);
       setSaveError("Failed to save. Please try again.");
@@ -888,14 +895,9 @@ export function WorkoutLog() {
                 />
               ))}
 
-              {editingId && (
-                <p className="wl-error">
-                  Saving adds a new log. Workout logs can't be overwritten, so delete the original if this replaces it.
-                </p>
-              )}
               {saveError && <p className="wl-error">{saveError}</p>}
               <button className="log-workout" onClick={handleSave} disabled={saving} type="button">
-                {saving ? "saving..." : "save workout"}
+                {saving ? "saving..." : editingId ? "update workout" : "save workout"}
               </button>
               <button
                 className="log-workout"

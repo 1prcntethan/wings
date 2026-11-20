@@ -14,7 +14,7 @@ import {
   limit,
   getDocs,
   getAggregateFromServer,
-  count,
+  getCountFromServer,
   sum,
   writeBatch,
 } from "firebase/firestore";
@@ -39,6 +39,20 @@ export async function saveWorkoutLog(uid, workoutData) {
     loggedAt: serverTimestamp(),
   });
   return docRef.id;
+}
+
+export async function updateWorkoutLog(uid, logId, workoutData) {
+  if (!uid || typeof logId !== "string" || !/^[A-Za-z0-9]+$/.test(logId)) {
+    throw new Error("Missing workout.");
+  }
+  const payload = { ...(workoutData || {}) };
+  delete payload.setCount;
+  const setCount = Math.min(MAX_STORED_SETS, countLoggedSets(payload.sections));
+  await updateDoc(doc(db, "users", uid, "workoutLogs", logId), {
+    ...payload,
+    setCount,
+    loggedAt: serverTimestamp(),
+  });
 }
 
 export async function getWorkoutLogs(uid, limitCount = 20) {
@@ -72,14 +86,13 @@ export async function getLatestWorkoutLog(uid) {
 export async function getWorkoutStats(uid, range, today = getFitnessDateObject()) {
   const logsRef = collection(db, "users", uid, "workoutLogs");
   if (!range || range.kind === "all") {
-    const snap = await getAggregateFromServer(logsRef, {
-      workouts: count(),
-      sets: sum("setCount"),
-    });
-    const data = snap.data();
+    const [counted, summed] = await Promise.all([
+      getCountFromServer(logsRef),
+      getAggregateFromServer(logsRef, { sets: sum("setCount") }),
+    ]);
     return {
-      workouts: Number(data.workouts) || 0,
-      sets: Number(data.sets) || 0,
+      workouts: counted.data().count,
+      sets: Number(summed.data().sets) || 0,
       durationSec: null,
       partialSets: true,
     };
