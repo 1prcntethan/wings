@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "test": "node --test src/utilites/livesession.test.js",
+    "test": "node --test src/utilites/livesession.test.js src/config/auth-bootstrap.test.js",
     "preview": "vite preview"
   },
   "dependencies": {

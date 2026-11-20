@@ -39,13 +39,16 @@ export async function getUserDoc(uid) {
 }
 
 export async function ensureUserDoc(user) {
-  const userRef = doc(db, "users", user.uid);
-  const snap = await getDoc(userRef);
-  // An existing account is left as-is. Replacing it here used to wipe progress.
-  if (snap.exists()) return;
+  if (!user?.uid) return;
 
+  const userRef = doc(db, "users", user.uid);
   try {
-    await setDoc(userRef, updateUserData(user));
+    const snap = await getDoc(userRef);
+    // An existing account is left as-is. Replacing it here used to wipe progress.
+    if (snap.exists()) return;
+    // merge keeps fields this payload does not mention if the doc appears
+    // between the read and the write. A failed read must not write at all.
+    await setDoc(userRef, updateUserData(user), { merge: true });
   } catch (error) {
     console.error("ensureUserDoc failed", error);
   }

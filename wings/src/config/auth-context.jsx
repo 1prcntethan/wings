@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { onAuthStateChanged } from "firebase/auth";
+import { subscribeAuthBoot } from "./auth-bootstrap";
 import { auth } from "./firebase";
 import { ensureUserDoc } from "./firestore";
 
@@ -18,26 +19,17 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      setLoading(true);
-      setDbReady(false);
-
-      if (user) {
-        await user.getIdToken(true);
-        await ensureUserDoc(user);
-        setCurrentUser(user);
-        setUserLoggedIn(true);
-      } else {
-        setCurrentUser(null);
-        setUserLoggedIn(false);
-      }
-
-      setDbReady(true);
-      setLoading(false);
-
+    return subscribeAuthBoot({
+      auth,
+      onAuthStateChanged,
+      ensureUserDoc,
+      onChange(next) {
+        setCurrentUser(next.currentUser);
+        setUserLoggedIn(next.userLoggedIn);
+        setDbReady(next.dbReady);
+        setLoading(next.loading);
+      },
     });
-
-    return unsubscribe;
   }, []);
 
   return (
