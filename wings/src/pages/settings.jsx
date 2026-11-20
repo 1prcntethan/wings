@@ -91,19 +91,17 @@ export function Settings() {
       setSaveMessage("");
       return;
     }
-    if (next === savedName) {
-      setSaveError("");
-      setSaveMessage("Saved.");
-      return;
-    }
 
+    const unchanged = next === savedName;
     setSaving(true);
     setSaveError("");
     setSaveMessage("");
     try {
       await updateUsername(currentUser.uid, next);
       setSavedName(next);
-      setSaveMessage(next ? "Username saved." : "Username cleared.");
+      setSaveMessage(
+        unchanged ? "Saved." : next ? "Username saved." : "Username cleared.",
+      );
     } catch (error) {
       setSaveError(accountErrorMessage(error));
     } finally {
@@ -234,7 +232,8 @@ export function Settings() {
                       }}
                     />
                     <p className="settings-help">
-                      This name shows on your dashboard. Leave it blank to use your email.
+                      This name shows on your dashboard. Each username belongs to one
+                      account. Leave it blank to use your email.
                     </p>
                     {saveMessage && (
                       <p className="settings-message settings-message--ok">{saveMessage}</p>

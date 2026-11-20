@@ -11,10 +11,10 @@ import {
   orderBy,
   limit,
   getDocs,
-  deleteDoc,
   writeBatch,
 } from "firebase/firestore";
 import { db } from "./firebase";
+import { commitUsernameClaim, deleteUserIdentity } from "../utilites/username";
 
 export async function saveWorkoutLog(uid, workoutData) {
   const logsRef = collection(db, "users", uid, "workoutLogs");
@@ -178,8 +178,46 @@ export async function logWorkout(uid, type) {
   });
 }
 
+function usernameTransactionStore(transaction) {
+  return {
+    async get(ref) {
+      const snap = await transaction.get(doc(db, ref.collection, ref.id));
+      return {
+        exists: snap.exists(),
+        data: snap.exists() ? snap.data() : null,
+      };
+    },
+    set(ref, data) {
+      if (ref.collection !== "usernames") {
+        throw Object.assign(new Error("Refusing to replace that document."), {
+          code: "invalid-argument",
+        });
+      }
+      transaction.set(doc(db, ref.collection, ref.id), data);
+    },
+    update(ref, data) {
+      if (ref.collection !== "users") {
+        throw Object.assign(new Error("Refusing to replace that document."), {
+          code: "invalid-argument",
+        });
+      }
+      transaction.update(doc(db, ref.collection, ref.id), data);
+    },
+    delete(ref) {
+      if (ref.collection !== "usernames" && ref.collection !== "users") {
+        throw Object.assign(new Error("Refusing to delete that document."), {
+          code: "invalid-argument",
+        });
+      }
+      transaction.delete(doc(db, ref.collection, ref.id));
+    },
+  };
+}
+
 export async function updateUsername(uid, username) {
-  await updateDoc(doc(db, "users", uid), { username });
+  await runTransaction(db, async (transaction) => {
+    await commitUsernameClaim(usernameTransactionStore(transaction), uid, username);
+  });
 }
 
 export async function deleteAccountData(uid) {
@@ -207,5 +245,7 @@ export async function deleteAccountData(uid) {
     });
   }
 
-  await deleteDoc(doc(db, "users", uid));
+  await runTransaction(db, async (transaction) => {
+    await deleteUserIdentity(usernameTransactionStore(transaction), uid);
+  });
 }
