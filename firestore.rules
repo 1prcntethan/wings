@@ -2,8 +2,10 @@ rules_version = '2';
 
 // Default is deny. A user can read and write only their own account.
 // Rank is not a stored field. Streak can move by at most one day per write.
-// Username is the only profile field a user can change. The owner can delete
-// their account document and their workout logs.
+// Username is the only profile field a user can change. The case-insensitive
+// reservation lives at usernames/{handle} and stores uid plus the display
+// name, never email or progress. The owner can delete their account document
+// and their workout logs.
 service cloud.firestore {
   match /databases/{database}/documents {
     match /users/{uid} {
@@ -19,11 +21,51 @@ service cloud.firestore {
         allow delete: if isOwner(uid);
       }
     }
+
+    match /usernames/{handle} {
+      allow get: if isSignedIn();
+      allow list: if false;
+      allow create: if isUsernameReservation(handle);
+      allow update: if isUsernameReservation(handle)
+        && resource.data.uid == request.auth.uid
+        && request.resource.data.uid == resource.data.uid;
+      allow delete: if isSignedIn() && resource.data.uid == request.auth.uid;
+    }
   }
 }
 
+function isSignedIn() {
+  return request.auth != null;
+}
+
 function isOwner(uid) {
-  return request.auth != null && request.auth.uid == uid;
+  return isSignedIn() && request.auth.uid == uid;
+}
+
+function isHandle(handle) {
+  return handle is string
+    && handle.matches('^[a-z0-9][a-z0-9 _-]{1,23}$')
+    && !handle.matches('.*  .*')
+    && !handle.matches('.* $');
+}
+
+function isDisplayName(name) {
+  return name is string
+    && name.matches('^[A-Za-z0-9][A-Za-z0-9 _-]{1,23}$')
+    && !name.matches('.*  .*')
+    && !name.matches('.* $');
+}
+
+function isUsernameReservation(handle) {
+  let data = request.resource.data;
+  let name = data.username;
+  return isSignedIn()
+    && isHandle(handle)
+    && data.keys().hasOnly(['uid', 'username'])
+    && data.uid is string
+    && data.uid == request.auth.uid
+    && isDisplayName(name)
+    && name.lower() == handle;
 }
 
 function isNewUser() {
@@ -56,15 +98,13 @@ function isNewUser() {
 function isUsernameUpdate() {
   let changed = request.resource.data.diff(resource.data).affectedKeys();
   let name = request.resource.data.username;
-  return changed.hasOnly(['username'])
+  let lower = request.resource.data.usernameLower;
+  return changed.hasOnly(['username', 'usernameLower'])
     && name is string
+    && lower is string
     && (
-      name == ''
-      || (
-        name.size() >= 2
-        && name.size() <= 24
-        && name.matches('^[A-Za-z0-9][A-Za-z0-9 _-]{1,23}$')
-      )
+      (name == '' && lower == '')
+      || (isDisplayName(name) && lower == name.lower())
     );
 }
 
