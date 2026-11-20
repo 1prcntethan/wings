@@ -95,6 +95,10 @@ const PullRmp = lazyNamed(() => import("./pages/guides/pullroadmap"), "PullRmp")
 const BeginnerWorkout = lazyNamed(() => import("./pages/guides/beginnerworkout"), "BeginnerWorkout");
 const FrontLeverGuide = lazyNamed(() => import("./pages/guides/frontleverguide"), "FrontLeverGuide");
 const IntermediateWorkout = lazyNamed(() => import("./pages/guides/intermediateworkout"), "IntermediateWorkout");
+const GymVsCalisthenics = lazyNamed(() => import("./pages/guides/gymvscalisthenics"), "GymVsCalisthenics");
+const FullBodyVsSplit = lazyNamed(() => import("./pages/guides/fullbodyvssplit"), "FullBodyVsSplit");
+const RestAndRecovery = lazyNamed(() => import("./pages/guides/restandrecovery"), "RestAndRecovery");
+const GeneralNutrition = lazyNamed(() => import("./pages/guides/generalnutrition"), "GeneralNutrition");
 
 
 function ScrollToTop({ children }) {
@@ -156,6 +160,10 @@ function App() {
             <Route path="/training/beginnerworkout" element={guidePage(<BeginnerWorkout />)} />
             <Route path="/training/intermediateworkout" element={guidePage(<IntermediateWorkout />)} />
             <Route path="/training/frontleverguide" element={guidePage(<FrontLeverGuide />)} />
+            <Route path="/training/gymvscalisthenics" element={guidePage(<GymVsCalisthenics />)} />
+            <Route path="/training/fullbodyvssplit" element={guidePage(<FullBodyVsSplit />)} />
+            <Route path="/training/restandrecovery" element={guidePage(<RestAndRecovery />)} />
+            <Route path="/training/generalnutrition" element={guidePage(<GeneralNutrition />)} />
 
             <Route path="/tutorials/pushup" element={<Pushup />} />
             <Route path="/tutorials/assistedpu" element={<AssistPu />} />
