@@ -172,11 +172,26 @@ function effortText(exercise) {
     const sets = Number(exercise.sets) || efforts.length;
     const same = efforts.every((value) => value === efforts[0]);
     const value = same ? `${efforts[0]}${unit}` : efforts.map((item) => `${item}${unit}`).join(", ");
-    return `${sets}×${value}`;
+    return `${sets} × ${value}`;
   }
-  if (exercise?.sets && exercise?.reps) return `${exercise.sets}×${exercise.reps}`;
+  if (exercise?.sets && exercise?.reps) return `${exercise.sets} × ${exercise.reps}`;
   if (exercise?.sets) return `${exercise.sets} sets`;
   return "";
+}
+
+export function logExerciseRows(log, limit = 8) {
+  const rows = [];
+  for (const key of SECTION_ORDER) {
+    const section = log?.sections?.[key];
+    if (!Array.isArray(section)) continue;
+    for (const exercise of section) {
+      const name = String(exercise?.name ?? "").trim();
+      if (!name) continue;
+      rows.push({ name, detail: effortText(exercise) });
+      if (rows.length >= limit) return rows;
+    }
+  }
+  return rows;
 }
 
 export function logSummary(log) {
@@ -226,4 +241,17 @@ export function formatLogDate(key) {
     month: "short",
     day: "numeric",
   });
+}
+
+export function formatLogDateCompact(key) {
+  return formatLogDate(key).replace(/,/g, "");
+}
+
+export function formatWorkoutDurationLabel(seconds) {
+  if (seconds == null || !Number.isFinite(Number(seconds))) return null;
+  const minutes = Math.max(0, Math.round(Number(seconds) / 60));
+  const hours = Math.floor(minutes / 60);
+  const remain = minutes % 60;
+  if (hours <= 0) return `${remain} min`;
+  return `${hours}h ${remain} min`;
 }

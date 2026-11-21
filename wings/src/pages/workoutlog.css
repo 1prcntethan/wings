@@ -226,6 +226,7 @@
   padding: 0 0.85rem;
   font-family: "Major Mono Display", monospace;
   font-size: 0.72rem;
+  text-transform: lowercase;
   cursor: pointer;
   opacity: 0.55;
 }
@@ -667,6 +668,7 @@
   font-size: 16px;
   font-family: Major Mono Display;
   font-weight: 200;
+  text-transform: lowercase;
   align-items: center;
   justify-content: center;
   align-self: flex-end;
@@ -759,6 +761,7 @@
   font-family: Major Mono Display;
   font-size: 14px;
   font-weight: 200;
+  text-transform: lowercase;
   border: 1px solid rgb(255, 255, 255, 0.5);
   border-radius: 4px;
   justify-self: center;

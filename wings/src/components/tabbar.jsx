@@ -47,7 +47,7 @@ function IconAccount() {
   );
 }
 
-function activeTab(pathname) {
+function activeTab(pathname, signedIn) {
   if (pathname.startsWith("/workoutlog")) return "log";
   if (pathname.startsWith("/skilltree") || pathname.startsWith("/skillvis")) return "skills";
   if (
@@ -67,16 +67,18 @@ function activeTab(pathname) {
   ) {
     return "account";
   }
-  if (pathname === "/" || pathname.startsWith("/dashboard")) return "home";
+  if (pathname.startsWith("/dashboard")) return "home";
+  if (pathname === "/") return signedIn ? "marketing" : "home";
   return "";
 }
 
 export default function TabBar() {
   const { currentUser } = useAuth();
   const { pathname } = useLocation();
-  const current = activeTab(pathname);
+  const current = activeTab(pathname, Boolean(currentUser));
+  const homeTab = currentUser ? "/dashboard" : "/";
   const items = [
-    { id: "home", label: "Home", to: currentUser ? "/dashboard" : "/", icon: <IconHome /> },
+    { id: "home", label: "Home", to: homeTab, icon: <IconHome /> },
     { id: "log", label: "Log", to: "/workoutlog", icon: <IconLog /> },
     { id: "skills", label: "Skills", to: "/skilltree", icon: <IconSkills /> },
     { id: "learn", label: "Learn", to: "/learn", icon: <IconLearn /> },

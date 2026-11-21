@@ -4,7 +4,7 @@
   margin: 0 auto;
   padding: 18px 16px 28px;
   font-family: "Fira Sans", sans-serif;
-  font-weight: 400;
+  font-weight: 200;
   color: #f3f3f3;
 }
 
@@ -33,13 +33,13 @@
     "date date"
     "hello avatar";
   align-items: center;
-  gap: 2px 12px;
+  gap: 0 12px;
   margin-bottom: 14px;
 }
 
 .dash-date {
   grid-area: date;
-  margin: 0 0 4px;
+  margin: 0;
   color: #a3a3a3;
   font-family: "Fira Sans", sans-serif;
   font-weight: 200;
@@ -54,7 +54,6 @@
   font-weight: 400;
   line-height: 1.15;
   letter-spacing: 0.04em;
-  text-transform: uppercase;
 }
 
 .dash-avatar {
@@ -69,12 +68,24 @@
   font-family: "Major Mono Display", monospace;
 }
 
+.dash-block {
+  margin-bottom: 24px;
+}
+
+.dash-block > .dash-card {
+  margin-bottom: 0;
+}
+
 .dash-card {
   background: #252525;
   border: 1px solid #333;
   border-radius: 12px;
   padding: 14px;
-  margin-bottom: 12px;
+  margin-bottom: 24px;
+}
+
+.dash-streak.dash-card {
+  padding-top: 20px;
 }
 
 .dash-kicker {
@@ -82,13 +93,12 @@
   justify-content: space-between;
   align-items: center;
   gap: 8px;
-  margin-bottom: 12px;
-  color: #9a9a9a;
+  margin: 0 0 10px;
+  color: #c0c0c0;
   font-family: "Major Mono Display", monospace;
-  font-size: 0.68rem;
+  font-size: 0.82rem;
   font-weight: 400;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  letter-spacing: 0.1em;
 }
 
 .dash-kicker a {
@@ -118,26 +128,45 @@
   fill: currentColor;
 }
 
-.dash-streak-top strong,
+.dash-streak-count {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.dash-streak-num,
 .dash-longest b,
-.dash-month-stats b,
-.dash-rank-main p {
+.dash-month-stats b {
   font-family: "Fira Sans", sans-serif;
   font-weight: 300;
 }
 
-.dash-streak-top strong {
-  display: block;
+.dash-streak-num {
+  flex: none;
   font-size: 2.7rem;
   line-height: 0.9;
+  color: #f3f3f3;
+  text-shadow: 0 0 28px rgba(182, 109, 163, 0.55);
 }
 
-.dash-streak-top span,
-.dash-longest span {
+.dash-streak-copy span {
   display: block;
   color: #d7d7d7;
   font-family: "Fira Sans", sans-serif;
-  font-weight: 400;
+  font-weight: 500;
+}
+
+.dash-longest span {
+  display: block;
+  color: #f3f3f3;
+  font-family: "Fira Sans", sans-serif;
+  font-weight: 100;
+  font-size: 0.65rem;
+}
+
+.dash-streak-copy small {
+  display: block;
 }
 
 .dash-streak-top small,
@@ -153,6 +182,7 @@
 }
 
 .dash-longest b {
+  display: block;
   font-size: 1.55rem;
   font-weight: 300;
 }
@@ -162,7 +192,7 @@
   display: flex;
   justify-content: space-between;
   gap: 4px;
-  margin: 14px 0;
+  margin: 14px 0 22px;
   padding: 0;
 }
 
@@ -174,7 +204,7 @@
   color: #8d8d8d;
   font-family: "Fira Sans", sans-serif;
   font-size: 0.72rem;
-  font-weight: 400;
+  font-weight: 200;
 }
 
 .dash-dot {
@@ -189,114 +219,182 @@
 .dash-dot--logged {
   background: #b66da3;
   border-color: #b66da3;
+  box-shadow: 0 0 14px rgba(182, 109, 163, 0.55);
 }
 
 .dash-dot--today {
   border-style: dashed;
   border-color: #d7d7d7;
   background: transparent;
+  box-shadow: 0 0 10px rgba(182, 109, 163, 0.3);
 }
 
 .dash-primary,
 .dash-secondary,
-.dash-last-actions button {
+.dash-repeat,
+.dash-details {
   width: 100%;
+  box-sizing: border-box;
   border-radius: 12px;
-  padding: 14px 14px;
   font-family: "Major Mono Display", monospace;
-  font-size: 0.78rem;
   font-weight: 400;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  text-transform: none;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
 }
 
-.dash-primary {
+.dash-btn-icon {
+  width: 18px;
+  height: 18px;
+  flex: none;
+}
+
+.dash-page button.dash-primary,
+.dash-page button.dash-secondary {
+  font-family: "Major Mono Display", monospace;
+  text-transform: lowercase;
+  letter-spacing: 0.04em;
+}
+
+.dash-page button.dash-primary {
+  padding: 22px 14px;
+  font-size: 1.08rem;
   background: #b66da3;
   color: #fff;
   border: none;
   margin-bottom: 8px;
+  box-shadow: 0 0 22px rgba(182, 109, 163, 0.45);
 }
 
-.dash-secondary,
-.dash-last-actions button {
+.dash-page button.dash-secondary {
+  padding: 16px 14px;
+  font-size: 0.94rem;
   background: #1b1b1b;
   color: #f3f3f3;
   border: 1px solid #333;
 }
 
-.dash-secondary:disabled {
+.dash-page button.dash-primary .dash-btn-icon--play {
+  width: 24px;
+  height: 24px;
+}
+
+.dash-page button.dash-secondary .dash-btn-icon--moon {
+  width: 20px;
+  height: 20px;
+}
+
+.dash-page button.dash-secondary:disabled {
   opacity: 0.55;
   cursor: default;
+}
+
+.dash-card.dash-rank {
+  padding: 10px 14px;
 }
 
 .dash-rank-main {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
 }
 
 .dash-rank-mark {
-  width: 72px;
-  height: 72px;
+  width: 88px;
+  height: 88px;
   object-fit: contain;
+  flex: none;
+  filter: drop-shadow(0 0 22px rgba(243, 243, 243, 0.45))
+    drop-shadow(0 0 10px rgba(182, 109, 163, 0.25));
+}
+
+.dash-rank-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.dash-rank-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
 }
 
 .dash-rank h2 {
   margin: 0;
   font-family: "Major Mono Display", monospace;
-  font-size: 1.45rem;
+  font-size: 1.32rem;
   font-weight: 400;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  line-height: 1;
 }
 
 .dash-squad h2 {
   margin: 0;
   font-family: "Major Mono Display", monospace;
-  font-size: 0.82rem;
+  font-size: 0.95rem;
   font-weight: 400;
   letter-spacing: 0.05em;
   line-height: 1.45;
-  text-transform: uppercase;
 }
 
-.dash-rank-main p {
-  margin: 4px 0 0;
-  color: #d7d7d7;
-  font-size: 0.95rem;
-  font-weight: 300;
+
+.dash-rank .dash-rank-head p {
+  margin: 0;
+  color: #f3f3f3;
+  font-family: "Fira Sans", sans-serif;
+  font-size: 0.78rem;
+  font-weight: 100;
+  white-space: nowrap;
 }
 
-.dash-bar {
-  height: 8px;
-  background: #1b1b1b;
+.dash-rank .dash-bar {
+  height: 7px;
+  background: #141414;
   border-radius: 99px;
-  margin: 12px 0 6px;
+  margin: 10px 0 8px;
   overflow: hidden;
 }
 
 .dash-bar span {
   display: block;
   height: 100%;
-  background: #b66da3;
+  background: linear-gradient(90deg, #b66da3, #bbca88);
+  background-size: calc(100% / var(--fill, 1)) 100%;
+  background-repeat: no-repeat;
 }
 
-.dash-scale {
+.dash-rank .dash-scale {
   display: flex;
   justify-content: space-between;
-  gap: 8px;
-  color: #9a9a9a;
+  align-items: baseline;
+  gap: 6px;
   font-family: "Fira Sans", sans-serif;
-  font-size: 0.75rem;
-  font-weight: 400;
+  font-size: 0.72rem;
 }
 
-.dash-scale span:nth-child(2) {
-  color: #e0c98a;
+.dash-rank .dash-scale > span:first-child,
+.dash-rank .dash-scale > span:last-child,
+.dash-rank .dash-scale .dash-scale-to {
+  color: #d2d2d2;
+  font-weight: 100;
+}
+
+.dash-scale-mid {
   text-align: center;
+}
+
+.dash-rank .dash-scale .dash-scale-rp {
+  color: #e0c98a;
+  font-family: "Fira Sans", sans-serif;
+  font-size: 0.72rem;
   font-weight: 500;
 }
+
 
 .dash-reached-list,
 .dash-guides ul {
@@ -334,17 +432,16 @@
 .dash-reached-list .is-progress { border-color: #b66da3; }
 .dash-reached-list .is-unlocked { border-color: #f3f3f3; }
 
-.dash-reached-list span,
-.dash-last-line {
+.dash-reached-list span {
   min-width: 0;
 }
 
-.dash-reached-list strong,
-.dash-last-line {
+.dash-reached-list strong {
   display: block;
-  font-family: "Fira Sans", sans-serif;
-  font-weight: 500;
-  text-transform: capitalize;
+  font-family: "Major Mono Display", monospace;
+  font-weight: 400;
+  text-transform: lowercase;
+  letter-spacing: 0.04em;
 }
 
 .dash-reached-list small {
@@ -357,7 +454,7 @@
   margin-left: auto;
   font-family: "Fira Sans", sans-serif;
   font-style: normal;
-  font-weight: 400;
+  font-weight: 200;
   color: #d7d7d7;
   font-size: 0.75rem;
   text-transform: lowercase;
@@ -371,13 +468,52 @@
   gap: 8px;
 }
 
+.dash-last-when {
+  color: #e0e0e0;
+  font-size: 0.78rem;
+  font-weight: 200;
+  text-align: right;
+}
+
+.dash-last-rows {
+  list-style: none;
+  margin: 12px 0;
+  padding: 0;
+  border-top: 1px solid #333;
+}
+
+.dash-last-rows li {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid #333;
+  font-weight: 200;
+}
+
+.dash-last-rows li span:first-child {
+  font-weight: 200;
+  font-size: 0.9rem;
+  color: #f3f3f3;
+  text-transform: capitalize;
+}
+
+.dash-last-rows li span:last-child {
+  color: #d7d7d7;
+  font-size: 0.82rem;
+  font-weight: 200;
+  white-space: nowrap;
+}
+
 .dash-cat {
   border-radius: 999px;
-  padding: 3px 8px;
-  font-family: "Fira Sans", sans-serif;
-  font-size: 0.72rem;
-  font-weight: 500;
+  padding: 5px 12px;
+  font-family: "Major Mono Display", monospace;
+  font-size: 0.68rem;
+  font-weight: 400;
   text-transform: lowercase;
+  letter-spacing: 0.06em;
   background: #333;
 }
 
@@ -387,30 +523,38 @@
 .dash-cat--full-body,
 .dash-cat--conditioning { background: #333; color: #f3f3f3; }
 
-.dash-last-line {
-  margin: 10px 0;
-  text-transform: none;
-  font-weight: 400;
+.dash-last-actions {
+  gap: 10px;
 }
 
-.dash-last-actions button,
-.dash-last-actions a {
+.dash-repeat,
+.dash-details {
   width: auto;
   flex: 1;
-  box-sizing: border-box;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 46px;
-  text-align: center;
-  background: #1b1b1b;
-  color: #f3f3f3;
-  border: 1px solid #333;
-  border-radius: 12px;
+  min-height: 48px;
+  padding: 14px 12px;
+  font-size: 0.88rem;
+  text-decoration: none;
+}
+
+.dash-page button.dash-repeat,
+.dash-page a.dash-details {
   font-family: "Major Mono Display", monospace;
-  font-size: 0.72rem;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  text-transform: lowercase;
+  letter-spacing: 0.04em;
+}
+
+.dash-repeat {
+  background: #b66da3;
+  color: #fff;
+  border: none;
+  box-shadow: 0 0 18px rgba(182, 109, 163, 0.35);
+}
+
+.dash-page a.dash-details {
+  color: #f3f3f3;
+  background: #1b1b1b;
+  border: 1px solid #333;
 }
 
 .dash-squad {
@@ -418,37 +562,59 @@
   border-style: dashed;
 }
 
+.dash-squad-inner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.dash-squad-text {
+  flex: 1;
+  min-width: 0;
+}
+
 .dash-soon {
+  flex: none;
+  align-self: center;
   background: #3a2a38;
   color: #d7a4cb;
   border-radius: 999px;
-  padding: 4px 8px;
+  padding: 5px 10px;
   font-family: "Fira Sans", sans-serif;
   font-size: 0.68rem;
-  font-weight: 500;
+  font-weight: 400;
   letter-spacing: 0.02em;
   text-transform: lowercase;
 }
 
 .dash-faces {
   display: flex;
-  gap: 8px;
-  margin-bottom: 8px;
+  flex: none;
+  margin: 0;
 }
 
 .dash-faces span {
   width: 28px;
   height: 28px;
+  margin-left: -8px;
   border-radius: 50%;
   border: 1px dashed #555;
+  background: #1e1e1e;
   display: grid;
   place-items: center;
   color: #9a9a9a;
 }
 
-.dash-squad p {
+.dash-faces span:first-child {
+  margin-left: 0;
+}
+
+.dash-squad-copy {
   margin: 4px 0 0;
-  color: #b5b5b5;
+  color: #9a9a9a;
+  font-size: 0.68rem;
+  font-weight: 100;
+  line-height: 1.35;
 }
 
 .dash-learn-grid {
@@ -467,7 +633,6 @@
   font-family: "Major Mono Display", monospace;
   font-size: 0.68rem;
   letter-spacing: 0.06em;
-  text-transform: uppercase;
 }
 
 .dash-month-stats {
@@ -501,7 +666,7 @@
   border-bottom: 1px solid #333;
   color: #f3f3f3;
   font-family: "Fira Sans", sans-serif;
-  font-weight: 400;
+  font-weight: 200;
   font-size: 0.92rem;
   text-transform: none;
   letter-spacing: 0;
@@ -544,7 +709,7 @@
   .dash-grid {
     display: grid;
     grid-template-columns: minmax(0, 1.05fr) minmax(0, 1.15fr) minmax(0, 0.9fr);
-    gap: 14px;
+    gap: 22px 14px;
     align-items: start;
   }
 
@@ -553,13 +718,17 @@
   }
 
   .dash-streak { grid-column: 1; grid-row: 1; }
-  .dash-rank { grid-column: 2; grid-row: 1; }
-  .dash-squad { grid-column: 3; grid-row: 1; }
-  .dash-last { grid-column: 1; grid-row: 2; }
-  .dash-reached { grid-column: 2; grid-row: 2 / span 2; }
-  .dash-learn { grid-column: 3; grid-row: 2; }
-  .dash-month { grid-column: 1; grid-row: 3; }
-  .dash-guides { grid-column: 3; grid-row: 3; }
+  .dash-rank-block { grid-column: 2; grid-row: 1; }
+  .dash-squad-block { grid-column: 3; grid-row: 1; }
+  .dash-last-block { grid-column: 1; grid-row: 2; }
+  .dash-reached-block { grid-column: 2; grid-row: 2 / span 2; }
+  .dash-learn-block { grid-column: 3; grid-row: 2; }
+  .dash-month-block { grid-column: 1; grid-row: 3; }
+  .dash-guides-block { grid-column: 3; grid-row: 3; }
+
+  .dash-block {
+    margin-bottom: 0;
+  }
 
   .dash-desktop-only,
   .desktop-footer {

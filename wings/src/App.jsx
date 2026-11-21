@@ -133,7 +133,7 @@ function App() {
         <ScrollToTop>
           <Suspense fallback={<Loading />}>
           <Routes>
-            <Route path="/" element={currentUser ? <Navigate to="/dashboard" /> : <Homepage />} />
+            <Route path="/" element={<Homepage />} />
             <Route path="/learn" element={<Learn />} />
             <Route path="/training" element={<Training />} />
             <Route path="/tutorials" element={<Tutorials />} />

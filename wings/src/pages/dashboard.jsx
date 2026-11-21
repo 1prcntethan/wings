@@ -19,9 +19,10 @@ import { weekDots } from "../utilites/streakweek.js";
 import { DRAFT_KEY, normalizeWorkoutLog, parseDraft } from "../utilites/livesession.js";
 import { loadDesignPreview } from "../utilites/designpreview.js";
 import {
-  formatLogDate,
+  formatLogDateCompact,
   formatTrainedTime,
-  logSummary,
+  formatWorkoutDurationLabel,
+  logExerciseRows,
   monthBounds,
   monthLabel,
   summarizeLogs,
@@ -242,19 +243,20 @@ export function Dashboard() {
   const rankFill = rank.name === "ethereal" || span <= 0
     ? 100
     : Math.min(100, Math.max(0, ((totalRP - rank.min) / span) * 100));
-  const displayName = username || currentUser?.email?.split("@")[0] || "athlete";
+  const displayName = (
+    username || currentUser?.email?.split("@")[0] || "athlete"
+  ).toLowerCase();
   const initial = displayName.trim().charAt(0).toUpperCase() || "W";
   const dots = weekDots(getFitnessDateObject(), streak);
   const reached = status === "ready" ? highestReached(userSkills || {}) : [];
-  const summary = latest ? logSummary(latest) : null;
-
+  const lastDurationLabel = latest ? formatWorkoutDurationLabel(latest.durationSec) : null;
   return (
     <>
       <Navbar />
       <main className="dash-page" data-screen="dashboard" data-ready={status}>
         <header className="dash-greet">
           <p className="dash-date">{headingDate(new Date())}</p>
-          <h1 className="dash-hello">Hey, {displayName}</h1>
+          <h1 className="dash-hello">hey, {displayName}</h1>
           <Link to="/settings" className="dash-avatar" aria-label="Account">
             {initial}
           </Link>
@@ -278,10 +280,12 @@ export function Dashboard() {
                     <path d="M12 2s2 4 2 6c1.2-.8 2-2.4 2-2.4S20 8.2 20 13a8 8 0 1 1-16 0c0-3 2.2-5.2 3.4-6.4C8 8 8.8 10 8.8 10 9 7 12 2 12 2z" />
                   </svg>
                 </span>
-                <div>
-                  <strong>{visibleStreak}</strong>
-                  <span>day streak</span>
-                  <small>+{totalStreakRP} Rp from streak</small>
+                <div className="dash-streak-count">
+                  <strong className="dash-streak-num">{visibleStreak}</strong>
+                  <div className="dash-streak-copy">
+                    <span>day streak</span>
+                    <small>+{totalStreakRP} Rp from streak</small>
+                  </div>
                 </div>
                 <div className="dash-longest">
                   <b>{streak.longest}</b>
@@ -297,7 +301,10 @@ export function Dashboard() {
                 ))}
               </ol>
               <button type="button" className="dash-primary" onClick={startSession}>
-                {draft ? "Resume session" : "Start session"}
+                <svg className="dash-btn-icon dash-btn-icon--play" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M8.2 6.8v10.4L17.8 12 8.2 6.8z" fill="currentColor" />
+                </svg>
+                <span>{draft ? "resume session" : "start session"}</span>
               </button>
               <button
                 type="button"
@@ -305,46 +312,74 @@ export function Dashboard() {
                 disabled={loggedToday || logging}
                 onClick={handleRest}
               >
-                {loggedToday ? "Logged today" : logging ? "Saving..." : "Log rest day"}
+                <svg className="dash-btn-icon dash-btn-icon--moon" viewBox="0 0 24 24" aria-hidden="true">
+                  <path
+                    d="M18.2 6.4a7.2 7.2 0 1 0-1.6 12.1 5.8 5.8 0 0 1 1.6-12.1z"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.7"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+                <span>
+                  {loggedToday ? "logged today" : logging ? "saving..." : "log rest day"}
+                </span>
               </button>
               {logError && <p className="dash-note">{logError}</p>}
             </section>
 
-            <section className="dash-card dash-rank">
+            <section className="dash-block dash-rank-block">
               <div className="dash-kicker">
-                <span>Rank</span>
+                <span>rank</span>
                 <Link to="/howtouseguide">how it works</Link>
               </div>
+              <div className="dash-card dash-rank">
               <div className="dash-rank-main">
                 {art && <img src={art.src} alt={art.alt} className="dash-rank-mark" />}
-                <div>
-                  <h2>{rank.name}</h2>
-                  <p>{totalRP} Rp</p>
+                <div className="dash-rank-body">
+                  <div className="dash-rank-head">
+                    <h2>{rank.name}</h2>
+                    <p>{totalRP} Rp</p>
+                  </div>
+                  <div
+                    className="dash-bar"
+                    role="progressbar"
+                    aria-valuemin={rank.min}
+                    aria-valuemax={rank.max}
+                    aria-valuenow={totalRP}
+                  >
+                    <span
+                      style={{
+                        width: `${rankFill}%`,
+                        "--fill": `${Math.max(rankFill / 100, 0.001)}`,
+                      }}
+                    />
+                  </div>
+                  <div className="dash-scale">
+                    <span>{rank.min}</span>
+                    <span className="dash-scale-mid">
+                      {rank.until == null ? (
+                        "max rank reached"
+                      ) : (
+                        <>
+                          <span className="dash-scale-rp">{rank.until} Rp</span>
+                          <span className="dash-scale-to"> to {rank.next}</span>
+                        </>
+                      )}
+                    </span>
+                    <span>{rank.name === "ethereal" ? "" : rank.max}</span>
+                  </div>
                 </div>
               </div>
-              <div
-                className="dash-bar"
-                role="progressbar"
-                aria-valuemin={rank.min}
-                aria-valuemax={rank.max}
-                aria-valuenow={totalRP}
-              >
-                <span style={{ width: `${rankFill}%` }} />
-              </div>
-              <div className="dash-scale">
-                <span>{rank.min}</span>
-                <span>
-                  {rank.until == null ? "max rank reached" : `${rank.until} Rp to ${rank.next}`}
-                </span>
-                <span>{rank.name === "ethereal" ? "" : rank.max}</span>
               </div>
             </section>
 
-            <section className="dash-card dash-reached">
+            <section className="dash-block dash-reached-block">
               <div className="dash-kicker">
-                <span>Reached</span>
+                <span>in progress</span>
                 <Link to="/skilltree">skill tree</Link>
               </div>
+              <div className="dash-card dash-reached">
               {reached.length === 0 ? (
                 <p className="dash-note">Unlock a skill to see your furthest node in each group.</p>
               ) : (
@@ -353,7 +388,7 @@ export function Dashboard() {
                     <li key={skill.id}>
                       <i className={`is-${skill.status === "in progress" ? "progress" : skill.status}`} />
                       <span>
-                        <strong>{skill.title}</strong>
+                        <strong>{skill.title.toLowerCase()}</strong>
                         <small>{skill.group} · {skill.rp} Rp</small>
                       </span>
                       <em>{skill.status}</em>
@@ -361,63 +396,93 @@ export function Dashboard() {
                   ))}
                 </ul>
               )}
+              </div>
             </section>
 
-            <section className="dash-card dash-last">
+            <section className="dash-block dash-last-block">
               <div className="dash-kicker">
-                <span>Last workout</span>
+                <span>last workout</span>
                 <Link to="/workoutlog">view workout log</Link>
               </div>
+              <div className="dash-card dash-last">
               {!latest ? (
                 <p className="dash-note">No workouts yet. Start a session when you train.</p>
               ) : (
                 <>
                   <div className="dash-last-meta">
                     <span className={`dash-cat dash-cat--${latest.category}`}>{latest.category}</span>
-                    <span>{formatLogDate(latest.date)}</span>
+                    <span className="dash-last-when">
+                      {formatLogDateCompact(latest.date)}
+                      {lastDurationLabel && <> · {lastDurationLabel}</>}
+                    </span>
                   </div>
-                  <p className="dash-last-line">{summary?.line || "Saved workout"}</p>
+                  <ul className="dash-last-rows">
+                    {logExerciseRows(latest).map((row) => (
+                      <li key={row.name}>
+                        <span>{row.name}</span>
+                        <span>{row.detail}</span>
+                      </li>
+                    ))}
+                  </ul>
                   <div className="dash-last-actions">
-                    <button type="button" onClick={repeatWorkout}>
-                      {draft ? "Resume" : "Repeat"}
+                    <button type="button" className="dash-repeat" onClick={repeatWorkout}>
+                      <svg className="dash-btn-icon" viewBox="0 0 24 24" aria-hidden="true">
+                        <path
+                          d="M12 5V2L7 7l5 5V9c2.8 0 5 2.2 5 5a5 5 0 0 1-5 5 5 5 0 0 1-4.9-4H5.1A7 7 0 0 0 12 21a7 7 0 0 0 0-14z"
+                          fill="currentColor"
+                        />
+                      </svg>
+                      <span>{draft ? "resume" : "repeat"}</span>
                     </button>
-                    <Link to="/workoutlog">Details</Link>
+                    <Link className="dash-details" to="/workoutlog">
+                      details
+                    </Link>
                   </div>
                 </>
               )}
+              </div>
             </section>
 
-            <section className="dash-card dash-squad" aria-label="Squad, coming soon">
+            <section className="dash-block dash-squad-block" aria-label="Squad, coming soon">
               <div className="dash-kicker">
-                <span>Squad</span>
+                <span>squad</span>
+              </div>
+              <div className="dash-card dash-squad">
+              <div className="dash-squad-inner">
+                <div className="dash-faces" aria-hidden="true">
+                  <span>?</span>
+                  <span>?</span>
+                  <span>?</span>
+                </div>
+                <div className="dash-squad-text">
+                  <h2>train with friends</h2>
+                  <p className="dash-squad-copy">compare streaks &amp; ranks</p>
+                </div>
                 <span className="dash-soon">coming soon</span>
               </div>
-              <div className="dash-faces" aria-hidden="true">
-                <span>?</span>
-                <span>?</span>
-                <span>?</span>
               </div>
-              <h2>Train with friends</h2>
-              <p>Compare streaks, ranks and skills with a small squad.</p>
             </section>
 
-            <section className="dash-card dash-learn">
+            <section className="dash-block dash-learn-block">
               <div className="dash-kicker">
-                <span>Learn</span>
+                <span>learn</span>
                 <Link to="/learn">hub</Link>
               </div>
+              <div className="dash-card dash-learn">
               <div className="dash-learn-grid">
-                <Link to="/training">Training</Link>
-                <Link to="/tutorials">Tutorials</Link>
-                <Link to="/terminology">Terminology</Link>
-                <Link to="/howtouseguide">How to use</Link>
+                <Link to="/training">training</Link>
+                <Link to="/tutorials">tutorials</Link>
+                <Link to="/terminology">terminology</Link>
+                <Link to="/howtouseguide">how to use</Link>
+              </div>
               </div>
             </section>
 
-            <section className="dash-card dash-month dash-desktop-only">
+            <section className="dash-block dash-month-block dash-desktop-only">
               <div className="dash-kicker">
-                <span>This month</span>
+                <span>this month</span>
               </div>
+              <div className="dash-card dash-month">
               <div className="dash-month-stats">
                 <p><b>{monthStats?.workouts ?? 0}</b><span>workouts</span></p>
                 <p>
@@ -429,12 +494,14 @@ export function Dashboard() {
                 <p><b>{monthStats?.sets ?? 0}</b><span>total sets</span></p>
               </div>
               <p className="dash-note">{monthName}</p>
+              </div>
             </section>
 
-            <section className="dash-card dash-guides dash-desktop-only">
+            <section className="dash-block dash-guides-block dash-desktop-only">
               <div className="dash-kicker">
-                <span>New guides</span>
+                <span>new guides</span>
               </div>
+              <div className="dash-card dash-guides">
               <ul>
                 {GUIDES.map((guide) => (
                   <li key={guide.to}>
@@ -445,6 +512,7 @@ export function Dashboard() {
                   </li>
                 ))}
               </ul>
+              </div>
             </section>
           </div>
         )}

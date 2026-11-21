@@ -5,6 +5,7 @@ import {
   STAT_RANGES,
   formatLogDate,
   formatTrainedTime,
+  logExerciseRows,
   logMatches,
   logSummary,
 } from "../utilites/workoutstats.js";
@@ -58,6 +59,7 @@ function LogCard({ log, onEdit, onDelete, pendingDelete, onConfirmDelete, onCanc
   const [sharing, setSharing] = useState(false);
   const [shareError, setShareError] = useState(null);
   const summary = logSummary(log);
+  const exercises = logExerciseRows(log);
   const confirming = pendingDelete === log.id;
 
   return (
@@ -69,7 +71,18 @@ function LogCard({ log, onEdit, onDelete, pendingDelete, onConfirmDelete, onCanc
           <span className="wh-duration">{formatTrainedTime(log.durationSec)}</span>
         )}
       </div>
-      <p>{summary.line || "Saved workout"}</p>
+      {exercises.length > 0 ? (
+        <ul className="wh-ex-list">
+          {exercises.map((row, index) => (
+            <li key={`${row.name}-${index}`} className="wh-ex-row">
+              <span className="wh-ex-name">{row.name}</span>
+              <span className="wh-ex-detail">{row.detail}</span>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="wh-ex-fallback">{summary.line || "Saved workout"}</p>
+      )}
       <div className="wh-card-foot">
         <span>{summary.exercises} exercises · {summary.sets} sets</span>
         {confirming ? (
@@ -124,9 +137,10 @@ function LogCard({ log, onEdit, onDelete, pendingDelete, onConfirmDelete, onCanc
 }
 
 function LogList({ logs, filter, query, ...cardProps }) {
+  if (!logs.length) return null;
   const visible = logs.filter((log) => logMatches(log, filter, query));
   if (visible.length === 0) {
-    return <p className="wh-empty">No workouts match.</p>;
+    return <p className="wh-empty">No workouts match this filter.</p>;
   }
   return visible.map((log) => <LogCard key={log.id} log={log} {...cardProps} />);
 }
@@ -221,7 +235,7 @@ export default function WorkoutHistory({
           All-time sets include workouts saved with a set total. Older logs still count as workouts.
         </p>
       )}
-      <div className="wh-filters" role="group" aria-label="Category">
+      <div className="wh-filters wh-cat-filters" role="group" aria-label="Category">
         {LOG_FILTERS.map((item) => (
           <button
             key={item.id}
@@ -247,7 +261,7 @@ export default function WorkoutHistory({
       {currentStatus === "ready" && currentLogs.length === 0 && (
         <p className="wh-empty">No workouts this month.</p>
       )}
-      {currentStatus === "ready" && (
+      {currentStatus === "ready" && currentLogs.length > 0 && (
         <LogList logs={currentLogs} filter={filter} query={query} {...cardProps} />
       )}
       {deleteError && <p className="wh-error">{deleteError}</p>}
@@ -265,18 +279,22 @@ export default function WorkoutHistory({
               <span>{entry.label}</span>
               <span>{open ? "Hide" : "Show"}</span>
             </button>
-            {open && cached?.status === "loading" && <p className="wh-empty">Loading...</p>}
-            {open && cached?.status === "error" && (
-              <p className="wh-error">
-                Couldn't load these workouts.{" "}
-                <button type="button" onClick={() => onToggle(entry, true)}>retry</button>
-              </p>
-            )}
-            {open && cached?.status === "ready" && cached.logs.length === 0 && (
-              <p className="wh-empty">No workouts then.</p>
-            )}
-            {open && cached?.status === "ready" && (
-              <LogList logs={cached.logs} filter={filter} query={query} {...cardProps} />
+            {open && (
+              <div className="wh-fold-panel">
+                {cached?.status === "loading" && <p className="wh-empty">Loading...</p>}
+                {cached?.status === "error" && (
+                  <p className="wh-error">
+                    Couldn't load these workouts.{" "}
+                    <button type="button" onClick={() => onToggle(entry, true)}>retry</button>
+                  </p>
+                )}
+                {cached?.status === "ready" && cached.logs.length === 0 && (
+                  <p className="wh-empty">No workouts then.</p>
+                )}
+                {cached?.status === "ready" && cached.logs.length > 0 && (
+                  <LogList logs={cached.logs} filter={filter} query={query} {...cardProps} />
+                )}
+              </div>
             )}
           </section>
         );

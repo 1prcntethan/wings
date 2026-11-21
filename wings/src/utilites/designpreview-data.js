@@ -38,6 +38,7 @@ export function previewWorkoutLogs(today) {
       id: "previewpull",
       date: dayKey(today, 2),
       category: "pull",
+      durationSec: 52 * 60,
       sections: {
         warmup: [],
         primary: [exercise("Pull-up", 4, [8, 8, 8, 8])],
