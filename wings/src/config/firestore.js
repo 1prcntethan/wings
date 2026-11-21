@@ -3,26 +3,56 @@ import {
   getDoc,
   updateDoc,
   setDoc,
+  deleteDoc,
   runTransaction,
   serverTimestamp,
   collection,
   addDoc,
   query,
+  where,
   orderBy,
   limit,
   getDocs,
+  getAggregateFromServer,
+  getCountFromServer,
+  sum,
   writeBatch,
 } from "firebase/firestore";
 import { db } from "./firebase";
 import { commitUsernameClaim, deleteUserIdentity } from "../utilites/username";
+import {
+  MAX_STORED_SETS,
+  countLoggedSets,
+  rangeBounds,
+  summarizeLogs,
+  workoutDateCreditsStreak,
+} from "../utilites/workoutstats.js";
 
 export async function saveWorkoutLog(uid, workoutData) {
+  const payload = { ...(workoutData || {}) };
+  delete payload.setCount;
+  const setCount = Math.min(MAX_STORED_SETS, countLoggedSets(payload.sections));
   const logsRef = collection(db, "users", uid, "workoutLogs");
   const docRef = await addDoc(logsRef, {
-    ...workoutData,
+    ...payload,
+    setCount,
     loggedAt: serverTimestamp(),
   });
   return docRef.id;
+}
+
+export async function updateWorkoutLog(uid, logId, workoutData) {
+  if (!uid || typeof logId !== "string" || !/^[A-Za-z0-9]+$/.test(logId)) {
+    throw new Error("Missing workout.");
+  }
+  const payload = { ...(workoutData || {}) };
+  delete payload.setCount;
+  const setCount = Math.min(MAX_STORED_SETS, countLoggedSets(payload.sections));
+  await updateDoc(doc(db, "users", uid, "workoutLogs", logId), {
+    ...payload,
+    setCount,
+    loggedAt: serverTimestamp(),
+  });
 }
 
 export async function getWorkoutLogs(uid, limitCount = 20) {
@@ -30,6 +60,54 @@ export async function getWorkoutLogs(uid, limitCount = 20) {
   const q = query(logsRef, orderBy("loggedAt", "desc"), limit(limitCount));
   const snap = await getDocs(q);
   return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+}
+
+export async function getWorkoutLogsByDate(uid, startDate, endDate) {
+  const logsRef = collection(db, "users", uid, "workoutLogs");
+  const q = query(
+    logsRef,
+    where("date", ">=", startDate),
+    where("date", "<=", endDate),
+    orderBy("date", "desc"),
+  );
+  const snap = await getDocs(q);
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+}
+
+export async function getLatestWorkoutLog(uid) {
+  const logsRef = collection(db, "users", uid, "workoutLogs");
+  const byDate = await getDocs(query(logsRef, orderBy("date", "desc"), limit(1)));
+  if (!byDate.empty) return { id: byDate.docs[0].id, ...byDate.docs[0].data() };
+  const byLoggedAt = await getDocs(query(logsRef, orderBy("loggedAt", "desc"), limit(1)));
+  if (byLoggedAt.empty) return null;
+  return { id: byLoggedAt.docs[0].id, ...byLoggedAt.docs[0].data() };
+}
+
+export async function getWorkoutStats(uid, range, today = getFitnessDateObject()) {
+  const logsRef = collection(db, "users", uid, "workoutLogs");
+  if (!range || range.kind === "all") {
+    const [counted, summed] = await Promise.all([
+      getCountFromServer(logsRef),
+      getAggregateFromServer(logsRef, { sets: sum("setCount") }),
+    ]);
+    return {
+      workouts: counted.data().count,
+      sets: Number(summed.data().sets) || 0,
+      durationSec: null,
+      partialSets: true,
+    };
+  }
+
+  const bounds = rangeBounds(today, range);
+  const logs = await getWorkoutLogsByDate(uid, bounds.start, bounds.end);
+  return { ...summarizeLogs(logs), partialSets: false };
+}
+
+export async function deleteWorkoutLog(uid, logId) {
+  if (!uid || typeof logId !== "string" || !/^[A-Za-z0-9]+$/.test(logId)) {
+    throw new Error("Missing workout.");
+  }
+  await deleteDoc(doc(db, "users", uid, "workoutLogs", logId));
 }
 
 export async function getUserDoc(uid) {
@@ -176,6 +254,15 @@ export async function logWorkout(uid, type) {
     transaction.update(ref, updates);
     return updates;
   });
+}
+
+export async function creditWorkoutStreak(uid, workoutDate) {
+  if (!workoutDateCreditsStreak(workoutDate, formatDate(getFitnessDateObject()))) {
+    return { credited: false, reason: "not-today" };
+  }
+  const updates = await logWorkout(uid, "workout");
+  if (!updates) return { credited: false, reason: "already-logged" };
+  return { credited: true, updates };
 }
 
 function usernameTransactionStore(transaction) {
