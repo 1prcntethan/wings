@@ -1,112 +1,189 @@
-import React from "react";
+import { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import Navbar from "../components/navbar";
 import Footer from "../components/footer";
-import BetaDisclaimer from "../components/betadisclaimer";
-import "./dashboard.css";
 import { useAuth } from "../config/auth-context.jsx";
-import { useEffect, useState } from "react";
 import {
   buildStreakUpdate,
   displayedStreak,
   formatDate,
   getFitnessDateObject,
+  getLatestWorkoutLog,
   getUserDoc,
+  getWorkoutLogsByDate,
   logWorkout,
 } from "../config/firestore.js";
-import { Link } from "react-router-dom";
 import { skillRP, skillRPDenominator } from "../utilites/skilltorp.js";
+import { highestReached } from "../utilites/skillgroups.js";
+import { weekDots } from "../utilites/streakweek.js";
+import { DRAFT_KEY, normalizeWorkoutLog, parseDraft } from "../utilites/livesession.js";
+import { loadDesignPreview } from "../utilites/designpreview.js";
+import {
+  formatLogDate,
+  formatTrainedTime,
+  logSummary,
+  monthBounds,
+  monthLabel,
+  summarizeLogs,
+} from "../utilites/workoutstats.js";
+import "./dashboard.css";
+
+const GUIDES = [
+  { title: "Gym vs Calisthenics", to: "/training/gymvscalisthenics" },
+  { title: "Full-body vs Split", to: "/training/fullbodyvssplit" },
+  { title: "Rest & Recovery", to: "/training/restandrecovery" },
+  { title: "General Nutrition", to: "/training/generalnutrition" },
+];
 
 function describeRank(totalRP) {
   if (totalRP >= 920) {
-    return { name: "ethereal", until: "max rank reached.", label: "" };
+    return { name: "ethereal", min: 920, max: 920, next: "", until: null };
   }
   if (totalRP >= 800) {
-    return { name: "ascendant", until: 920 - totalRP, label: "Rp until next rank" };
+    return { name: "ascendant", min: 800, max: 920, next: "ethereal", until: 920 - totalRP };
   }
   if (totalRP >= 630) {
-    return { name: "diamond", until: 800 - totalRP, label: "Rp until next rank" };
+    return { name: "diamond", min: 630, max: 800, next: "ascendant", until: 800 - totalRP };
   }
   if (totalRP >= 430) {
-    return { name: "platinum", until: 630 - totalRP, label: "Rp until next rank" };
+    return { name: "platinum", min: 430, max: 630, next: "diamond", until: 630 - totalRP };
   }
   if (totalRP >= 260) {
-    return { name: "gold", until: 430 - totalRP, label: "Rp until next rank" };
+    return { name: "gold", min: 260, max: 430, next: "platinum", until: 430 - totalRP };
   }
   if (totalRP >= 120) {
-    return { name: "silver", until: 260 - totalRP, label: "Rp until next rank" };
+    return { name: "silver", min: 120, max: 260, next: "gold", until: 260 - totalRP };
   }
   if (totalRP > 0) {
-    return { name: "bronze", until: 120 - totalRP, label: "Rp until next rank" };
+    return { name: "bronze", min: 0, max: 120, next: "silver", until: 120 - totalRP };
   }
-  return { name: "unranked", until: 1, label: "Rp until next rank" };
+  return { name: "unranked", min: 0, max: 1, next: "bronze", until: 1 };
+}
+
+function rankArt(totalRP) {
+  if (totalRP >= 920) return { src: "ethereal.svg", alt: "Ethereal rank" };
+  if (totalRP >= 800) return { src: "ascended.svg", alt: "Ascendant rank" };
+  if (totalRP >= 630) return { src: "diamond.svg", alt: "Diamond rank" };
+  if (totalRP >= 430) return { src: "platinum.svg", alt: "Platinum rank" };
+  if (totalRP >= 260) return { src: "gold.svg", alt: "Gold rank" };
+  if (totalRP >= 120) return { src: "silver.svg", alt: "Silver rank" };
+  if (totalRP > 0) return { src: "bronze.svg", alt: "Bronze rank" };
+  return null;
+}
+
+function skillPointsOf(userSkills) {
+  let rankSum = 0;
+  for (const [skillName, progress] of Object.entries(userSkills || {})) {
+    if (typeof progress !== "number") continue;
+    const basePoints = skillRP.get(skillName) ?? 0;
+    if (!basePoints) continue;
+    rankSum += basePoints * (progress / 3);
+  }
+  return rankSum;
+}
+
+function headingDate(date) {
+  return date.toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "short",
+    day: "numeric",
+  });
 }
 
 export function Dashboard() {
   const { currentUser } = useAuth();
+  const navigate = useNavigate();
   const [userSkills, setUserSkills] = useState(null);
   const [workoutCounter, setWorkoutCounter] = useState(0);
   const [restCounter, setRestCounter] = useState(0);
-  const [streak, setStreak] = useState({
-    current: 0,
-    longest: 0,
-    lastLog: null,
-  });
+  const [streak, setStreak] = useState({ current: 0, longest: 0, lastLog: null });
+  const [username, setUsername] = useState("");
+  const [latest, setLatest] = useState(null);
+  const [monthStats, setMonthStats] = useState(null);
+  const [monthName, setMonthName] = useState("");
+  const [draft, setDraft] = useState(null);
   const [status, setStatus] = useState("loading");
   const [loadError, setLoadError] = useState(null);
   const [retryCount, setRetryCount] = useState(0);
   const [logging, setLogging] = useState(false);
   const [logError, setLogError] = useState(null);
-  const [username, setUsername] = useState("");
 
   useEffect(() => {
-    if (!currentUser) return;
+    try {
+      setDraft(parseDraft(localStorage.getItem(DRAFT_KEY)));
+    } catch {
+      setDraft(null);
+    }
+  }, []);
 
+  useEffect(() => {
     let cancelled = false;
-    setStatus("loading");
-    setLoadError(null);
 
-    getUserDoc(currentUser.uid)
-      .then((data) => {
+    async function load() {
+      setStatus("loading");
+      setLoadError(null);
+      const preview = await loadDesignPreview();
+      if (cancelled) return;
+      if (preview) {
+        const today = getFitnessDateObject();
+        const yesterday = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1);
+        const logs = preview.previewWorkoutLogs(today);
+        const bounds = monthBounds(today.getFullYear(), today.getMonth());
+        setUsername("Ethan");
+        setUserSkills(preview.previewSkills);
+        setStreak({ current: 12, longest: 31, lastLog: formatDate(yesterday) });
+        setWorkoutCounter(48);
+        setRestCounter(10);
+        setLatest(logs[0]);
+        setMonthStats(
+          summarizeLogs(logs.filter((log) => log.date >= bounds.start && log.date <= bounds.end)),
+        );
+        setMonthName(monthLabel(today));
+        setStatus("ready");
+        return;
+      }
+
+      if (!currentUser) return;
+      const today = getFitnessDateObject();
+      const bounds = monthBounds(today.getFullYear(), today.getMonth());
+      try {
+        const [data, log, monthLogs] = await Promise.all([
+          getUserDoc(currentUser.uid),
+          getLatestWorkoutLog(currentUser.uid),
+          getWorkoutLogsByDate(currentUser.uid, bounds.start, bounds.end),
+        ]);
         if (cancelled) return;
         if (!data) {
           setLoadError("Couldn't load your progress.");
           setStatus("error");
           return;
         }
-
         setUserSkills(data.skills ?? {});
-        setStreak(
-          data.streak || {
-            current: 0,
-            longest: 0,
-            lastLog: null,
-          },
-        );
+        setStreak(data.streak || { current: 0, longest: 0, lastLog: null });
         setWorkoutCounter(Number(data.workout) || 0);
         setRestCounter(Number(data.rest) || 0);
         setUsername(typeof data.username === "string" ? data.username : "");
+        setLatest(log ? normalizeWorkoutLog(log) : null);
+        setMonthStats(summarizeLogs(monthLogs));
+        setMonthName(monthLabel(today));
         setStatus("ready");
-      })
-      .catch(() => {
+      } catch {
         if (cancelled) return;
         setLoadError("Couldn't load your progress.");
         setStatus("error");
-      });
+      }
+    }
 
+    load();
     return () => {
       cancelled = true;
     };
   }, [currentUser, retryCount]);
 
-  async function handleLog(type) {
+  async function handleRest() {
     if (status !== "ready" || loggedToday || logging) return;
-
-    const previous = {
-      streak,
-      workout: workoutCounter,
-      rest: restCounter,
-    };
-    const predicted = buildStreakUpdate(previous, type);
+    const previous = { streak, workout: workoutCounter, rest: restCounter };
+    const predicted = buildStreakUpdate(previous, "rest");
     if (!predicted) return;
 
     setLogError(null);
@@ -114,9 +191,8 @@ export function Dashboard() {
     setStreak(predicted.streak);
     setWorkoutCounter(predicted.workout);
     setRestCounter(predicted.rest);
-
     try {
-      const result = await logWorkout(currentUser.uid, type);
+      const result = await logWorkout(currentUser.uid, "rest");
       if (!result) {
         setStreak(previous.streak);
         setWorkoutCounter(previous.workout);
@@ -137,277 +213,245 @@ export function Dashboard() {
     }
   }
 
-  function calculateSkillRP() {
-    if (!userSkills) return 0;
-
-    let rankSum = 0;
-
-    for (const [skillName, progress] of Object.entries(userSkills)) {
-      if (typeof progress !== "number") continue;
-
-      const basePoints = skillRP.get(skillName) ?? 0;
-
-      if (!basePoints) continue;
-
-      const weight = progress / 3;
-      rankSum += basePoints * weight;
+  function startSession() {
+    if (draft) {
+      navigate("/workoutlog/session");
+      return;
     }
+    navigate("/workoutlog/session", { state: { fresh: true } });
+  }
 
-    return rankSum;
+  function repeatWorkout() {
+    if (!latest || draft) {
+      navigate("/workoutlog/session");
+      return;
+    }
+    navigate("/workoutlog/session", { state: { fresh: true, log: latest } });
   }
 
   const today = formatDate(getFitnessDateObject());
   const visibleStreak = displayedStreak(streak);
-
   const loggedToday = streak.lastLog === today;
-  const totalDays = workoutCounter + restCounter;
-  const workoutPercentage =
-    totalDays > 0 ? Math.round((workoutCounter / totalDays) * 100) : 0;
-  const skillPoints = calculateSkillRP();
+  const skillPoints = skillPointsOf(userSkills);
   const totalSkillRP = Math.round((skillPoints / skillRPDenominator) * 750);
   const totalStreakRP = Math.round(Math.sqrt(visibleStreak / 365) * 250);
   const totalRP = totalSkillRP + totalStreakRP;
   const rank = describeRank(totalRP);
-
-  function rankSVG(totalRP) {
-    if (totalRP >= 920) {
-      return <img src="ethereal.svg" alt="Ethereal rank" className="rank-svg ethereal"></img>;
-    } else if (totalRP >= 800) {
-      return <img src="ascended.svg" alt="Ascendant rank" className="rank-svg asc"></img>;
-    } else if (totalRP >= 630) {
-      return <img src="diamond.svg" alt="Diamond rank" className="rank-svg diamond"></img>;
-    } else if (totalRP >= 430) {
-      return <img src="platinum.svg" alt="Platinum rank" className="rank-svg plat"></img>;
-    } else if (totalRP >= 260) {
-      return <img src="gold.svg" alt="Gold rank" className="rank-svg gold"></img>;
-    } else if (totalRP >= 120) {
-      return <img src="silver.svg" alt="Silver rank" className="rank-svg silver"></img>;
-    } else if (totalRP > 0) {
-      return <img src="bronze.svg" alt="Bronze rank" className="rank-svg bronze"></img>;
-    }
-    return null;
-  }
+  const art = rankArt(totalRP);
+  const span = rank.max - rank.min;
+  const rankFill = rank.name === "ethereal" || span <= 0
+    ? 100
+    : Math.min(100, Math.max(0, ((totalRP - rank.min) / span) * 100));
+  const displayName = username || currentUser?.email?.split("@")[0] || "athlete";
+  const initial = displayName.trim().charAt(0).toUpperCase() || "W";
+  const dots = weekDots(getFitnessDateObject(), streak);
+  const reached = status === "ready" ? highestReached(userSkills || {}) : [];
+  const summary = latest ? logSummary(latest) : null;
 
   return (
     <>
       <Navbar />
-      <BetaDisclaimer />
-      <h1 className="dashboard-title">
-        {status === "ready"
-          ? `${username || currentUser?.email}'s dashboard`
-          : "dashboard"}
-      </h1>
-
-      {status !== "ready" ? (
-        <p className="log-caption">
-          {status === "loading" ? "Loading your progress..." : loadError}{" "}
-          {status === "error" && (
-            <button
-              className="log-streak"
-              onClick={() => setRetryCount((count) => count + 1)}
-            >
-              retry
-            </button>
-          )}
-        </p>
-      ) : (
-      <div className="streak-container">
-        <div className="streak-display">
-          <div className="streak-info">
-            <div className="streak-counter">
-              streak: {visibleStreak} {visibleStreak > 0 ? "🔥" : ""}
-            </div>
-            <div className="streak-data">
-              <div className="streak-data__left">Longest streak: </div>
-              <div className="streak-data__right">{streak.longest}</div>
-            </div>
-            <div className="streak-data">
-              <div className="streak-data__left">Total workouts logged:</div>
-              <div className="streak-data__right">{workoutCounter}</div>
-            </div>
-            <div className="streak-data">
-              <div className="streak-data__left">Total rest days logged: </div>
-              <div className="streak-data__right">{restCounter}</div>
-            </div>
-            <div className="streak-data">
-              <div className="streak-data__left">Workout consistency: </div>
-              <div className="streak-data__right">{workoutPercentage}%</div>
-            </div>
-          </div>
-          <div className="streak-info">
-            <button
-              className="log-streak"
-              disabled={loggedToday || logging}
-              onClick={() => handleLog("workout")}
-            >
-              {loggedToday ? "logged today" : logging ? "saving..." : "log workout"}
-            </button>
-            <button
-              className="log-streak"
-              disabled={loggedToday || logging}
-              onClick={() => handleLog("rest")}
-            >
-              {loggedToday ? "logged today" : logging ? "saving..." : "log rest day"}
-            </button>
-            <div className="streak-rank-points">+{totalStreakRP} Rp</div>
-          </div>
-        </div>
-        <p className="log-caption">
-          *Make sure to log your workout or rest day once per day to keep your
-          streak alive!{" "}
-          {streak.lastLog
-            ? `Your last log was on ${streak.lastLog}. `
-            : "You have not logged a day yet. "}
-          Resets at 4:00am daily.
-        </p>
-        {logError && <p className="log-caption">{logError}</p>}
-      </div>
-      )}
-
-      <div className="streak-container">
-        <div className="workout-link-display">
-          <Link to="/workoutlog" className="workout-link">
-            <div className="workout-link-btn">view workout log</div>
+      <main className="dash-page" data-screen="dashboard" data-ready={status}>
+        <header className="dash-greet">
+          <p className="dash-date">{headingDate(new Date())}</p>
+          <h1 className="dash-hello">Hey, {displayName}</h1>
+          <Link to="/settings" className="dash-avatar" aria-label="Account">
+            {initial}
           </Link>
-        </div>
-      </div>
-      <br />
-      {status === "ready" && (
-      <div className="rank-container">
-        <div className="rank-display">
-          <Link to="/howtouseguide">
-            <img src="info.svg" id="rank-info" alt="How rank is calculated"></img>
-          </Link>
+        </header>
 
-          <div className="rank-top">
-            {rankSVG(totalRP)}
-            <div className="rank-rank">{rank.name}</div>
-            {totalRP} Rp
-          </div>
-          <div className="rank-divider"></div>
-          <div className="rank-bottom">
-            <div className="rank-contributions">
-              <div className="rank-points">
-                <div className="rank-points__left">streak Rp contribution:</div>
-                <div className="rank-points__right">+{totalStreakRP} Rp</div>
+        {status !== "ready" ? (
+          <p className="dash-note">
+            {status === "loading" ? "Loading your progress..." : loadError}{" "}
+            {status === "error" && (
+              <button type="button" onClick={() => setRetryCount((count) => count + 1)}>
+                retry
+              </button>
+            )}
+          </p>
+        ) : (
+          <div className="dash-grid">
+            <section className="dash-card dash-streak">
+              <div className="dash-streak-top">
+                <span className="dash-flame" aria-hidden="true">
+                  <svg viewBox="0 0 24 24">
+                    <path d="M12 2s2 4 2 6c1.2-.8 2-2.4 2-2.4S20 8.2 20 13a8 8 0 1 1-16 0c0-3 2.2-5.2 3.4-6.4C8 8 8.8 10 8.8 10 9 7 12 2 12 2z" />
+                  </svg>
+                </span>
+                <div>
+                  <strong>{visibleStreak}</strong>
+                  <span>day streak</span>
+                  <small>+{totalStreakRP} Rp from streak</small>
+                </div>
+                <div className="dash-longest">
+                  <b>{streak.longest}</b>
+                  <span>longest</span>
+                </div>
               </div>
-              <div className="rank-points">
-                <div className="rank-points__left">skill Rp contribution:</div>
-                <div className="rank-points__right">+{totalSkillRP} Rp</div>
+              <ol className="dash-week">
+                {dots.map((dot) => (
+                  <li key={dot.key}>
+                    <span className={`dash-dot dash-dot--${dot.state}`} />
+                    <span>{dot.label}</span>
+                  </li>
+                ))}
+              </ol>
+              <button type="button" className="dash-primary" onClick={startSession}>
+                {draft ? "Resume session" : "Start session"}
+              </button>
+              <button
+                type="button"
+                className="dash-secondary"
+                disabled={loggedToday || logging}
+                onClick={handleRest}
+              >
+                {loggedToday ? "Logged today" : logging ? "Saving..." : "Log rest day"}
+              </button>
+              {logError && <p className="dash-note">{logError}</p>}
+            </section>
+
+            <section className="dash-card dash-rank">
+              <div className="dash-kicker">
+                <span>Rank</span>
+                <Link to="/howtouseguide">how it works</Link>
               </div>
-            </div>
-            <div className="rank-up">
-              +{rank.until} {rank.label}
-            </div>
+              <div className="dash-rank-main">
+                {art && <img src={art.src} alt={art.alt} className="dash-rank-mark" />}
+                <div>
+                  <h2>{rank.name}</h2>
+                  <p>{totalRP} Rp</p>
+                </div>
+              </div>
+              <div
+                className="dash-bar"
+                role="progressbar"
+                aria-valuemin={rank.min}
+                aria-valuemax={rank.max}
+                aria-valuenow={totalRP}
+              >
+                <span style={{ width: `${rankFill}%` }} />
+              </div>
+              <div className="dash-scale">
+                <span>{rank.min}</span>
+                <span>
+                  {rank.until == null ? "max rank reached" : `${rank.until} Rp to ${rank.next}`}
+                </span>
+                <span>{rank.name === "ethereal" ? "" : rank.max}</span>
+              </div>
+            </section>
+
+            <section className="dash-card dash-reached">
+              <div className="dash-kicker">
+                <span>Reached</span>
+                <Link to="/skilltree">skill tree</Link>
+              </div>
+              {reached.length === 0 ? (
+                <p className="dash-note">Unlock a skill to see your furthest node in each group.</p>
+              ) : (
+                <ul className="dash-reached-list">
+                  {reached.map((skill) => (
+                    <li key={skill.id}>
+                      <i className={`is-${skill.status === "in progress" ? "progress" : skill.status}`} />
+                      <span>
+                        <strong>{skill.title}</strong>
+                        <small>{skill.group} · {skill.rp} Rp</small>
+                      </span>
+                      <em>{skill.status}</em>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+
+            <section className="dash-card dash-last">
+              <div className="dash-kicker">
+                <span>Last workout</span>
+                <Link to="/workoutlog">view workout log</Link>
+              </div>
+              {!latest ? (
+                <p className="dash-note">No workouts yet. Start a session when you train.</p>
+              ) : (
+                <>
+                  <div className="dash-last-meta">
+                    <span className={`dash-cat dash-cat--${latest.category}`}>{latest.category}</span>
+                    <span>{formatLogDate(latest.date)}</span>
+                  </div>
+                  <p className="dash-last-line">{summary?.line || "Saved workout"}</p>
+                  <div className="dash-last-actions">
+                    <button type="button" onClick={repeatWorkout}>
+                      {draft ? "Resume" : "Repeat"}
+                    </button>
+                    <Link to="/workoutlog">Details</Link>
+                  </div>
+                </>
+              )}
+            </section>
+
+            <section className="dash-card dash-squad" aria-label="Squad, coming soon">
+              <div className="dash-kicker">
+                <span>Squad</span>
+                <span className="dash-soon">coming soon</span>
+              </div>
+              <div className="dash-faces" aria-hidden="true">
+                <span>?</span>
+                <span>?</span>
+                <span>?</span>
+              </div>
+              <h2>Train with friends</h2>
+              <p>Compare streaks, ranks and skills with a small squad.</p>
+            </section>
+
+            <section className="dash-card dash-learn">
+              <div className="dash-kicker">
+                <span>Learn</span>
+                <Link to="/learn">hub</Link>
+              </div>
+              <div className="dash-learn-grid">
+                <Link to="/training">Training</Link>
+                <Link to="/tutorials">Tutorials</Link>
+                <Link to="/terminology">Terminology</Link>
+                <Link to="/howtouseguide">How to use</Link>
+              </div>
+            </section>
+
+            <section className="dash-card dash-month dash-desktop-only">
+              <div className="dash-kicker">
+                <span>This month</span>
+              </div>
+              <div className="dash-month-stats">
+                <p><b>{monthStats?.workouts ?? 0}</b><span>workouts</span></p>
+                <p>
+                  <b title="Duration is not stored on workout logs.">
+                    {formatTrainedTime(monthStats?.durationSec)}
+                  </b>
+                  <span>time trained</span>
+                </p>
+                <p><b>{monthStats?.sets ?? 0}</b><span>total sets</span></p>
+              </div>
+              <p className="dash-note">{monthName}</p>
+            </section>
+
+            <section className="dash-card dash-guides dash-desktop-only">
+              <div className="dash-kicker">
+                <span>New guides</span>
+              </div>
+              <ul>
+                {GUIDES.map((guide) => (
+                  <li key={guide.to}>
+                    <Link to={guide.to}>
+                      <span>{guide.title}</span>
+                      <span>read</span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </section>
           </div>
-        </div>
+        )}
+      </main>
+      <div className="desktop-footer">
+        <Footer />
       </div>
-      )}
-
-      {/* <div className="dashboard-skill__container">
-        <div className="dashboard-skill__push">
-          <p>target push</p>
-          <Link to={skillLinkMap.get(push)} className="skill-svg">
-            {skillTreeIcon.get(push)}
-          </Link>
-          <div className="dashboard-skill__title">
-            {push === null || push === "Change target push skill"
-              ? "select target push skill"
-              : skillNameMap?.get(push)}
-          </div>
-          <div className="dashboard-skill__difficulty">
-            skill difficulty: {skillDiffMap?.get(push)?.toLowerCase()}
-          </div>
-          <select
-            id="push-selector"
-            className="skill-selector"
-            onChange={async (e) => {
-              const newSkill = e.target.value;
-
-              try {
-                await updateSkill(currentUser.uid, "push", newSkill);
-                setPush(newSkill);
-              } catch (error) {
-                if (error.code === "permission-denied") {
-                  alert("Please wait 2 seconds between skill changes.");
-                } else {
-                  console.error(error);
-                  alert("An error occured. Please try again.");
-                }
-              }
-            }}
-          >
-            <option>Change target push skill</option>
-            <option value="handstand">Handstand</option>
-            <option value="hspu">Handstand Push-up</option>
-            <option value="ninety-deg-hold">90 Degree Hold</option>
-            <option value="full-pl">Full Planche</option>
-          </select>
-        </div>
-        <div className="dashboard-skill__pull">
-          <p>target pull</p>
-          <Link to={skillLinkMap.get(pull)} className="skill-svg">
-            {skillTreeIcon.get(pull)}
-          </Link>
-          <div className="dashboard-skill__title">
-            {pull === null || pull === "Change target pull skill"
-              ? "select target pull skill"
-              : skillNameMap?.get(pull)}
-          </div>
-          <div className="dashboard-skill__difficulty">
-            skill difficulty: {skillDiffMap?.get(pull)?.toLowerCase()}
-          </div>
-          <select
-            id="pull-selector"
-            className="skill-selector"
-            onChange={async (e) => {
-              const newSkill = e.target.value;
-
-              try {
-                await updateSkill(currentUser.uid, "pull", newSkill);
-                setPull(newSkill);
-              } catch (error) {
-                if (error.code === "permission-denied") {
-                  alert("Please wait 2 seconds between skill changes.");
-                } else {
-                  console.error(error);
-                  alert("An error occured. Please try again.");
-                }
-              }
-            }}
-          >
-            <option value={null}>Change target pull skill</option>
-            <option value="pull-up">Pull-up</option>
-            <option value="muscle-up">Muscle Up</option>
-            <option value="full-fl">Front Lever</option>
-            <option value="oac-oap">One Arm Pull-up</option>
-          </select>
-        </div>
-      </div> */}
-      <div className="dashboard-donate">
-        <div>
-          Enjoying this platform? Support its development. Donate through
-          <a
-            href="https://ko-fi.com/wingssw"
-            className="donate-link"
-            target="_blank"
-            rel="noopener"
-          >
-            Ko-fi
-          </a>
-          or
-          <a
-            href="https://www.paypal.com/donate/?hosted_button_id=RNREJQ826VL46"
-            className="donate-link"
-            target="_blank"
-            rel="noopener"
-          >
-            Paypal
-          </a>
-          !!
-        </div>
-      </div>
-      <Footer />
     </>
   );
 }

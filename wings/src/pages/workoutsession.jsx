@@ -1,7 +1,12 @@
 import { useEffect, useReducer, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../config/auth-context.jsx";
-import { formatDate, getFitnessDateObject, saveWorkoutLog } from "../config/firestore.js";
+import {
+  creditWorkoutStreak,
+  formatDate,
+  getFitnessDateObject,
+  saveWorkoutLog,
+} from "../config/firestore.js";
 import {
   DRAFT_KEY,
   blankSession,
@@ -138,16 +143,20 @@ export function WorkoutSession() {
     setSaving(true);
     setSaveError(null);
     try {
-      await saveWorkoutLog(
-        currentUser.uid,
-        sessionToLog(session, formatDate(getFitnessDateObject())),
-      );
+      const log = sessionToLog(session, formatDate(getFitnessDateObject()));
+      await saveWorkoutLog(currentUser.uid, log);
+      let streakWarning = null;
+      try {
+        await creditWorkoutStreak(currentUser.uid, log.date);
+      } catch {
+        streakWarning = "Workout saved, but the streak didn't update.";
+      }
       try {
         localStorage.removeItem(DRAFT_KEY);
       } catch {
         // The workout is already saved.
       }
-      navigate("/workoutlog");
+      navigate("/workoutlog", streakWarning ? { state: { streakWarning } } : undefined);
     } catch {
       savingLock.current = false;
       setSaveError("Couldn't save that workout. Your session is still here.");

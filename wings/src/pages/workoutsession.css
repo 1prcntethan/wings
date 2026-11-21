@@ -17,6 +17,12 @@
   padding-bottom: 2.5rem;
 }
 
+@media (max-width: 640px) {
+  .ls-page--focus {
+    min-height: calc(100svh - 64px - env(safe-area-inset-bottom));
+  }
+}
+
 .ls-page button {
   font-family: "Major Mono Display", monospace;
   font-weight: 400;

@@ -1,10 +1,9 @@
-import React, { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import React, { useEffect, useRef, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import CreatableSelect from "react-select/creatable";
 import Navbar from "../components/navbar";
-import Footer from "../components/footer";
-import BetaDisclaimer from "../components/betadisclaimer";
 import "./workoutlog.css";
+import { loadDesignPreview } from "../utilites/designpreview.js";
 import { useAuth } from "../config/auth-context.jsx";
 import { skillTitle } from "../utilites/skilltitles.js";
 import {
@@ -16,15 +15,28 @@ import {
   parseDraft,
   restSeconds,
 } from "../utilites/livesession.js";
-import { shareWorkoutCard } from "../utilites/progresscard.js";
+import WorkoutHistory from "../components/workoutloghistory.jsx";
 import {
+  creditWorkoutStreak,
+  deleteWorkoutLog,
+  updateWorkoutLog,
   formatDate,
   getFitnessDateObject,
   getUserDoc,
-  getWorkoutLogs,
-  logWorkout,
+  getWorkoutLogsByDate,
+  getWorkoutStats,
   saveWorkoutLog,
 } from "../config/firestore.js";
+import {
+  DEFAULT_STAT_RANGE,
+  historySkeleton,
+  monthBounds,
+  monthLabel,
+  rangeBounds,
+  statRangeById,
+  summarizeLogs,
+  yearBounds,
+} from "../utilites/workoutstats.js";
 
 // ─── section config ────────────────────────────────────────────────────────────
 // Each section has a label, a max number of exercises, and a hint shown in the UI.
@@ -198,30 +210,6 @@ function fromSavedExercise(raw) {
     notes: raw.notes == null ? "" : String(raw.notes),
     restSec: restSeconds(raw.restSec) ?? DEFAULT_REST,
   };
-}
-
-function restDetail(exercise) {
-  const seconds = restSeconds(exercise?.restSec);
-  if (seconds == null) return "";
-  return `rest ${formatClock(seconds * 1000)}`;
-}
-
-function exerciseDetail(exercise) {
-  const efforts = Array.isArray(exercise.efforts)
-    ? exercise.efforts.map((value) => String(value).trim()).filter(Boolean)
-    : [];
-
-  if (efforts.length > 0) {
-    const unit = exercise.measure === "hold" ? "s" : "";
-    const values = efforts.map((value) => `${value}${unit}`).join(", ");
-    const sets = exercise.sets || efforts.length;
-    return `${sets} × ${values}`;
-  }
-
-  if (exercise.sets && exercise.reps) return `${exercise.sets} × ${exercise.reps}`;
-  if (exercise.sets) return `${exercise.sets} sets`;
-  if (exercise.reps) return String(exercise.reps);
-  return "";
 }
 
 function validateWorkout(formData) {
@@ -417,126 +405,45 @@ function SectionBlock({ section, exercises, onChange, onEffort }) {
   );
 }
 
-function LogCard({ log, onCopy, onStart, startDisabled }) {
-  const [open, setOpen] = useState(false);
-  const [sharing, setSharing] = useState(false);
-  const [shareError, setShareError] = useState(null);
-
-  const hasExercises = (sectionKey) => {
-    const rows = log.sections?.[sectionKey];
-    return Array.isArray(rows) && rows.some((e) => String(e?.name ?? "").trim() !== "");
-  };
-
-  return (
-    <div className="wl-card">
-      <div className="wl-card-header" onClick={() => setOpen((o) => !o)}>
-        <div className="wl-card-meta">
-          <span className="wl-card-date">{log.date}</span>
-          <span className={`wl-card-category wl-cat--${log.category}`}>
-            {log.category}
-          </span>
-        </div>
-        <div className="wl-card-actions">
-          <button
-            type="button"
-            className="wl-copy-btn"
-            disabled={log.pending || startDisabled}
-            onClick={(e) => {
-              e.stopPropagation();
-              onStart(log);
-            }}
-          >
-            start
-          </button>
-          <button
-            type="button"
-            className="wl-copy-btn"
-            disabled={log.pending}
-            onClick={(e) => {
-              e.stopPropagation();
-              onCopy(log);
-            }}
-          >
-            {log.pending ? "saving" : "copy"}
-          </button>
-          <button
-            type="button"
-            className="wl-copy-btn"
-            disabled={sharing}
-            onClick={async (e) => {
-              e.stopPropagation();
-              if (sharing) return;
-              setSharing(true);
-              setShareError(null);
-              try {
-                await shareWorkoutCard(log);
-              } catch (error) {
-                if (error?.name !== "AbortError") {
-                  setShareError("Couldn't make that image. Try again.");
-                }
-              } finally {
-                setSharing(false);
-              }
-            }}
-          >
-            {sharing ? "…" : "share"}
-          </button>
-          <span className="wl-card-toggle">{open ? "▲" : "▼"}</span>
-        </div>
-      </div>
-
-      {shareError && <p className="wl-card-share-error">{shareError}</p>}
-
-      {open && (
-        <div className="wl-card-body">
-          {SECTIONS.map((s) =>
-            hasExercises(s.key) ? (
-              <div key={s.key} className="wl-card-section">
-                <div className="wl-card-section-title">{s.label}</div>
-                {(Array.isArray(log.sections?.[s.key]) ? log.sections[s.key] : [])
-                  .filter((e) => String(e?.name ?? "").trim() !== "")
-                  .map((e, i) => {
-                    const detail = [exerciseDetail(e), restDetail(e)].filter(Boolean).join(" · ");
-                    return (
-                    <div key={i} className="wl-card-exercise">
-                      <span className="wl-card-ex-name">{e.name}</span>
-                      {detail && (
-                        <span className="wl-card-ex-detail">{detail}</span>
-                      )}
-                      {e.notes ? (
-                        <span className="wl-card-ex-notes">{e.notes}</span>
-                      ) : null}
-                    </div>
-                    );
-                  })}
-              </div>
-            ) : null,
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ─── main component ────────────────────────────────────────────────────────────
-
 export function WorkoutLog() {
   const { currentUser } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const formRef = useRef(null);
+  const archiveRef = useRef({});
+  const previewRef = useRef(null);
   const [sessionDraft, setSessionDraft] = useState(null);
   const [confirmDiscardDraft, setConfirmDiscardDraft] = useState(false);
-
-  const [logs, setLogs] = useState([]);
-  const [logsLoading, setLogsLoading] = useState(true);
-  const [logsError, setLogsError] = useState(null);
-  const [reloadLogs, setReloadLogs] = useState(0);
-
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState(blankLog());
+  const [editingId, setEditingId] = useState(null);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState(null);
   const [streakWarning, setStreakWarning] = useState(null);
-  const [username, setUsername] = useState("");
+  const [createdAt, setCreatedAt] = useState(null);
+  const [rangeId, setRangeId] = useState(DEFAULT_STAT_RANGE);
+  const [stats, setStats] = useState(null);
+  const [statsStatus, setStatsStatus] = useState("loading");
+  const [statsError, setStatsError] = useState(null);
+  const [statsRetry, setStatsRetry] = useState(0);
+  const [currentLogs, setCurrentLogs] = useState([]);
+  const [currentStatus, setCurrentStatus] = useState("loading");
+  const [currentError, setCurrentError] = useState(null);
+  const [currentRetry, setCurrentRetry] = useState(0);
+  const [archive, setArchive] = useState({});
+  const [openKeys, setOpenKeys] = useState({});
+  const [filter, setFilter] = useState("all");
+  const [query, setQuery] = useState("");
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState(null);
+
+  useEffect(() => {
+    if (typeof location.state?.streakWarning === "string") {
+      setStreakWarning(location.state.streakWarning);
+    }
+  }, [location.state]);
 
   useEffect(() => {
     try {
@@ -546,53 +453,130 @@ export function WorkoutLog() {
     }
   }, []);
 
-  // ── fetch past logs ──────────────────────────────────────────────────────────
   useEffect(() => {
-    if (!currentUser) {
-      setLogs([]);
-      setLogsLoading(false);
-      setLogsError(null);
-      return;
+    let cancelled = false;
+
+    async function loadUser() {
+      const preview = await loadDesignPreview();
+      if (cancelled) return;
+      if (preview) {
+        previewRef.current = preview;
+        setCreatedAt(new Date(new Date().getFullYear() - 1, 0, 1));
+        return;
+      }
+      if (!currentUser) return;
+      try {
+        const data = await getUserDoc(currentUser.uid);
+        if (cancelled || !data) return;
+        const created = data.createdAt;
+        setCreatedAt(typeof created?.toDate === "function" ? created.toDate() : null);
+      } catch {
+        if (!cancelled) setCreatedAt(null);
+      }
     }
 
-    let cancelled = false;
-    setLogsLoading(true);
-    setLogsError(null);
-    getWorkoutLogs(currentUser.uid)
-      .then((rows) => {
-        if (!cancelled) setLogs(rows.map((row) => normalizeWorkoutLog(row)));
-      })
-      .catch(() => {
-        if (!cancelled) setLogsError("Couldn't load your workouts.");
-      })
-      .finally(() => {
-        if (!cancelled) setLogsLoading(false);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [currentUser, reloadLogs]);
-
-  useEffect(() => {
-    if (!currentUser) return;
-
-    let cancelled = false;
-    getUserDoc(currentUser.uid)
-      .then((data) => {
-        if (cancelled) return;
-        setUsername(typeof data?.username === "string" ? data.username : "");
-      })
-      .catch(() => {
-        if (!cancelled) setUsername("");
-      });
-
+    loadUser();
     return () => {
       cancelled = true;
     };
   }, [currentUser]);
 
-  // ── field updater ────────────────────────────────────────────────────────────
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadStats() {
+      setStatsStatus("loading");
+      setStatsError(null);
+      const preview = previewRef.current || (await loadDesignPreview());
+      if (cancelled) return;
+      if (preview) {
+        previewRef.current = preview;
+        const today = getFitnessDateObject();
+        const range = statRangeById(rangeId);
+        if (range.kind === "all") {
+          setStats(preview.previewAllTime);
+        } else {
+          const bounds = rangeBounds(today, range);
+          const logs = preview.previewWorkoutLogs(today).filter(
+            (log) => log.date >= bounds.start && log.date <= bounds.end,
+          );
+          setStats({ ...summarizeLogs(logs), partialSets: false });
+        }
+        setStatsStatus("ready");
+        return;
+      }
+      if (!currentUser) {
+        setStats(null);
+        setStatsStatus("ready");
+        return;
+      }
+      try {
+        const next = await getWorkoutStats(currentUser.uid, statRangeById(rangeId));
+        if (!cancelled) {
+          setStats(next);
+          setStatsStatus("ready");
+        }
+      } catch {
+        if (!cancelled) {
+          setStatsError("Couldn't load those stats.");
+          setStatsStatus("error");
+        }
+      }
+    }
+
+    loadStats();
+    return () => {
+      cancelled = true;
+    };
+  }, [currentUser, rangeId, statsRetry]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadMonth() {
+      setCurrentStatus("loading");
+      setCurrentError(null);
+      const preview = previewRef.current || (await loadDesignPreview());
+      if (cancelled) return;
+      if (preview) {
+        previewRef.current = preview;
+        const today = getFitnessDateObject();
+        const bounds = monthBounds(today.getFullYear(), today.getMonth());
+        setCurrentLogs(
+          preview.previewWorkoutLogs(today).filter(
+            (log) => log.date >= bounds.start && log.date <= bounds.end,
+          ),
+        );
+        setCurrentStatus("ready");
+        return;
+      }
+      if (!currentUser) {
+        setCurrentLogs([]);
+        setCurrentStatus("ready");
+        return;
+      }
+      const today = getFitnessDateObject();
+      const bounds = monthBounds(today.getFullYear(), today.getMonth());
+      try {
+        const rows = await getWorkoutLogsByDate(currentUser.uid, bounds.start, bounds.end);
+        if (!cancelled) {
+          setCurrentLogs(rows.map((row) => normalizeWorkoutLog(row)));
+          setCurrentStatus("ready");
+        }
+      } catch {
+        if (!cancelled) {
+          setCurrentError("Couldn't load this month.");
+          setCurrentStatus("error");
+        }
+      }
+    }
+
+    loadMonth();
+    return () => {
+      cancelled = true;
+    };
+  }, [currentUser, currentRetry]);
+
   function updateExercise(sectionKey, index, field, value) {
     setFormData((prev) => {
       const updatedSection = prev.sections[sectionKey].map((ex, i) => {
@@ -614,7 +598,7 @@ export function WorkoutLog() {
     setFormData((prev) => {
       const updatedSection = prev.sections[sectionKey].map((ex, i) => {
         if (i !== index) return ex;
-        const efforts = resizeEfforts(ex.efforts, setCount(ex.sets));
+        const efforts = Array.isArray(ex.efforts) ? [...ex.efforts] : [];
         efforts[setIndex] = value;
         return { ...ex, efforts };
       });
@@ -653,7 +637,34 @@ export function WorkoutLog() {
     };
   }
 
-  // ── save ─────────────────────────────────────────────────────────────────────
+  function forgetLog(logId) {
+    setCurrentLogs((prev) => prev.filter((row) => row.id !== logId));
+    for (const [key, entry] of Object.entries(archiveRef.current)) {
+      if (!entry?.logs) continue;
+      archiveRef.current[key] = {
+        ...entry,
+        logs: entry.logs.filter((row) => row.id !== logId),
+      };
+    }
+    setArchive({ ...archiveRef.current });
+  }
+
+  function rememberLog(log) {
+    const todayDate = getFitnessDateObject();
+    const bounds = monthBounds(todayDate.getFullYear(), todayDate.getMonth());
+    if (log.date >= bounds.start && log.date <= bounds.end) {
+      setCurrentLogs((prev) => [log, ...prev.filter((row) => row.id !== log.id)]);
+    }
+    for (const [key, entry] of Object.entries(archiveRef.current)) {
+      if (entry?.status !== "ready" || !log.date.startsWith(key)) continue;
+      archiveRef.current[key] = {
+        ...entry,
+        logs: [log, ...entry.logs.filter((row) => row.id !== log.id)],
+      };
+    }
+    setArchive({ ...archiveRef.current });
+  }
+
   async function handleSave() {
     if (!currentUser) {
       setSaveError("Sign in to save a workout.");
@@ -669,30 +680,33 @@ export function WorkoutLog() {
 
     const snapshot = formData;
     const savedShape = sanitizeWorkout(formData);
-    const tempId = `pending-${Date.now()}`;
+    const replacingId = editingId;
+    const tempId = replacingId || `pending-${Date.now()}`;
     setSaveError(null);
     setStreakWarning(null);
     setSaving(true);
-    setLogs((prev) => [{ id: tempId, ...savedShape, pending: true }, ...prev]);
+    forgetLog(tempId);
+    rememberLog({ id: tempId, ...savedShape, pending: true });
     setFormData(blankLog());
+    setEditingId(null);
     setShowForm(false);
 
     try {
-      const saved = await saveWorkoutLog(currentUser.uid, savedShape);
-      setLogs((prev) =>
-        prev.map((log) =>
-          log.id === tempId ? { id: saved, ...savedShape, pending: false } : log,
-        ),
-      );
-      if (savedShape.date === formatDate(getFitnessDateObject())) {
-        try {
-          await logWorkout(currentUser.uid, "workout");
-        } catch {
-          setStreakWarning("Workout saved, but the streak didn't update.");
-        }
+      const savedId = replacingId
+        ? replacingId
+        : await saveWorkoutLog(currentUser.uid, savedShape);
+      if (replacingId) await updateWorkoutLog(currentUser.uid, replacingId, savedShape);
+      forgetLog(tempId);
+      rememberLog({ id: savedId, ...savedShape, pending: false });
+      try {
+        await creditWorkoutStreak(currentUser.uid, savedShape.date);
+      } catch {
+        setStreakWarning("Workout saved, but the streak didn't update.");
       }
+      setStatsRetry((count) => count + 1);
     } catch {
-      setLogs((prev) => prev.filter((log) => log.id !== tempId));
+      forgetLog(tempId);
+      setEditingId(replacingId);
       setFormData(snapshot);
       setShowForm(true);
       setSaveError("Failed to save. Please try again.");
@@ -701,9 +715,12 @@ export function WorkoutLog() {
     }
   }
 
-  function handleStart(log) {
-    if (sessionDraft) return;
-    navigate("/workoutlog/session", { state: { fresh: true, log } });
+  function handleStartFresh() {
+    if (sessionDraft) {
+      navigate("/workoutlog/session");
+      return;
+    }
+    navigate("/workoutlog/session", { state: { fresh: true } });
   }
 
   function discardDraft() {
@@ -716,265 +733,228 @@ export function WorkoutLog() {
     setConfirmDiscardDraft(false);
   }
 
-  function handleCopy(log) {
-    // rebuild sections to match current SECTIONS config
-    // in case section slots have changed since the log was saved
+  function fillForm(log) {
     const sections = {};
-    SECTIONS.forEach((s) => {
-      const saved = Array.isArray(log.sections?.[s.key]) ? log.sections[s.key] : [];
-      // pad or trim to current max
-      const padded = Array.from({ length: s.max }, (_, i) =>
-        fromSavedExercise(saved[i]),
+    SECTIONS.forEach((section) => {
+      const saved = Array.isArray(log.sections?.[section.key]) ? log.sections[section.key] : [];
+      sections[section.key] = Array.from({ length: section.max }, (_, index) =>
+        fromSavedExercise(saved[index]),
       );
-      sections[s.key] = padded;
     });
-
     setFormData({
-      date: formatDate(getFitnessDateObject()), // today's date, not the old one
+      date: /^\d{4}-\d{2}-\d{2}$/.test(log.date) ? log.date : formatDate(getFitnessDateObject()),
       category: WORKOUT_CATEGORIES.includes(log.category) ? log.category : "push",
       sections,
     });
+    setEditingId(log.id);
     setShowForm(true);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    window.setTimeout(() => {
+      formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 0);
   }
 
-  // ─────────────────────────────────────────────────────────────────────────────
+  async function fetchArchive(entry) {
+    if (!currentUser) {
+      archiveRef.current[entry.key] = { status: "ready", logs: [] };
+      setArchive({ ...archiveRef.current });
+      return;
+    }
+    archiveRef.current[entry.key] = { status: "loading", logs: [] };
+    setArchive({ ...archiveRef.current });
+    const bounds = entry.kind === "year" ? yearBounds(entry.year) : monthBounds(entry.year, entry.month);
+    try {
+      const rows = await getWorkoutLogsByDate(currentUser.uid, bounds.start, bounds.end);
+      archiveRef.current[entry.key] = {
+        status: "ready",
+        logs: rows.map((row) => normalizeWorkoutLog(row)),
+      };
+    } catch {
+      archiveRef.current[entry.key] = { status: "error", logs: [] };
+    }
+    setArchive({ ...archiveRef.current });
+  }
+
+  function toggleArchive(entry, force) {
+    if (!force && openKeys[entry.key]) {
+      setOpenKeys((prev) => ({ ...prev, [entry.key]: false }));
+      return;
+    }
+    setOpenKeys((prev) => ({ ...prev, [entry.key]: true }));
+    const cached = archiveRef.current[entry.key];
+    if (!force && (cached?.status === "ready" || cached?.status === "loading")) return;
+    fetchArchive(entry);
+  }
+
+  async function confirmDelete(log) {
+    if (!currentUser || deleting) return;
+    setDeleting(true);
+    setDeleteError(null);
+    try {
+      await deleteWorkoutLog(currentUser.uid, log.id);
+      forgetLog(log.id);
+      setPendingDelete(null);
+      setStatsRetry((count) => count + 1);
+    } catch {
+      setDeleteError("Couldn't delete that workout. Try again.");
+    } finally {
+      setDeleting(false);
+    }
+  }
+
+  const today = getFitnessDateObject();
+  const skeleton = historySkeleton(today, createdAt);
+  const placeholders = [...skeleton.months, ...skeleton.years];
 
   return (
     <>
       <Navbar />
-      <BetaDisclaimer />
+      <main className="wh-page" data-screen="log" data-ready={currentStatus}>
+        <WorkoutHistory
+          rangeId={rangeId}
+          onRange={setRangeId}
+          stats={stats}
+          statsStatus={statsStatus}
+          statsError={statsError}
+          onRetryStats={() => setStatsRetry((count) => count + 1)}
+          filter={filter}
+          onFilter={setFilter}
+          query={query}
+          onQuery={setQuery}
+          searchOpen={searchOpen}
+          onToggleSearch={() => setSearchOpen((open) => !open)}
+          monthTitle={monthLabel(today)}
+          currentLogs={currentLogs}
+          currentStatus={currentStatus}
+          currentError={currentError}
+          onRetryCurrent={() => setCurrentRetry((count) => count + 1)}
+          placeholders={placeholders}
+          archive={archive}
+          openKeys={openKeys}
+          onToggle={toggleArchive}
+          onEdit={fillForm}
+          onDelete={(log) => {
+            setDeleteError(null);
+            setPendingDelete(log.id);
+          }}
+          pendingDelete={pendingDelete}
+          onConfirmDelete={confirmDelete}
+          onCancelDelete={() => setPendingDelete(null)}
+          deleting={deleting}
+          deleteError={deleteError}
+          onStartSession={handleStartFresh}
+          onLogWorkout={() => {
+            setEditingId(null);
+            setFormData(blankLog());
+            setShowForm(true);
+            window.setTimeout(() => {
+              formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+            }, 0);
+          }}
+        />
 
-      <h1 className="workout-welcome">
-        {username || currentUser?.email}'s workout log
-      </h1>
+        {showForm && (
+          <div className="workout-container" ref={formRef}>
+            <div className="wl-form">
+              <div className="wl-form-top">
+                <div className="wl-field">
+                  <label className="wl-label">Date</label>
+                  <input
+                    className="wl-input"
+                    type="date"
+                    value={formData.date}
+                    onChange={(event) =>
+                      setFormData((prev) => ({ ...prev, date: event.target.value }))
+                    }
+                  />
+                </div>
+                <div className="wl-field">
+                  <label className="wl-label">Category</label>
+                  <select
+                    className="category-selector"
+                    value={formData.category}
+                    onChange={(event) =>
+                      setFormData((prev) => ({ ...prev, category: event.target.value }))
+                    }
+                  >
+                    <option value="push">push</option>
+                    <option value="pull">pull</option>
+                    <option value="legs">legs</option>
+                    <option value="full-body">full body</option>
+                    <option value="conditioning">conditioning</option>
+                  </select>
+                </div>
+              </div>
 
-      <div className="workout-container">
-        <div className="wl-choices">
-          <section className="wl-choice">
-            <h2>start session</h2>
-            <p>
-              Use this when you are about to train. Plan the exercises, hold time, and rest time for each set. Workout will log automatically when you finish.
-            </p>
-            {currentUser ? (
-              <button
-                type="button"
-                className="log-workout"
-                disabled={Boolean(sessionDraft)}
-                onClick={() => navigate("/workoutlog/session", { state: { fresh: true } })}
-              >
-                start session
-              </button>
-            ) : (
-              <Link to="/login" className="log-workout">
-                sign in
-              </Link>
-            )}
-          </section>
-          <section className="wl-choice">
-            <h2>new workout</h2>
-            <p>
-              Use this after you have already trained. Write down the exercises and
-              the reps or holds you did.
-            </p>
-            {currentUser ? (
-              <button
-                type="button"
-                className="log-workout"
-                onClick={() => setShowForm((s) => !s)}
-              >
-                {showForm ? "cancel" : "+ new workout"}
-              </button>
-            ) : (
-              <Link to="/login" className="log-workout">
-                sign in
-              </Link>
-            )}
-          </section>
-        </div>
-        <p className="workout-caption" style={{ fontWeight: "200" }}>
-          Don't know how to structure your workout? Check out the{" "}
-          <Link to="/training/beginnerworkout" className="log-caption-link">
-            beginner workout guide
-          </Link>{" "}
-          or the{" "}
-          <Link to="/training/intermediateworkout" className="log-caption-link">
-            intermediate workout guide
-          </Link>{" "}
-          to learn how to craft a successful workout.
-        </p>
-      </div>
-
-      {/* ── log form ── */}
-      {showForm && (
-        <div className="workout-container">
-          <div className="wl-form">
-            {/* date + category row */}
-            <div className="wl-form-top">
-              <div className="wl-field">
-                <label className="wl-label">Date</label>
-                <input
-                  className="wl-input"
-                  type="date"
-                  value={formData.date}
-                  onChange={(e) =>
-                    setFormData((p) => ({ ...p, date: e.target.value }))
-                  }
+              {SECTIONS.map((section) => (
+                <SectionBlock
+                  key={section.key}
+                  section={section}
+                  exercises={formData.sections[section.key]}
+                  onChange={updateExercise}
+                  onEffort={updateEffort}
                 />
-              </div>
-              <div className="wl-field">
-                <label className="wl-label">Category</label>
-                <select
-                  className="category-selector"
-                  value={formData.category}
-                  onChange={(e) =>
-                    setFormData((p) => ({ ...p, category: e.target.value }))
-                  }
-                >
-                  <option value="push">push</option>
-                  <option value="pull">pull</option>
-                  <option value="legs">legs</option>
-                  <option value="full-body">full body</option>
-                  <option value="conditioning">conditioning</option>
-                </select>
-              </div>
+              ))}
+
+              {saveError && <p className="wl-error">{saveError}</p>}
+              <button className="log-workout" onClick={handleSave} disabled={saving} type="button">
+                {saving ? "saving..." : editingId ? "update workout" : "save workout"}
+              </button>
+              <button
+                className="log-workout"
+                type="button"
+                onClick={() => {
+                  setShowForm(false);
+                  setEditingId(null);
+                }}
+              >
+                cancel
+              </button>
             </div>
-
-            {SECTIONS.map((s) => (
-              <SectionBlock
-                key={s.key}
-                section={s}
-                exercises={formData.sections[s.key]}
-                onChange={updateExercise}
-                onEffort={updateEffort}
-              />
-            ))}
-
-            {saveError && <p className="wl-error">{saveError}</p>}
-
-            <button
-              className="log-workout"
-              onClick={handleSave}
-              disabled={saving}
-            >
-              {saving ? "saving..." : "save workout"}
-            </button>
-          </div>
-        </div>
-      )}
-
-      {currentUser && sessionDraft && (
-        <div className="workout-container">
-          <div className="wl-resume">
-            {confirmDiscardDraft ? (
-              <>
-                <p>Discard the workout in progress?</p>
-                <div className="wl-log-actions">
-                  <button type="button" className="log-workout" onClick={discardDraft}>
-                    discard
-                  </button>
-                  <button
-                    type="button"
-                    className="log-workout wl-start-session"
-                    onClick={() => setConfirmDiscardDraft(false)}
-                  >
-                    keep it
-                  </button>
-                </div>
-              </>
-            ) : (
-              <>
-                <p>You have a workout in progress.</p>
-                <div className="wl-log-actions">
-                  <button
-                    type="button"
-                    className="log-workout"
-                    onClick={() => navigate("/workoutlog/session")}
-                  >
-                    resume
-                  </button>
-                  <button
-                    type="button"
-                    className="log-workout wl-start-session"
-                    onClick={() => setConfirmDiscardDraft(true)}
-                  >
-                    discard
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* ── past logs ── */}
-      <div className="workout-container">
-        <div className="wl-logs-header">past workouts</div>
-        {streakWarning && <p className="wl-error">{streakWarning}</p>}
-        {!currentUser ? (
-          <p className="wl-empty">
-            Sign in to save workouts and see them here.{" "}
-            <Link to="/login" className="log-caption-link">
-              Sign in
-            </Link>
-          </p>
-        ) : logsLoading ? (
-          <p className="wl-empty">loading...</p>
-        ) : logsError ? (
-          <p className="wl-error">
-            {logsError}{" "}
-            <button
-              className="log-workout"
-              onClick={() => setReloadLogs((count) => count + 1)}
-            >
-              retry
-            </button>
-          </p>
-        ) : logs.length === 0 ? (
-          <p className="wl-empty">
-            No workouts logged yet. Hit <i> + new workout </i> to get started.
-          </p>
-        ) : (
-          <div className="wl-log-list">
-            {logs.map((log) => (
-              <LogCard
-                key={log.id}
-                log={log}
-                onCopy={handleCopy}
-                onStart={handleStart}
-                startDisabled={Boolean(sessionDraft)}
-              />
-            ))}
           </div>
         )}
-      </div>
 
-      {/* ── donate ── */}
-      <div className="dashboard-donate">
-        <div>
-          Enjoying this platform? Support its development. Donate through{" "}
-          <a
-            href="https://ko-fi.com/wingssw"
-            className="donate-link"
-            target="_blank"
-            rel="noopener"
-          >
-            Ko-fi
-          </a>{" "}
-          or{" "}
-          <a
-            href="https://www.paypal.com/donate/?hosted_button_id=RNREJQ826VL46"
-            className="donate-link"
-            target="_blank"
-            rel="noopener"
-          >
-            Paypal
-          </a>
-          !!
-        </div>
-      </div>
+        {currentUser && sessionDraft && (
+          <div className="workout-container">
+            <div className="wl-resume">
+              {confirmDiscardDraft ? (
+                <>
+                  <p>Discard the workout in progress?</p>
+                  <div className="wl-log-actions">
+                    <button type="button" className="log-workout" onClick={discardDraft}>
+                      discard
+                    </button>
+                    <button
+                      type="button"
+                      className="log-workout wl-start-session"
+                      onClick={() => setConfirmDiscardDraft(false)}
+                    >
+                      keep it
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <p>You have a workout in progress.</p>
+                  <div className="wl-log-actions">
+                    <button type="button" className="log-workout" onClick={handleStartFresh}>
+                      resume
+                    </button>
+                    <button
+                      type="button"
+                      className="log-workout wl-start-session"
+                      onClick={() => setConfirmDiscardDraft(true)}
+                    >
+                      discard
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        )}
 
-      <Footer />
+        {streakWarning && <p className="wl-error">{streakWarning}</p>}
+      </main>
     </>
   );
 }

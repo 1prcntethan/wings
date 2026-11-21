@@ -1,5 +1,5 @@
 import "./skilltree.css";
-import React, { useEffect, useState, useContext } from "react";
+import React, { useCallback, useEffect, useRef, useState, useContext } from "react";
 import {
   ReactFlow,
   Controls,
@@ -28,8 +28,28 @@ import { skillDB } from "../utilites/skilltodb.js";
 import { skillRP, skillRPDenominator } from "../utilites/skilltorp.js";
 import { shareProgressCard } from "../utilites/progresscard.js";
 import InstallBanner from "../components/installbanner";
+import { SkillList, SkillViewToggle } from "../components/skilllist";
+import { designPreviewRequested, loadDesignPreview } from "../utilites/designpreview.js";
 
 const SkillContext = createContext(null);
+const SKILL_VIEW_KEY = "wings-skills-view";
+
+function readSkillView() {
+  try {
+    const saved = localStorage.getItem(SKILL_VIEW_KEY);
+    if (saved === "list" || saved === "map") return saved;
+  } catch {
+    // Keep the width default when storage is blocked.
+  }
+  if (typeof window !== "undefined" && window.matchMedia("(max-width: 640px)").matches) {
+    return "list";
+  }
+  return "map";
+}
+
+function showSkillWindow() {
+  document.querySelector(".skill-window")?.classList.remove("close");
+}
 
 const initialNodes = [
   {
@@ -1157,10 +1177,10 @@ const SkillWindow = () => {
   const {
     skill,
     userSkills,
-    setUserSkills,
     skillsStatus,
     skillsError,
     retrySkills,
+    saveProgress,
   } = useContext(SkillContext);
   const [saving, setSaving] = useState(false);
   const [skillError, setSkillError] = useState(null);
@@ -1199,45 +1219,20 @@ const SkillWindow = () => {
             <div className="skill-window__muscle-use">
               Muscle Use: {skillMetric.get(skill)}
             </div>
-            {currentUser && (
+            {(currentUser || designPreviewRequested()) && (
               <div className="skill-update__container">
                 <div className="skill-update__select">
                   <select
                     value={progress}
                     disabled={saving || skillsStatus !== "ready"}
-                    onChange={async (e) => {
-                      const newProgress = Number(e.target.value);
-                      if (![0, 1, 2, 3].includes(newProgress)) return;
-                      if (!skillEq || !currentUser || saving) return;
-
-                      const previousSkills = userSkills;
+                    onChange={async (event) => {
+                      const newProgress = Number(event.target.value);
+                      if (![0, 1, 2, 3].includes(newProgress) || saving) return;
                       setSkillError(null);
                       setSaving(true);
-                      setUserSkills((prev) => ({
-                        ...prev,
-                        [skillEq]: newProgress,
-                      }));
-
-                      try {
-                        const saved = await updateSkill(
-                          currentUser.uid,
-                          skillEq,
-                          newProgress,
-                        );
-                        if (saved === false) {
-                          setUserSkills(previousSkills);
-                          setSkillError("Couldn't save that progress. Try again.");
-                        }
-                      } catch (error) {
-                        setUserSkills(previousSkills);
-                        setSkillError(
-                          error.code === "permission-denied"
-                            ? "Please wait 2 seconds between skill changes."
-                            : "Couldn't save that progress. Try again.",
-                        );
-                      } finally {
-                        setSaving(false);
-                      }
+                      const result = await saveProgress(skill, newProgress);
+                      if (!result?.ok && result?.error) setSkillError(result.error);
+                      setSaving(false);
                     }}
                   >
                     <option value={0}>locked</option>
@@ -1259,7 +1254,7 @@ const SkillWindow = () => {
                 </div>
               </div>
             )}
-            {currentUser && (skillError || skillsStatus === "error") && (
+            {(currentUser || designPreviewRequested()) && (skillError || skillsStatus === "error") && (
               <div className="skill-update__error">
                 {skillError || skillsError}{" "}
                 {skillsStatus === "error" && (
@@ -1506,16 +1501,42 @@ export function SkillTree() {
   const [skillsError, setSkillsError] = useState(null);
   const [loadedUid, setLoadedUid] = useState(null);
   const [skillsRetry, setSkillsRetry] = useState(0);
-  const skillsStatus = !currentUser
-    ? "ready"
-    : skillsError
-      ? "error"
-      : loadedUid === currentUser.uid
-        ? "ready"
-        : "loading";
+  const [view, setView] = useState(readSkillView);
+  const [phoneLayout] = useState(
+    () => typeof window !== "undefined" && window.matchMedia("(max-width: 640px)").matches,
+  );
+  const [previewReady, setPreviewReady] = useState(() => !designPreviewRequested());
+  const saveLock = useRef(false);
+  const skillsRef = useRef(userSkills);
+  skillsRef.current = userSkills;
+  const previewing = designPreviewRequested();
+  const skillsStatus = previewing
+    ? previewReady
+      ? "ready"
+      : "loading"
+    : !currentUser
+      ? "ready"
+      : skillsError
+        ? "error"
+        : loadedUid === currentUser.uid
+          ? "ready"
+          : "loading";
 
   useEffect(() => {
-    if (!currentUser) return;
+    if (!previewing) return undefined;
+    let cancelled = false;
+    loadDesignPreview().then((mod) => {
+      if (cancelled) return;
+      if (mod?.previewSkills) setUserSkills(mod.previewSkills);
+      setPreviewReady(true);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [previewing]);
+
+  useEffect(() => {
+    if (previewing || !currentUser) return undefined;
 
     let cancelled = false;
 
@@ -1538,7 +1559,55 @@ export function SkillTree() {
     return () => {
       cancelled = true;
     };
-  }, [currentUser, skillsRetry]);
+  }, [currentUser, skillsRetry, previewing]);
+
+  const saveProgress = useCallback(async (skillName, newProgress) => {
+    const skillEq = skillDB.get(skillName);
+    const progress = Number(newProgress);
+    if (!skillEq || ![0, 1, 2, 3].includes(progress)) {
+      return { ok: false, error: "Couldn't save that progress. Try again." };
+    }
+    if (designPreviewRequested() && !currentUser) {
+      setUserSkills((prev) => ({ ...prev, [skillEq]: progress }));
+      return { ok: true };
+    }
+    if (!currentUser) return { ok: false, error: "Sign in to save progress." };
+    if (saveLock.current) {
+      return { ok: false, error: "Please wait 2 seconds between skill changes." };
+    }
+
+    const previous = skillsRef.current;
+    saveLock.current = true;
+    setUserSkills((prev) => ({ ...prev, [skillEq]: progress }));
+    try {
+      const saved = await updateSkill(currentUser.uid, skillEq, progress);
+      if (saved === false) {
+        setUserSkills(previous);
+        return { ok: false, error: "Couldn't save that progress. Try again." };
+      }
+      return { ok: true };
+    } catch (error) {
+      setUserSkills(previous);
+      return {
+        ok: false,
+        error:
+          error?.code === "permission-denied"
+            ? "Please wait 2 seconds between skill changes."
+            : "Couldn't save that progress. Try again.",
+      };
+    } finally {
+      saveLock.current = false;
+    }
+  }, [currentUser]);
+
+  function chooseView(next) {
+    setView(next);
+    try {
+      localStorage.setItem(SKILL_VIEW_KEY, next);
+    } catch {
+      // The choice still applies until reload.
+    }
+  }
 
   return (
     <SkillContext.Provider
@@ -1549,6 +1618,7 @@ export function SkillTree() {
         setUserSkills,
         skillsStatus,
         skillsError,
+        saveProgress,
         retrySkills: () => {
           setSkillsError(null);
           setLoadedUid(null);
@@ -1556,34 +1626,68 @@ export function SkillTree() {
         },
       }}
     >
-      <div className="skill-tree">
+      <div
+        className={view === "map" ? "skill-tree" : "skill-board"}
+        data-screen={view === "map" ? "skills-map" : "skills-list"}
+        data-ready={skillsStatus}
+      >
         <InstallBanner />
-        <SkillTreeLinkContainer />
-        <SkillWindow />
-
-        <ReactFlow
-          nodes={nodes}
-          edges={edges}
-          nodeTypes={nodeTypes}
-          nodesDraggable={false}
-          edgeTypes={edgeTypes}
-          minZoom={0.15}
-          maxZoom={2}
-          translateExtent={translateExtent}
-          defaultViewport={{ x: 1000, y: 1000, zoom: 0.5 }}
-          attributionPosition="top-left"
-        >
-          <Controls
-            showZoom={true}
-            showFitView={true}
-            showInteractive={false}
-            style={{
-              boxShadow: "none",
-              color: "#ffffff",
+        {view === "list" ? (
+          <SkillList
+            userSkills={userSkills}
+            skillsStatus={skillsStatus}
+            skillsError={skillsError}
+            onRetry={() => {
+              setSkillsError(null);
+              setLoadedUid(null);
+              setSkillsRetry((count) => count + 1);
             }}
-            position="top-right"
-          ></Controls>
-        </ReactFlow>
+            onStatus={saveProgress}
+            onOpen={(name) => {
+              setSkill(name);
+              showSkillWindow();
+            }}
+            view={view}
+            onView={chooseView}
+            canEdit={Boolean(currentUser) || previewing}
+          />
+        ) : (
+          <>
+            <div className="skill-map-bar">
+              <SkillViewToggle view={view} onView={chooseView} />
+            </div>
+            <SkillTreeLinkContainer />
+            <ReactFlow
+              nodes={nodes}
+              edges={edges}
+              nodeTypes={nodeTypes}
+              nodesDraggable={false}
+              edgeTypes={edgeTypes}
+              minZoom={phoneLayout ? 0.04 : 0.15}
+              maxZoom={2}
+              translateExtent={translateExtent}
+              fitView={phoneLayout}
+              fitViewOptions={{ padding: 0.18 }}
+              defaultViewport={phoneLayout ? undefined : { x: 1000, y: 1000, zoom: 0.5 }}
+              onInit={(instance) => {
+                if (phoneLayout) instance.fitView({ padding: 0.18, duration: 0 });
+              }}
+              attributionPosition="top-left"
+            >
+              <Controls
+                showZoom={true}
+                showFitView={true}
+                showInteractive={false}
+                style={{
+                  boxShadow: "none",
+                  color: "#ffffff",
+                }}
+                position="top-right"
+              ></Controls>
+            </ReactFlow>
+          </>
+        )}
+        <SkillWindow />
       </div>
     </SkillContext.Provider>
   );
