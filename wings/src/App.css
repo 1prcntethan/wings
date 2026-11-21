@@ -16,9 +16,11 @@
 html {
     font-family: Major Mono Display;
     margin: 0 0;
-    background-color: #1b1b1b;
     color-scheme: dark;
     min-height: 100%;
+    /* Keep this background transparent. The landing hero and the training
+       timeline use z-index: -1, and an opaque html background paints over
+       them. Body's #1b1b1b still fills the canvas and the status bar. */
 }
 
 html.disable-scroll {
