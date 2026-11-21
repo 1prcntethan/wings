@@ -279,23 +279,39 @@ describe("skill progress rules", { concurrency: 1 }, () => {
       }),
     );
 
+    const sections = {
+      warmup: [],
+      primary: [],
+      secondary: [],
+      volume: [],
+    };
+    await assertDenied(
+      addDoc(collection(db, "users", uid, "workoutLogs"), {
+        date: today,
+        category: "push",
+        sections,
+        loggedAt: serverTimestamp(),
+      }),
+    );
     const logRef = await assertSucceeds(
       addDoc(collection(db, "users", uid, "workoutLogs"), {
         date: today,
         category: "push",
-        sections: {
-          warmup: [],
-          primary: [],
-          secondary: [],
-          volume: [],
-        },
+        setCount: 8,
+        sections,
+        loggedAt: serverTimestamp(),
+      }),
+    );
+    await assertSucceeds(
+      updateDoc(logRef, {
+        category: "pull",
+        setCount: 9,
         loggedAt: serverTimestamp(),
       }),
     );
     await assertDenied(
       updateDoc(logRef, {
-        category: "pull",
-        loggedAt: serverTimestamp(),
+        category: "legs",
       }),
     );
   });
