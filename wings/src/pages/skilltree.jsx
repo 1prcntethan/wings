@@ -27,7 +27,6 @@ import { getUserDoc, updateSkill } from "../config/firestore.js";
 import { skillDB } from "../utilites/skilltodb.js";
 import { skillRP, skillRPDenominator } from "../utilites/skilltorp.js";
 import { shareProgressCard } from "../utilites/progresscard.js";
-import InstallBanner from "../components/installbanner";
 import { SkillList, SkillViewToggle } from "../components/skilllist";
 import { designPreviewRequested, loadDesignPreview } from "../utilites/designpreview.js";
 
@@ -1631,7 +1630,6 @@ export function SkillTree() {
         data-screen={view === "map" ? "skills-map" : "skills-list"}
         data-ready={skillsStatus}
       >
-        <InstallBanner />
         {view === "list" ? (
           <SkillList
             userSkills={userSkills}

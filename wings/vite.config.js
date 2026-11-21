@@ -1,41 +1,59 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
-import { VitePWA } from 'vite-plugin-pwa'
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
+import { VitePWA } from "vite-plugin-pwa";
 
 export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      registerType: 'autoUpdate',
-      includeAssets: ['wingslogo.ico', 'wingslogo192.png', 'wingslogo512.png'],
+      registerType: "autoUpdate",
+      injectRegister: "auto",
+      includeAssets: [
+        "wingslogo.ico",
+        "wingslogo192.png",
+        "wingslogo512.png",
+        "apple-touch-icon.png",
+        "wingslogo-maskable-192.png",
+        "wingslogo-maskable-512.png",
+      ],
       manifest: {
-        name: 'WINGS',
-        short_name: 'WINGS',
-        description: 'Calisthenics skill tracking and workout logging',
-        theme_color: '#1b1b1b',
-        background_color: '#1b1b1b',
-        display: 'standalone',
-        scope: '/',
-        start_url: '/',
+        id: "/",
+        name: "WINGS",
+        short_name: "WINGS",
+        description: "Calisthenics skill tracking and workout logging",
+        lang: "en",
+        theme_color: "#1b1b1b",
+        background_color: "#1b1b1b",
+        display: "standalone",
+        scope: "/",
+        start_url: "/",
         icons: [
           {
-            src: 'wingslogo192.png',
-            sizes: '192x192',
-            type: 'image/png'
+            src: "wingslogo192.png",
+            sizes: "192x192",
+            type: "image/png",
+            purpose: "any",
           },
           {
-            src: 'wingslogo512.png',
-            sizes: '512x512',
-            type: 'image/png'
+            src: "wingslogo512.png",
+            sizes: "512x512",
+            type: "image/png",
+            purpose: "any",
           },
           {
-            src: 'wingslogo512.png',
-            sizes: '512x512',
-            type: 'image/png',
-            purpose: 'any maskable'
-          }
-        ]
-      }
-    })
+            src: "wingslogo-maskable-192.png",
+            sizes: "192x192",
+            type: "image/png",
+            purpose: "maskable",
+          },
+          {
+            src: "wingslogo-maskable-512.png",
+            sizes: "512x512",
+            type: "image/png",
+            purpose: "maskable",
+          },
+        ],
+      },
+    }),
   ],
-})
+});

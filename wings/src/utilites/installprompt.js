@@ -1,86 +1,112 @@
-const DISMISS_KEY = "wings-install-dismissed";
+import {
+  detectInstallContext,
+  readInstallMemory,
+  rememberDismiss,
+  rememberInstall,
+} from "./installplatform.js";
 
 let deferredPrompt = null;
+let sessionHidden = false;
+let sessionInstalled = false;
+let memory = { remindAt: 0, dismissCount: 0 };
+let memoryLoaded = false;
+let snapshot = null;
 const listeners = new Set();
 
-function notify() {
-  listeners.forEach((listener) => listener(deferredPrompt));
+function browserStorage() {
+  try {
+    return window.localStorage;
+  } catch {
+    return null;
+  }
+}
+
+function ensureMemory() {
+  if (memoryLoaded) return;
+  memoryLoaded = true;
+  memory = readInstallMemory(browserStorage(), Date.now());
+}
+
+function publish() {
+  ensureMemory();
+  snapshot = {
+    prompt: deferredPrompt,
+    sessionHidden,
+    sessionInstalled,
+    memory,
+  };
+  listeners.forEach((listener) => listener());
+}
+
+export function subscribeInstallPrompt(listener) {
+  listeners.add(listener);
+  return () => listeners.delete(listener);
+}
+
+export function getInstallSnapshot() {
+  if (!snapshot) {
+    ensureMemory();
+    snapshot = {
+      prompt: deferredPrompt,
+      sessionHidden,
+      sessionInstalled,
+      memory,
+    };
+  }
+  return snapshot;
 }
 
 window.addEventListener("beforeinstallprompt", (event) => {
   event.preventDefault();
   deferredPrompt = event;
-  notify();
+  publish();
 });
 
 window.addEventListener("appinstalled", () => {
   deferredPrompt = null;
-  notify();
+  sessionInstalled = true;
+  sessionHidden = true;
+  memory = rememberInstall(browserStorage(), Date.now());
+  memoryLoaded = true;
+  publish();
 });
 
-export function isInstalled() {
-  return (
-    window.matchMedia("(display-mode: standalone)").matches ||
-    window.navigator.standalone === true
-  );
-}
-
-export function isIOS() {
-  const agent = window.navigator.userAgent;
-  return (
-    /iphone|ipad|ipod/i.test(agent) ||
-    (window.navigator.platform === "MacIntel" &&
-      window.navigator.maxTouchPoints > 1)
-  );
-}
-
-export function isInAppBrowser() {
-  return /Instagram|FBAN|FBAV|FB_IAB|TikTok|musical_ly|Bytedance/i.test(
-    window.navigator.userAgent,
-  );
-}
-
-export function installBrowserName() {
-  return isIOS() ? "Safari" : "Chrome";
-}
-
-export function canInstall() {
-  return deferredPrompt !== null;
-}
-
-export function subscribeInstallPrompt(listener) {
-  listeners.add(listener);
-  listener(deferredPrompt);
-  return () => listeners.delete(listener);
+export function currentInstallContext() {
+  return detectInstallContext(window.navigator, (query) => window.matchMedia(query));
 }
 
 export async function promptInstall() {
   if (!deferredPrompt) return "unavailable";
+  const prompt = deferredPrompt;
   try {
-    deferredPrompt.prompt();
-    const choice = await deferredPrompt.userChoice;
+    // prompt() has to run in the tap, before any store update re-renders the button.
+    const pending = prompt.prompt();
     deferredPrompt = null;
-    notify();
-    return choice.outcome;
+    publish();
+    await pending;
+    const choice = await prompt.userChoice;
+    const outcome = choice?.outcome === "accepted" ? "accepted" : "dismissed";
+    sessionHidden = true;
+    if (outcome === "accepted") {
+      sessionInstalled = true;
+      memory = rememberInstall(browserStorage(), Date.now());
+    } else {
+      memory = rememberDismiss(browserStorage(), Date.now());
+    }
+    memoryLoaded = true;
+    publish();
+    return outcome;
   } catch {
     deferredPrompt = null;
-    notify();
+    publish();
     return "unavailable";
   }
 }
 
-export function isInstallDismissed() {
-  try {
-    return window.localStorage.getItem(DISMISS_KEY) === "1";
-  } catch {
-    return false;
-  }
-}
-
-export function dismissInstallPrompt() {
-  try {
-    window.localStorage.setItem(DISMISS_KEY, "1");
-  } catch {
-    // Private browsing can block storage. The bar still hides for this visit.
-  }
+export function dismissInstallPrompt(now = Date.now()) {
+  sessionHidden = true;
+  memory = rememberDismiss(browserStorage(), now);
+  memoryLoaded = true;
+  publish();
+  return memory;
 }
