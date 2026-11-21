@@ -7,7 +7,20 @@
 
 .wh-history {
   font-family: "Fira Sans", sans-serif;
+  font-weight: 400;
   color: #f3f3f3;
+}
+
+.wh-history button {
+  font-family: "Major Mono Display", monospace;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+}
+
+.wh-history input,
+.wh-history select {
+  font-family: "Fira Sans", sans-serif;
+  font-weight: 300;
 }
 
 .wh-tools {
@@ -20,18 +33,20 @@
 .wh-history h1 {
   margin: 0;
   font-family: "Major Mono Display", monospace;
-  font-size: 1.7rem;
-  font-weight: 400;
-}
-
-.wh-history h2 {
-  margin: 16px 0 8px;
-  font-family: "Major Mono Display", monospace;
-  font-size: 0.85rem;
+  font-size: clamp(1.45rem, 6vw, 1.85rem);
   font-weight: 400;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #cfcfcf;
+}
+
+.wh-history h2 {
+  margin: 18px 0 10px;
+  font-family: "Major Mono Display", monospace;
+  font-size: 0.72rem;
+  font-weight: 400;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #bdbdbd;
 }
 
 .wh-search-btn,
@@ -63,8 +78,7 @@
   stroke-linejoin: round;
 }
 
-.wh-search,
-.wh-range select {
+.wh-search {
   width: 100%;
   box-sizing: border-box;
   margin-top: 10px;
@@ -74,20 +88,8 @@
   border-radius: 12px;
   padding: 12px;
   font-family: "Fira Sans", sans-serif;
+  font-weight: 300;
   font-size: 0.95rem;
-}
-
-.wh-range {
-  display: block;
-  margin-top: 12px;
-}
-
-.wh-range span {
-  display: block;
-  color: #9a9a9a;
-  font-size: 0.75rem;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
 }
 
 .wh-stats {
@@ -108,13 +110,17 @@
 
 .wh-stats b {
   display: block;
-  font-size: 1.25rem;
-  font-weight: 500;
+  font-family: "Fira Sans", sans-serif;
+  font-size: 1.35rem;
+  font-weight: 300;
+  letter-spacing: 0;
 }
 
 .wh-stats span {
   color: #9a9a9a;
+  font-family: "Fira Sans", sans-serif;
   font-size: 0.72rem;
+  font-weight: 300;
 }
 
 .wh-filters {
@@ -127,13 +133,21 @@
 
 .wh-filters button {
   border: 1px solid #333;
-  background: #252525;
+  background: #1b1b1b;
   color: #f3f3f3;
   border-radius: 999px;
-  padding: 7px 12px;
-  font-family: "Fira Sans", sans-serif;
+  padding: 8px 12px;
+  font-family: "Major Mono Display", monospace;
+  font-size: 0.62rem;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
   white-space: nowrap;
   cursor: pointer;
+}
+
+.wh-ranges {
+  margin-top: 14px;
 }
 
 .wh-filters button[aria-pressed="true"] {
@@ -163,15 +177,36 @@
   gap: 8px;
 }
 
+.wh-card-top {
+  justify-content: flex-start;
+}
+
+.wh-duration {
+  margin-left: auto;
+}
+
 .wh-card p {
-  margin: 8px 0;
+  margin: 10px 0;
   color: #e4e4e4;
+  font-family: "Fira Sans", sans-serif;
+  font-weight: 400;
+  font-size: 0.92rem;
+}
+
+.wh-date,
+.wh-duration,
+.wh-card-foot > span:first-child {
+  font-family: "Fira Sans", sans-serif;
+  font-weight: 300;
 }
 
 .wh-cat {
   border-radius: 999px;
   padding: 3px 8px;
-  font-size: 0.75rem;
+  font-family: "Fira Sans", sans-serif;
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0;
   text-transform: lowercase;
 }
 
@@ -189,16 +224,25 @@
   font-size: 0.82rem;
 }
 
+.wh-icon-row {
+  display: flex;
+  flex: none;
+  gap: 8px;
+}
+
 .wh-icon-row button {
-  width: 36px;
-  height: 36px;
+  width: 38px;
+  height: 38px;
   display: grid;
   place-items: center;
   padding: 0;
+  border-radius: 12px;
+  letter-spacing: 0;
 }
 
 .wh-danger {
   color: #e07a7a;
+  border-color: #8a3d3d;
 }
 
 .wh-confirm {
@@ -211,7 +255,10 @@
 .wh-confirm button,
 .wh-error button {
   padding: 6px 8px;
-  font-family: "Fira Sans", sans-serif;
+  font-family: "Major Mono Display", monospace;
+  font-size: 0.62rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .wh-fold-wrap {
@@ -222,8 +269,10 @@
   width: 100%;
   color: #f3f3f3;
   padding: 14px;
-  font-family: "Fira Sans", sans-serif;
-  font-size: 1rem;
+  font-family: "Major Mono Display", monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
   cursor: pointer;
 }
 
@@ -241,10 +290,11 @@
 .wh-ghost,
 .wh-go {
   border-radius: 12px;
-  padding: 13px 10px;
-  font-family: "Fira Sans", sans-serif;
-  font-weight: 650;
-  letter-spacing: 0.04em;
+  padding: 14px 10px;
+  font-family: "Major Mono Display", monospace;
+  font-size: 0.72rem;
+  font-weight: 400;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   cursor: pointer;
 }

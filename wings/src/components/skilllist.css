@@ -4,7 +4,20 @@
   margin: 0 auto;
   padding: 18px 16px 28px;
   font-family: "Fira Sans", sans-serif;
+  font-weight: 400;
   color: #f3f3f3;
+}
+
+.skill-list button {
+  font-family: "Major Mono Display", monospace;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+}
+
+.skill-list input,
+.skill-list select {
+  font-family: "Fira Sans", sans-serif;
+  font-weight: 400;
 }
 
 .skill-list-head {
@@ -18,8 +31,10 @@
 .skill-list h1 {
   margin: 0;
   font-family: "Major Mono Display", monospace;
-  font-size: 1.8rem;
+  font-size: clamp(1.45rem, 6vw, 1.9rem);
   font-weight: 400;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .skill-view {
@@ -35,9 +50,12 @@
   background: transparent;
   color: #f3f3f3;
   border-radius: 999px;
-  padding: 6px 14px;
-  font-family: "Fira Sans", sans-serif;
-  font-size: 0.9rem;
+  padding: 7px 14px;
+  font-family: "Major Mono Display", monospace;
+  font-size: 0.62rem;
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
   cursor: pointer;
 }
 
@@ -86,13 +104,33 @@
 .skill-pill,
 .skill-list select {
   border: 1px solid #333;
-  background: #252525;
+  background: #1b1b1b;
   color: #f3f3f3;
   border-radius: 999px;
-  padding: 6px 12px;
-  font-family: "Fira Sans", sans-serif;
-  font-size: 0.85rem;
+  padding: 7px 12px;
+  font-size: 0.68rem;
   cursor: pointer;
+}
+
+.skill-filters button,
+.skill-pill {
+  font-family: "Major Mono Display", monospace;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.skill-list select {
+  font-family: "Fira Sans", sans-serif;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: lowercase;
+  appearance: none;
+  padding-right: 22px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23b5b5b5' stroke-width='1.4'/%3E%3C/svg%3E");
+  background-position: right 8px center;
+  background-size: 10px 6px;
+  background-repeat: no-repeat;
 }
 
 .skill-filters button[aria-pressed="true"] {
@@ -120,12 +158,22 @@
 
 .skill-legend i,
 .skill-open i {
-  width: 12px;
-  height: 12px;
   border-radius: 50%;
   border: 2px solid #494949;
   display: inline-block;
   box-sizing: border-box;
+}
+
+.skill-legend i {
+  width: 10px;
+  height: 10px;
+}
+
+.skill-open i {
+  width: 22px;
+  height: 22px;
+  border-width: 3px;
+  flex: none;
 }
 
 .is-mastered { color: #bbca88; border-color: #bbca88; }
@@ -150,11 +198,15 @@
 
 .skill-path h2 {
   margin: 0;
+  min-width: 0;
   font-family: "Major Mono Display", monospace;
-  font-size: 0.78rem;
+  font-size: 0.62rem;
   font-weight: 400;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .skill-path-head span {
@@ -179,16 +231,21 @@
 
 .skill-path ul {
   list-style: none;
-  margin: 0;
+  margin: 8px 0 0;
   padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .skill-path li {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 10px 0;
-  border-bottom: 1px solid #2c2c2c;
+  padding: 12px;
+  background: #252525;
+  border: 1px solid #333;
+  border-radius: 12px;
 }
 
 .skill-open {
@@ -213,17 +270,54 @@
 }
 
 .skill-open strong {
+  font-family: "Fira Sans", sans-serif;
   font-weight: 500;
+  letter-spacing: 0;
   text-transform: capitalize;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .skill-open small {
   color: #9a9a9a;
+  font-family: "Fira Sans", sans-serif;
+  font-weight: 300;
+  letter-spacing: 0;
+  text-transform: none;
 }
 
 .skill-list select,
 .skill-pill {
   flex: none;
+}
+
+.skill-list select.is-mastered,
+.skill-pill.is-mastered {
+  color: #bbca88;
+  border-color: #6d7a52;
+  background-color: #2a3124;
+}
+
+.skill-list select.is-progress,
+.skill-pill.is-progress {
+  color: #f3d3ea;
+  border-color: #b66da3;
+  background-color: #3a2a38;
+}
+
+.skill-list select.is-unlocked,
+.skill-pill.is-unlocked {
+  color: #f3f3f3;
+  border-color: #666;
+  background-color: #1b1b1b;
+}
+
+.skill-list select.is-locked,
+.skill-pill.is-locked {
+  color: #8a8a8a;
+  border-color: #494949;
+  background-color: #1b1b1b;
 }
 
 .skill-note {

@@ -381,7 +381,7 @@ export function Dashboard() {
                     <button type="button" onClick={repeatWorkout}>
                       {draft ? "Resume" : "Repeat"}
                     </button>
-                    <Link to="/workoutlog">view workout log</Link>
+                    <Link to="/workoutlog">Details</Link>
                   </div>
                 </>
               )}

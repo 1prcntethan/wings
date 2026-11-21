@@ -2,9 +2,23 @@
   box-sizing: border-box;
   width: min(1120px, 100%);
   margin: 0 auto;
-  padding: 16px 16px 28px;
+  padding: 18px 16px 28px;
   font-family: "Fira Sans", sans-serif;
+  font-weight: 400;
   color: #f3f3f3;
+}
+
+.dash-page button,
+.dash-page input,
+.dash-page select {
+  font-family: "Fira Sans", sans-serif;
+}
+
+.dash-page button {
+  font-family: "Major Mono Display", monospace;
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 
 .dash-page a {
@@ -25,8 +39,10 @@
 
 .dash-date {
   grid-area: date;
-  margin: 0;
-  color: #b5b5b5;
+  margin: 0 0 4px;
+  color: #a3a3a3;
+  font-family: "Fira Sans", sans-serif;
+  font-weight: 200;
   font-size: 0.92rem;
 }
 
@@ -34,9 +50,10 @@
   grid-area: hello;
   margin: 0;
   font-family: "Major Mono Display", monospace;
-  font-size: clamp(1.25rem, 5.4vw, 1.8rem);
+  font-size: clamp(1.45rem, 6.2vw, 2rem);
   font-weight: 400;
-  line-height: 1.2;
+  line-height: 1.15;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
 }
 
@@ -65,11 +82,21 @@
   justify-content: space-between;
   align-items: center;
   gap: 8px;
-  margin-bottom: 10px;
-  color: #b5b5b5;
-  font-size: 0.78rem;
-  letter-spacing: 0.08em;
+  margin-bottom: 12px;
+  color: #9a9a9a;
+  font-family: "Major Mono Display", monospace;
+  font-size: 0.68rem;
+  font-weight: 400;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
+}
+
+.dash-kicker a {
+  font-family: "Fira Sans", sans-serif;
+  font-weight: 400;
+  font-size: 0.78rem;
+  letter-spacing: 0;
+  text-transform: none;
 }
 
 .dash-streak-top {
@@ -91,24 +118,34 @@
   fill: currentColor;
 }
 
+.dash-streak-top strong,
+.dash-longest b,
+.dash-month-stats b,
+.dash-rank-main p {
+  font-family: "Fira Sans", sans-serif;
+  font-weight: 300;
+}
+
 .dash-streak-top strong {
   display: block;
-  font-size: 2.4rem;
-  font-weight: 500;
-  line-height: 1;
+  font-size: 2.7rem;
+  line-height: 0.9;
 }
 
 .dash-streak-top span,
 .dash-longest span {
   display: block;
   color: #d7d7d7;
+  font-family: "Fira Sans", sans-serif;
+  font-weight: 400;
 }
 
 .dash-streak-top small,
-.dash-longest span,
 .dash-note {
-  color: #b5b5b5;
-  font-size: 0.82rem;
+  color: #a3a3a3;
+  font-family: "Fira Sans", sans-serif;
+  font-size: 0.78rem;
+  font-weight: 300;
 }
 
 .dash-longest {
@@ -116,8 +153,8 @@
 }
 
 .dash-longest b {
-  font-size: 1.4rem;
-  font-weight: 500;
+  font-size: 1.55rem;
+  font-weight: 300;
 }
 
 .dash-week {
@@ -133,18 +170,20 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
-  color: #9a9a9a;
+  gap: 6px;
+  color: #8d8d8d;
+  font-family: "Fira Sans", sans-serif;
   font-size: 0.72rem;
+  font-weight: 400;
 }
 
 .dash-dot {
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   box-sizing: border-box;
-  border: 2px solid #333;
-  background: #1b1b1b;
+  border: 2px solid #3a3a3a;
+  background: #141414;
 }
 
 .dash-dot--logged {
@@ -153,7 +192,8 @@
 }
 
 .dash-dot--today {
-  border-color: #f3f3f3;
+  border-style: dashed;
+  border-color: #d7d7d7;
   background: transparent;
 }
 
@@ -162,11 +202,11 @@
 .dash-last-actions button {
   width: 100%;
   border-radius: 12px;
-  padding: 13px 14px;
-  font-family: "Fira Sans", sans-serif;
-  font-size: 0.95rem;
-  font-weight: 650;
-  letter-spacing: 0.06em;
+  padding: 14px 14px;
+  font-family: "Major Mono Display", monospace;
+  font-size: 0.78rem;
+  font-weight: 400;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   cursor: pointer;
 }
@@ -202,18 +242,30 @@
   object-fit: contain;
 }
 
-.dash-rank h2,
+.dash-rank h2 {
+  margin: 0;
+  font-family: "Major Mono Display", monospace;
+  font-size: 1.45rem;
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
 .dash-squad h2 {
   margin: 0;
   font-family: "Major Mono Display", monospace;
-  font-size: 1.4rem;
+  font-size: 0.82rem;
   font-weight: 400;
+  letter-spacing: 0.05em;
+  line-height: 1.45;
   text-transform: uppercase;
 }
 
 .dash-rank-main p {
-  margin: 2px 0 0;
+  margin: 4px 0 0;
   color: #d7d7d7;
+  font-size: 0.95rem;
+  font-weight: 300;
 }
 
 .dash-bar {
@@ -235,12 +287,15 @@
   justify-content: space-between;
   gap: 8px;
   color: #9a9a9a;
+  font-family: "Fira Sans", sans-serif;
   font-size: 0.75rem;
+  font-weight: 400;
 }
 
 .dash-scale span:nth-child(2) {
-  color: #d7a4cb;
+  color: #e0c98a;
   text-align: center;
+  font-weight: 500;
 }
 
 .dash-reached-list,
@@ -250,12 +305,20 @@
   padding: 0;
 }
 
+.dash-reached-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
 .dash-reached-list li {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 8px 0;
-  border-bottom: 1px solid #333;
+  padding: 10px 12px;
+  background: #1e1e1e;
+  border: 1px solid #333;
+  border-radius: 12px;
 }
 
 .dash-reached-list i {
@@ -279,19 +342,24 @@
 .dash-reached-list strong,
 .dash-last-line {
   display: block;
+  font-family: "Fira Sans", sans-serif;
   font-weight: 500;
   text-transform: capitalize;
 }
 
 .dash-reached-list small {
   color: #9a9a9a;
+  font-family: "Fira Sans", sans-serif;
+  font-weight: 300;
 }
 
 .dash-reached-list em {
   margin-left: auto;
+  font-family: "Fira Sans", sans-serif;
   font-style: normal;
+  font-weight: 400;
   color: #d7d7d7;
-  font-size: 0.78rem;
+  font-size: 0.75rem;
   text-transform: lowercase;
 }
 
@@ -306,7 +374,9 @@
 .dash-cat {
   border-radius: 999px;
   padding: 3px 8px;
-  font-size: 0.75rem;
+  font-family: "Fira Sans", sans-serif;
+  font-size: 0.72rem;
+  font-weight: 500;
   text-transform: lowercase;
   background: #333;
 }
@@ -327,7 +397,20 @@
 .dash-last-actions a {
   width: auto;
   flex: 1;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 46px;
   text-align: center;
+  background: #1b1b1b;
+  color: #f3f3f3;
+  border: 1px solid #333;
+  border-radius: 12px;
+  font-family: "Major Mono Display", monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 
 .dash-squad {
@@ -339,8 +422,11 @@
   background: #3a2a38;
   color: #d7a4cb;
   border-radius: 999px;
-  padding: 3px 8px;
-  letter-spacing: 0;
+  padding: 4px 8px;
+  font-family: "Fira Sans", sans-serif;
+  font-size: 0.68rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
   text-transform: lowercase;
 }
 
@@ -373,10 +459,15 @@
 
 .dash-learn-grid a {
   background: #1b1b1b;
+  border: 1px solid #333;
   border-radius: 12px;
   color: #f3f3f3;
   text-align: center;
   padding: 16px 8px;
+  font-family: "Major Mono Display", monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 
 .dash-month-stats {
@@ -391,8 +482,9 @@
 
 .dash-month-stats b {
   display: block;
-  font-size: 1.4rem;
-  font-weight: 500;
+  font-family: "Fira Sans", sans-serif;
+  font-size: 1.55rem;
+  font-weight: 300;
 }
 
 .dash-month-stats span,
@@ -408,6 +500,11 @@
   padding: 8px 0;
   border-bottom: 1px solid #333;
   color: #f3f3f3;
+  font-family: "Fira Sans", sans-serif;
+  font-weight: 400;
+  font-size: 0.92rem;
+  text-transform: none;
+  letter-spacing: 0;
 }
 
 .dash-desktop-only,

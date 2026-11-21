@@ -38,6 +38,12 @@ function IconShare() {
   );
 }
 
+function rangeChipLabel(id) {
+  if (id === "14d") return "2w";
+  if (id === "all") return "All";
+  return id;
+}
+
 function IconTrash() {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -58,7 +64,7 @@ function LogCard({ log, onEdit, onDelete, pendingDelete, onConfirmDelete, onCanc
     <article className="wh-card">
       <div className="wh-card-top">
         <span className={`wh-cat wh-cat--${log.category}`}>{log.category || "workout"}</span>
-        <span>{formatLogDate(log.date)}</span>
+        <span className="wh-date">{formatLogDate(log.date)}</span>
         {typeof log.durationSec === "number" && (
           <span className="wh-duration">{formatTrainedTime(log.durationSec)}</span>
         )}
@@ -181,14 +187,18 @@ export default function WorkoutHistory({
           placeholder="Search loaded workouts"
         />
       )}
-      <label className="wh-range">
-        <span>Range</span>
-        <select value={rangeId} onChange={(event) => onRange(event.target.value)}>
-          {STAT_RANGES.map((range) => (
-            <option key={range.id} value={range.id}>{range.label}</option>
-          ))}
-        </select>
-      </label>
+      <div className="wh-filters wh-ranges" role="group" aria-label="Range">
+        {STAT_RANGES.map((range) => (
+          <button
+            key={range.id}
+            type="button"
+            aria-pressed={rangeId === range.id}
+            onClick={() => onRange(range.id)}
+          >
+            {rangeChipLabel(range.id)}
+          </button>
+        ))}
+      </div>
       {statsStatus === "error" ? (
         <p className="wh-error">
           {statsError}{" "}
