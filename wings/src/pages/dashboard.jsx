@@ -108,6 +108,7 @@ export function Dashboard() {
   const [retryCount, setRetryCount] = useState(0);
   const [logging, setLogging] = useState(false);
   const [logError, setLogError] = useState(null);
+  const [restDays, setRestDays] = useState([]);
 
   useEffect(() => {
     try {
@@ -133,6 +134,7 @@ export function Dashboard() {
         setUsername("Ethan");
         setUserSkills(preview.previewSkills);
         setStreak({ current: 12, longest: 31, lastLog: formatDate(yesterday) });
+        setRestDays([formatDate(yesterday)]);
         setWorkoutCounter(48);
         setRestCounter(10);
         setLatest(logs[0]);
@@ -161,6 +163,7 @@ export function Dashboard() {
         }
         setUserSkills(data.skills ?? {});
         setStreak(data.streak || { current: 0, longest: 0, lastLog: null });
+        setRestDays([]);
         setWorkoutCounter(Number(data.workout) || 0);
         setRestCounter(Number(data.rest) || 0);
         setUsername(typeof data.username === "string" ? data.username : "");
@@ -187,17 +190,20 @@ export function Dashboard() {
     const predicted = buildStreakUpdate(previous, "rest");
     if (!predicted) return;
 
+    const restDay = formatDate(getFitnessDateObject());
     setLogError(null);
     setLogging(true);
     setStreak(predicted.streak);
     setWorkoutCounter(predicted.workout);
     setRestCounter(predicted.rest);
+    setRestDays((days) => (days.includes(restDay) ? days : [...days, restDay]));
     try {
       const result = await logWorkout(currentUser.uid, "rest");
       if (!result) {
         setStreak(previous.streak);
         setWorkoutCounter(previous.workout);
         setRestCounter(previous.rest);
+        setRestDays((days) => days.filter((day) => day !== restDay));
         setLogError("Already logged today.");
         return;
       }
@@ -208,6 +214,7 @@ export function Dashboard() {
       setStreak(previous.streak);
       setWorkoutCounter(previous.workout);
       setRestCounter(previous.rest);
+      setRestDays((days) => days.filter((day) => day !== restDay));
       setLogError("Couldn't save that log. Try again.");
     } finally {
       setLogging(false);
@@ -247,7 +254,7 @@ export function Dashboard() {
     username || currentUser?.email?.split("@")[0] || "athlete"
   ).toLowerCase();
   const initial = displayName.trim().charAt(0).toUpperCase() || "W";
-  const dots = weekDots(getFitnessDateObject(), streak);
+  const dots = weekDots(getFitnessDateObject(), streak, restDays);
   const reached = status === "ready" ? highestReached(userSkills || {}) : [];
   const lastDurationLabel = latest ? formatWorkoutDurationLabel(latest.durationSec) : null;
   return (
@@ -295,7 +302,11 @@ export function Dashboard() {
               <ol className="dash-week">
                 {dots.map((dot) => (
                   <li key={dot.key}>
-                    <span className={`dash-dot dash-dot--${dot.state}`} />
+                    <span className={`dash-dot dash-dot--${dot.state}`}>
+                      {dot.state === "rest" && (
+                        <span className="dash-dot-rest" aria-hidden="true" />
+                      )}
+                    </span>
                     <span>{dot.label}</span>
                   </li>
                 ))}

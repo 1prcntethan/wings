@@ -22,10 +22,10 @@ function IconLog() {
 function IconSkills() {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true">
-      <circle cx="6" cy="12" r="2.2" />
-      <circle cx="16" cy="7" r="2.2" />
-      <circle cx="16" cy="17" r="2.2" />
-      <path d="M8 12h5.5M14.2 8.6 8.2 11.2M14.2 15.4 8.2 12.8" />
+      <circle cx="18" cy="5" r="3" />
+      <circle cx="6" cy="12" r="3" />
+      <circle cx="18" cy="19" r="3" />
+      <path d="M8.59 13.51 15.42 17.49M15.41 6.51 8.59 10.49" />
     </svg>
   );
 }
@@ -33,7 +33,8 @@ function IconSkills() {
 function IconLearn() {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M4 6.5h7.2a2 2 0 0 1 2 2V19a2 2 0 0 0-2-1.2H4zM20 6.5h-7.2a2 2 0 0 0-2 2V19a2 2 0 0 1 2-1.2H20z" />
+      <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+      <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
     </svg>
   );
 }

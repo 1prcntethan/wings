@@ -3,6 +3,8 @@ import test from "node:test";
 import {
   countLoggedSets,
   formatTrainedTime,
+  groupArchiveLogs,
+  historyPlaceholders,
   historySkeleton,
   rangeBounds,
   statRangeById,
@@ -58,6 +60,26 @@ test("history placeholders are older months, then past years", () => {
   const capped = historySkeleton(today, new Date(2010, 0, 1));
   assert.equal(capped.years[0].label, "2025");
   assert.equal(capped.years.at(-1).label, "2018");
+});
+
+test("history folds only include months and years that have workouts", () => {
+  const skeleton = historySkeleton(today, new Date(2025, 2, 1));
+  const archive = groupArchiveLogs(
+    [
+      { id: "nov", date: "2026-11-02" },
+      { id: "oct", date: "2026-10-04" },
+      { id: "old", date: "2025-06-10" },
+    ],
+    today,
+  );
+  assert.equal(archive["2026-10"].logs[0].id, "oct");
+  assert.equal(archive["2025"].logs[0].id, "old");
+  assert.equal(archive["2026-11"], undefined);
+  assert.deepEqual(
+    historyPlaceholders(skeleton, archive).map((entry) => entry.key),
+    ["2026-10", "2025"],
+  );
+  assert.deepEqual(historyPlaceholders(skeleton, {}), []);
 });
 
 test("set totals prefer a stored count and fall back to sections", () => {

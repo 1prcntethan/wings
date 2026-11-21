@@ -419,14 +419,3 @@
     padding-bottom: 112px;
   }
 }
-
-@media (max-width: 640px) {
-  body:has(main.wh-page[data-screen="log"]) {
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-  }
-
-  body:has(main.wh-page[data-screen="log"])::-webkit-scrollbar {
-    display: none;
-  }
-}

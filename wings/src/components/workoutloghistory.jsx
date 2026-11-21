@@ -20,11 +20,11 @@ function IconSearch() {
   );
 }
 
-function IconPencil() {
+function IconCopy() {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M4 16.5V20h3.5L18 9.5 14.5 6 4 16.5z" />
-      <path d="M13.5 7.2 16.8 10.5" />
+      <rect x="9" y="9" width="11" height="11" rx="2" />
+      <path d="M7 15H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2v1" />
     </svg>
   );
 }
@@ -55,7 +55,7 @@ function IconTrash() {
   );
 }
 
-function LogCard({ log, onEdit, onDelete, pendingDelete, onConfirmDelete, onCancelDelete, deleting }) {
+function LogCard({ log, onCopy, onDelete, pendingDelete, onConfirmDelete, onCancelDelete, deleting }) {
   const [sharing, setSharing] = useState(false);
   const [shareError, setShareError] = useState(null);
   const summary = logSummary(log);
@@ -97,8 +97,8 @@ function LogCard({ log, onEdit, onDelete, pendingDelete, onConfirmDelete, onCanc
           </span>
         ) : (
           <span className="wh-icon-row">
-            <button type="button" aria-label="Edit workout" disabled={log.pending} onClick={() => onEdit(log)}>
-              <IconPencil />
+            <button type="button" aria-label="Copy workout" disabled={log.pending} onClick={() => onCopy(log)}>
+              <IconCopy />
             </button>
             <button
               type="button"
@@ -165,9 +165,11 @@ export default function WorkoutHistory({
   onRetryCurrent,
   placeholders,
   archive,
+  archiveError,
+  onRetryArchive,
   openKeys,
   onToggle,
-  onEdit,
+  onCopy,
   onDelete,
   pendingDelete,
   onConfirmDelete,
@@ -177,7 +179,7 @@ export default function WorkoutHistory({
   onStartSession,
   onLogWorkout,
 }) {
-  const cardProps = { onEdit, onDelete, pendingDelete, onConfirmDelete, onCancelDelete, deleting };
+  const cardProps = { onCopy, onDelete, pendingDelete, onConfirmDelete, onCancelDelete, deleting };
 
   return (
     <div className="wh-history">
@@ -265,6 +267,12 @@ export default function WorkoutHistory({
         <LogList logs={currentLogs} filter={filter} query={query} {...cardProps} />
       )}
       {deleteError && <p className="wh-error">{deleteError}</p>}
+      {archiveError && (
+        <p className="wh-error">
+          {archiveError}{" "}
+          <button type="button" onClick={onRetryArchive}>retry</button>
+        </p>
+      )}
       {placeholders.map((entry) => {
         const open = Boolean(openKeys[entry.key]);
         const cached = archive[entry.key];
@@ -301,7 +309,7 @@ export default function WorkoutHistory({
       })}
       <div className="wh-actions">
         <button type="button" className="wh-ghost" onClick={onLogWorkout}>+ Log workout</button>
-        <button type="button" className="wh-go" onClick={onStartSession}>Start session</button>
+        <button type="button" className="wh-go" onClick={onStartSession}>start session</button>
       </div>
     </div>
   );

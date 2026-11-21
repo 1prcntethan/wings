@@ -105,6 +105,38 @@ export function historySkeleton(today, earliestDate) {
   return { months, years };
 }
 
+export function groupArchiveLogs(logs, today) {
+  const year = today.getFullYear();
+  const month = today.getMonth();
+  const thisMonthKey = `${year}-${String(month + 1).padStart(2, "0")}`;
+  const grouped = {};
+  for (const log of Array.isArray(logs) ? logs : []) {
+    const date = String(log?.date ?? "");
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) continue;
+    const monthKey = date.slice(0, 7);
+    if (monthKey === thisMonthKey) continue;
+    const logYear = Number(date.slice(0, 4));
+    const key = logYear === year ? monthKey : String(logYear);
+    if (!grouped[key]) grouped[key] = [];
+    grouped[key].push(log);
+  }
+  const archive = {};
+  for (const [key, rows] of Object.entries(grouped)) {
+    archive[key] = { status: "ready", logs: rows };
+  }
+  return archive;
+}
+
+export function historyPlaceholders(skeleton, archive) {
+  const entries = [...(skeleton?.months || []), ...(skeleton?.years || [])];
+  return entries.filter((entry) => {
+    const cached = archive?.[entry.key];
+    if (!cached) return false;
+    if (cached.status === "error" || cached.status === "loading") return true;
+    return Array.isArray(cached.logs) && cached.logs.length > 0;
+  });
+}
+
 export function countLoggedSets(sections) {
   if (!sections || typeof sections !== "object") return 0;
   let total = 0;

@@ -19,7 +19,6 @@ import WorkoutHistory from "../components/workoutloghistory.jsx";
 import {
   creditWorkoutStreak,
   deleteWorkoutLog,
-  updateWorkoutLog,
   formatDate,
   getFitnessDateObject,
   getUserDoc,
@@ -29,6 +28,8 @@ import {
 } from "../config/firestore.js";
 import {
   DEFAULT_STAT_RANGE,
+  groupArchiveLogs,
+  historyPlaceholders,
   historySkeleton,
   monthBounds,
   monthLabel,
@@ -416,7 +417,6 @@ export function WorkoutLog() {
   const [confirmDiscardDraft, setConfirmDiscardDraft] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState(blankLog());
-  const [editingId, setEditingId] = useState(null);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState(null);
   const [streakWarning, setStreakWarning] = useState(null);
@@ -431,6 +431,8 @@ export function WorkoutLog() {
   const [currentError, setCurrentError] = useState(null);
   const [currentRetry, setCurrentRetry] = useState(0);
   const [archive, setArchive] = useState({});
+  const [archiveError, setArchiveError] = useState(null);
+  const [archiveRetry, setArchiveRetry] = useState(0);
   const [openKeys, setOpenKeys] = useState({});
   const [filter, setFilter] = useState("all");
   const [query, setQuery] = useState("");
@@ -577,6 +579,53 @@ export function WorkoutLog() {
     };
   }, [currentUser, currentRetry]);
 
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadArchive() {
+      setArchiveError(null);
+      const preview = previewRef.current || (await loadDesignPreview());
+      if (cancelled) return;
+      const todayDate = getFitnessDateObject();
+      const previous = monthBounds(todayDate.getFullYear(), todayDate.getMonth() - 1);
+      if (preview) {
+        previewRef.current = preview;
+        const logs = preview.previewWorkoutLogs(todayDate).filter(
+          (log) => log.date <= previous.end,
+        );
+        archiveRef.current = groupArchiveLogs(logs, todayDate);
+        setArchive({ ...archiveRef.current });
+        return;
+      }
+      if (!currentUser) {
+        archiveRef.current = {};
+        setArchive({});
+        return;
+      }
+      const start = `${todayDate.getFullYear() - 8}-01-01`;
+      try {
+        const rows = await getWorkoutLogsByDate(currentUser.uid, start, previous.end);
+        if (cancelled) return;
+        archiveRef.current = groupArchiveLogs(
+          rows.map((row) => normalizeWorkoutLog(row)),
+          todayDate,
+        );
+        setArchive({ ...archiveRef.current });
+      } catch {
+        if (!cancelled) {
+          archiveRef.current = {};
+          setArchive({});
+          setArchiveError("Couldn't load older workouts.");
+        }
+      }
+    }
+
+    loadArchive();
+    return () => {
+      cancelled = true;
+    };
+  }, [currentUser, archiveRetry]);
+
   function updateExercise(sectionKey, index, field, value) {
     setFormData((prev) => {
       const updatedSection = prev.sections[sectionKey].map((ex, i) => {
@@ -654,14 +703,21 @@ export function WorkoutLog() {
     const bounds = monthBounds(todayDate.getFullYear(), todayDate.getMonth());
     if (log.date >= bounds.start && log.date <= bounds.end) {
       setCurrentLogs((prev) => [log, ...prev.filter((row) => row.id !== log.id)]);
+      return;
     }
-    for (const [key, entry] of Object.entries(archiveRef.current)) {
-      if (entry?.status !== "ready" || !log.date.startsWith(key)) continue;
-      archiveRef.current[key] = {
-        ...entry,
-        logs: [log, ...entry.logs.filter((row) => row.id !== log.id)],
-      };
-    }
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(String(log.date || ""))) return;
+    const logYear = Number(String(log.date).slice(0, 4));
+    const key = logYear === todayDate.getFullYear()
+      ? String(log.date).slice(0, 7)
+      : String(logYear);
+    const existing = archiveRef.current[key];
+    const logs = existing?.status === "ready" && Array.isArray(existing.logs)
+      ? existing.logs
+      : [];
+    archiveRef.current[key] = {
+      status: "ready",
+      logs: [log, ...logs.filter((row) => row.id !== log.id)],
+    };
     setArchive({ ...archiveRef.current });
   }
 
@@ -680,22 +736,17 @@ export function WorkoutLog() {
 
     const snapshot = formData;
     const savedShape = sanitizeWorkout(formData);
-    const replacingId = editingId;
-    const tempId = replacingId || `pending-${Date.now()}`;
+    const tempId = `pending-${Date.now()}`;
     setSaveError(null);
     setStreakWarning(null);
     setSaving(true);
     forgetLog(tempId);
     rememberLog({ id: tempId, ...savedShape, pending: true });
     setFormData(blankLog());
-    setEditingId(null);
     setShowForm(false);
 
     try {
-      const savedId = replacingId
-        ? replacingId
-        : await saveWorkoutLog(currentUser.uid, savedShape);
-      if (replacingId) await updateWorkoutLog(currentUser.uid, replacingId, savedShape);
+      const savedId = await saveWorkoutLog(currentUser.uid, savedShape);
       forgetLog(tempId);
       rememberLog({ id: savedId, ...savedShape, pending: false });
       try {
@@ -706,7 +757,6 @@ export function WorkoutLog() {
       setStatsRetry((count) => count + 1);
     } catch {
       forgetLog(tempId);
-      setEditingId(replacingId);
       setFormData(snapshot);
       setShowForm(true);
       setSaveError("Failed to save. Please try again.");
@@ -733,7 +783,7 @@ export function WorkoutLog() {
     setConfirmDiscardDraft(false);
   }
 
-  function fillForm(log) {
+  function copyWorkout(log) {
     const sections = {};
     SECTIONS.forEach((section) => {
       const saved = Array.isArray(log.sections?.[section.key]) ? log.sections[section.key] : [];
@@ -742,11 +792,10 @@ export function WorkoutLog() {
       );
     });
     setFormData({
-      date: /^\d{4}-\d{2}-\d{2}$/.test(log.date) ? log.date : formatDate(getFitnessDateObject()),
+      date: formatDate(getFitnessDateObject()),
       category: WORKOUT_CATEGORIES.includes(log.category) ? log.category : "push",
       sections,
     });
-    setEditingId(log.id);
     setShowForm(true);
     window.setTimeout(() => {
       formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -803,7 +852,7 @@ export function WorkoutLog() {
 
   const today = getFitnessDateObject();
   const skeleton = historySkeleton(today, createdAt);
-  const placeholders = [...skeleton.months, ...skeleton.years];
+  const placeholders = historyPlaceholders(skeleton, archive);
 
   return (
     <>
@@ -829,9 +878,11 @@ export function WorkoutLog() {
           onRetryCurrent={() => setCurrentRetry((count) => count + 1)}
           placeholders={placeholders}
           archive={archive}
+          archiveError={archiveError}
+          onRetryArchive={() => setArchiveRetry((count) => count + 1)}
           openKeys={openKeys}
           onToggle={toggleArchive}
-          onEdit={fillForm}
+          onCopy={copyWorkout}
           onDelete={(log) => {
             setDeleteError(null);
             setPendingDelete(log.id);
@@ -843,7 +894,6 @@ export function WorkoutLog() {
           deleteError={deleteError}
           onStartSession={handleStartFresh}
           onLogWorkout={() => {
-            setEditingId(null);
             setFormData(blankLog());
             setShowForm(true);
             window.setTimeout(() => {
@@ -897,14 +947,13 @@ export function WorkoutLog() {
 
               {saveError && <p className="wl-error">{saveError}</p>}
               <button className="log-workout" onClick={handleSave} disabled={saving} type="button">
-                {saving ? "saving..." : editingId ? "update workout" : "save workout"}
+                {saving ? "saving..." : "save workout"}
               </button>
               <button
                 className="log-workout"
                 type="button"
                 onClick={() => {
                   setShowForm(false);
-                  setEditingId(null);
                 }}
               >
                 cancel
