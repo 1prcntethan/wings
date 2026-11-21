@@ -1,7 +1,7 @@
 .login-logo {
     position: absolute;
-    top: 0;
-    left: 0;
+    top: var(--safe-area-top);
+    left: var(--safe-area-left);
     margin: 20px;
     width: 150px;
     height: 150px;
@@ -9,10 +9,17 @@
 
 .login-container {
     display: flex;
-    width: 100vw;
-    height: 100vh;
+    width: 100%;
+    min-height: calc(100dvh - var(--safe-area-top) - var(--safe-area-bottom));
+    box-sizing: border-box;
     flex-direction: row;
     justify-content: center;
+}
+
+@media (max-width: 640px) {
+    .login-container {
+        min-height: calc(100dvh - var(--safe-area-top) - var(--tabbar-offset));
+    }
 }
 
 .signup-block {

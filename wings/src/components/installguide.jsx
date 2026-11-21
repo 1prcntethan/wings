@@ -149,7 +149,7 @@ function guideContent(context) {
         {
           icon: "copy",
           title: "copy the link",
-          text: "Use the button, or select the address below and copy it.",
+          text: "Tap copy link. If it can't be copied, select the address that appears.",
         },
         {
           icon: "menu",
@@ -278,6 +278,19 @@ function useInstallController() {
     };
   }, [showSheet]);
 
+  useEffect(() => {
+    if (copyState === "copied") {
+      const id = window.setTimeout(() => setCopyState("idle"), 2000);
+      return () => window.clearTimeout(id);
+    }
+    if (copyState === "manual") {
+      const field = linkRef.current;
+      field?.focus();
+      field?.select();
+    }
+    return undefined;
+  }, [copyState]);
+
   async function onInstall() {
     setError("");
     setBusy(true);
@@ -295,8 +308,6 @@ function useInstallController() {
       setCopyState("copied");
     } catch {
       setCopyState("manual");
-      linkRef.current?.focus();
-      linkRef.current?.select();
     }
   }
 
@@ -358,18 +369,27 @@ function InstallActions({ controller }) {
       )}
       {content.copy && (
         <div className="install-copy">
-          <button type="button" className="install-action" onClick={onCopy}>
-            {copyState === "copied" ? "link copied" : "copy link"}
+          <button type="button" className="install-action" onClick={onCopy} aria-live="polite">
+            {copyState === "copied" ? "copied" : "copy link"}
           </button>
-          <label className="install-copy__label">
-            page link
-            <input ref={linkRef} className="install-copy__input" readOnly value={pageUrl} onFocus={(event) => event.target.select()} />
-          </label>
           {copyState === "copied" && (
-            <p className="install-copy__status">Paste it into {context.openIn}.</p>
+            <p className="install-copy__status" role="status">Paste it into {context.openIn}.</p>
           )}
           {copyState === "manual" && (
-            <p className="install-copy__status">Select the link above and copy it.</p>
+            <>
+              <label className="install-copy__label">
+                page link
+                <input
+                  ref={linkRef}
+                  className="install-copy__input"
+                  readOnly
+                  value={pageUrl}
+                  aria-label="page link"
+                  onFocus={(event) => event.target.select()}
+                />
+              </label>
+              <p className="install-copy__status" role="status">Select the link and copy it.</p>
+            </>
           )}
         </div>
       )}

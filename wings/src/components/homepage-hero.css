@@ -135,6 +135,13 @@
   font-weight: 200;
   margin-top: 60px;
 
+  /* The tab bar grows with the home indicator and the page shifts down
+     for the notch. Give that space back from these gaps so the buttons
+     stay above the tab bar. With zero insets this stays 60px. */
+  @media (max-width: 640px) {
+    margin-top: max(12px, calc(60px - (var(--safe-area-top) + var(--safe-area-bottom)) / 2));
+  }
+
   @media (max-width: 1200px) {
     font-size: 20px;
   }
