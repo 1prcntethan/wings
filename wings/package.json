@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "test": "node --test src/utilites/livesession.test.js src/utilites/username.test.js src/config/auth-bootstrap.test.js src/utilites/workoutstats.test.js src/utilites/skillgroups.test.js src/utilites/streakweek.test.js",
+    "test": "node --test src/utilites/livesession.test.js src/utilites/username.test.js src/config/auth-bootstrap.test.js src/utilites/workoutstats.test.js src/utilites/skillgroups.test.js src/utilites/streakweek.test.js && npm run test:rules",
+    "test:rules": "cd .. && ./wings/node_modules/.bin/firebase emulators:exec --only firestore --project demo-wings \"cd wings && node --test --test-timeout 180000 src/config/firestore.rules.test.js\"",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -20,12 +21,14 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
+    "@firebase/rules-unit-testing": "^5.0.2",
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^5.1.1",
     "eslint": "^9.39.1",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.4.24",
+    "firebase-tools": "^15.37.0",
     "globals": "^16.5.0",
     "vite": "^7.3.1",
     "vite-plugin-pwa": "^1.2.0"

@@ -112,14 +112,17 @@ function isSkillUpdate() {
   let changed = request.resource.data.diff(resource.data).affectedKeys();
   let skills = request.resource.data.skills;
   let diff = skills.diff(beforeSkills());
+  // One skill key is added or changed. Checking every skill here used to
+  // exceed the 1000-expression cap, so only that key is validated below.
+  // 120 covers the catalog plus push/pull and some legacy keys, and keeps
+  // the key lookup itself under the cap.
   return changed.hasOnly(['skills', 'updatedAt'])
     && request.resource.data.updatedAt == request.time
     && skills is map
+    && skills.size() <= 120
     && diff.removedKeys().size() == 0
-    && diff.addedKeys().hasOnly(progressIds())
-    && diff.changedKeys().hasOnly(progressIds())
-    && diff.addedKeys().size() + diff.changedKeys().size() == 1
-    && progressValuesOk(skills, diff);
+    && diff.affectedKeys().size() == 1
+    && changedSkillOk(skills, diff);
 }
 
 function isStreakUpdate() {
@@ -313,95 +316,37 @@ function progressIds() {
   ];
 }
 
-function progressValuesOk(skills, diff) {
-  return valueOk(skills, diff, 'assisted-push-up')
-    && valueOk(skills, diff, 'push-up')
-    && valueOk(skills, diff, 'dip')
-    && valueOk(skills, diff, 'elbow-lever')
-    && valueOk(skills, diff, 'planche-lean')
-    && valueOk(skills, diff, 'pseudo-push-up')
-    && valueOk(skills, diff, 'tuck-planche')
-    && valueOk(skills, diff, 'tuck-planche-pu')
-    && valueOk(skills, diff, 'adv-tuck-planche')
-    && valueOk(skills, diff, 'adv-tuck-planche-pu')
-    && valueOk(skills, diff, '90-degree-hold')
-    && valueOk(skills, diff, 'back-lever')
-    && valueOk(skills, diff, 'super-adv-tuck-pl')
-    && valueOk(skills, diff, 'straddle-planche')
-    && valueOk(skills, diff, 'straddle-planche-pu')
-    && valueOk(skills, diff, 'half-lay-planche')
-    && valueOk(skills, diff, 'full-planche')
-    && valueOk(skills, diff, 'full-planche-pu')
-    && valueOk(skills, diff, 'one-arm-planche')
-    && valueOk(skills, diff, 'maltese')
-    && valueOk(skills, diff, 'pike-push-up')
-    && valueOk(skills, diff, 'crow-pose')
-    && valueOk(skills, diff, 'assisted-handstand')
-    && valueOk(skills, diff, 'handstand')
-    && valueOk(skills, diff, 'elevated-pike-pu')
-    && valueOk(skills, diff, 'bent-arm-press-to-hs')
-    && valueOk(skills, diff, 'straight-arm-press-to-hs')
-    && valueOk(skills, diff, 'bent-arm-stand')
-    && valueOk(skills, diff, 'assisted-hspu')
-    && valueOk(skills, diff, 'hspu')
-    && valueOk(skills, diff, 'deep-hspu')
-    && valueOk(skills, diff, '90-degree-pu')
-    && valueOk(skills, diff, 'assisted-oahs')
-    && valueOk(skills, diff, 'oahs')
-    && valueOk(skills, diff, 'oa-flag')
-    && valueOk(skills, diff, 'assisted-inverted-row')
-    && valueOk(skills, diff, 'inverted-row')
-    && valueOk(skills, diff, 'tuck-fl')
-    && valueOk(skills, diff, 'tuck-fl-row')
-    && valueOk(skills, diff, 'pike-fl')
-    && valueOk(skills, diff, 'pike-fl-row')
-    && valueOk(skills, diff, 'adv-tuck-fl')
-    && valueOk(skills, diff, 'super-adv-tuck-fl')
-    && valueOk(skills, diff, 'adv-tuck-fl-row')
-    && valueOk(skills, diff, 'straddle-fl')
-    && valueOk(skills, diff, 'straddle-fl-row')
-    && valueOk(skills, diff, 'half-lay-fl')
-    && valueOk(skills, diff, 'full-front-lever')
-    && valueOk(skills, diff, 'full-fl-row')
-    && valueOk(skills, diff, 'front-lever-touch')
-    && valueOk(skills, diff, 'deadhang')
-    && valueOk(skills, diff, 'active-hang')
-    && valueOk(skills, diff, 'assisted-pull-up')
-    && valueOk(skills, diff, 'pull-up')
-    && valueOk(skills, diff, 'scapula pull-up')
-    && valueOk(skills, diff, 'chest pull-up')
-    && valueOk(skills, diff, 'waist pull-up')
-    && valueOk(skills, diff, 'muscle-up')
-    && valueOk(skills, diff, 'archer-pull-up')
-    && valueOk(skills, diff, 'clean-muscle-up')
-    && valueOk(skills, diff, 'assisted-oac')
-    && valueOk(skills, diff, 'assisted-oap')
-    && valueOk(skills, diff, 'oac-oap')
-    && valueOk(skills, diff, 'weighted-pull-ups')
-    && valueOk(skills, diff, 'butterfly')
-    && valueOk(skills, diff, 'bodyweight-squat')
-    && valueOk(skills, diff, 'split-squat')
-    && valueOk(skills, diff, 'assisted-pistol-squat')
-    && valueOk(skills, diff, 'bulgarian-split-squat')
-    && valueOk(skills, diff, 'reverse-nordic-curl')
-    && valueOk(skills, diff, 'nordic-curl')
-    && valueOk(skills, diff, 'sissy-squat')
-    && valueOk(skills, diff, 'pistol-squat')
-    && valueOk(skills, diff, 'shrimp-squat')
-    && valueOk(skills, diff, 'dragon-pistol-squat')
-    && valueOk(skills, diff, 'sit-up')
-    && valueOk(skills, diff, 'hollow-body-hold')
-    && valueOk(skills, diff, 'l-sit-compression')
-    && valueOk(skills, diff, 'l-sit')
-    && valueOk(skills, diff, 'dragon-flag')
-    && valueOk(skills, diff, 'v-sit')
-    && valueOk(skills, diff, 'i-sit')
-    && valueOk(skills, diff, 'manna')
-    && valueOk(skills, diff, 'human-flag')
-    && valueOk(skills, diff, 'victorian');
+// affectedKeys() is a set, and rules cannot read a set entry by index.
+// Eight halvings reduce a map of at most 256 keys to one index. The size
+// check in isSkillUpdate keeps this lookup under the expression cap.
+function changedSkillOk(skills, diff) {
+  let keys = skills.keys();
+  let changed = diff.affectedKeys();
+  let id = narrowedId(keys, changed);
+  return changed.hasAny([id])
+    && progressIds().hasAny([id])
+    && skills[id] is int
+    && skills[id] >= 0
+    && skills[id] <= 3;
 }
 
-function valueOk(skills, diff, id) {
-  return !diff.affectedKeys().hasAny([id])
-    || (skills[id] is int && skills[id] >= 0 && skills[id] <= 3);
+function narrowedId(keys, changed) {
+  let half = narrow4(0, keys.size(), keys, changed);
+  let done = narrow4(half[0], half[1], keys, changed);
+  return keys[done[0]];
+}
+
+function narrow4(start, end, keys, changed) {
+  let a = narrow(start, end, keys, changed);
+  let b = narrow(a[0], a[1], keys, changed);
+  let c = narrow(b[0], b[1], keys, changed);
+  let d = narrow(c[0], c[1], keys, changed);
+  return d;
+}
+
+function narrow(start, end, keys, changed) {
+  let mid = int((start + end) / 2);
+  return mid > start && changed.hasAny(keys[start:mid])
+    ? [start, mid]
+    : [mid, end];
 }
