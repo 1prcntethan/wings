@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import Navbar from "../components/navbar";
+import Footer from "../components/footer";
 import "./learn.css";
 
 const GUIDES = [
@@ -162,13 +163,8 @@ export function Learn() {
         {!showGuides && cards.length === 0 && (
           <p className="learn-empty">Nothing matches that search.</p>
         )}
-
-        <p className="learn-more">
-          <Link to="/about">About</Link>
-          <Link to="/disclaimer">Disclaimer</Link>
-          <Link to="/install">Install</Link>
-        </p>
       </main>
+      <Footer />
     </>
   );
 }

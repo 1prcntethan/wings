@@ -1,4 +1,3 @@
-import BetaDisclaimer from "../components/betadisclaimer";
 import Footer from "../components/footer";
 import Navbar from "../components/navbar";
 
@@ -8,7 +7,6 @@ export function Disclaimer() {
   return (
     <>
       <Navbar />
-      <BetaDisclaimer />
       <div className="disclaimer-text">
         <div className="disclaimer-title">disclaimer</div>
         <p>

@@ -4,13 +4,11 @@ import LineDivider from "../components/line-divider";
 import HomepageHero from "../components/homepage-hero";
 import { Link } from "react-router-dom";
 import Footer from "../components/footer.jsx";
-import BetaDisclaimer from "../components/betadisclaimer.jsx";
 
 export function Homepage() {
   return (
     <>
       <Navbar />
-      <BetaDisclaimer />
       <HomepageHero />
       <LineDivider />
       <div className="container">
@@ -147,22 +145,12 @@ export function Homepage() {
             </Link>
           </div>
           <div className="cta-block">
-          <div className="cta-title-1">visualization</div>
-
-            <div className="cta-info">
-              See how advanced skills are built from the ground up.
-            </div>
-            <Link to="/" className="cta-go-1">
-              Incomplete
-            </Link>
-          </div>
-          <div className="cta-block">
-          <div className="cta-title-2">how to guide</div>
+          <div className="cta-title-1">how to guide</div>
 
             <div className="cta-info">
               Start here! This is a guide on how to use this site effectively.
             </div>
-            <Link to="/howtouseguide" className="cta-go-2">
+            <Link to="/howtouseguide" className="cta-go-1">
               View Page
             </Link>
           </div>

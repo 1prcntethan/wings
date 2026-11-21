@@ -672,8 +672,7 @@
   letter-spacing: 0;
 }
 
-.dash-desktop-only,
-.desktop-footer {
+.dash-desktop-only {
   display: none;
 }
 
@@ -730,8 +729,7 @@
     margin-bottom: 0;
   }
 
-  .dash-desktop-only,
-  .desktop-footer {
+  .dash-desktop-only {
     display: block;
   }
 }

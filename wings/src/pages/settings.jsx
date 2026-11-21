@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/navbar";
 import Footer from "../components/footer";
-import BetaDisclaimer from "../components/betadisclaimer";
 import { useAuth } from "../config/auth-context.jsx";
 import {
   doDeleteAuthUser,
@@ -167,7 +166,6 @@ export function Settings() {
   return (
     <>
       <Navbar />
-      <BetaDisclaimer />
       <div className="settings">
         <h1 className="settings-title">account</h1>
 
@@ -349,7 +347,9 @@ export function Settings() {
           )}
         </section>
       </div>
-      <Footer />
+      <div className="footer-app-chrome">
+        <Footer />
+      </div>
     </>
   );
 }

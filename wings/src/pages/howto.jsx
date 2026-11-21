@@ -1,4 +1,3 @@
-import BetaDisclaimer from "../components/betadisclaimer";
 import Footer from "../components/footer";
 import Navbar from "../components/navbar";
 
@@ -8,7 +7,6 @@ export function HowTo() {
   return (
     <>
       <Navbar />
-      <BetaDisclaimer />
       <div className="howto-text">
         <div className="howto-title">how to use this website</div>
         <p>

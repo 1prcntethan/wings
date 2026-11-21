@@ -517,7 +517,7 @@ export function Dashboard() {
           </div>
         )}
       </main>
-      <div className="desktop-footer">
+      <div className="footer-app-chrome">
         <Footer />
       </div>
     </>

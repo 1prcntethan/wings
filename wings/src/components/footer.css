@@ -124,6 +124,13 @@ footer {
 
 #footer-email {
     color: #919191;
+    text-decoration: none;
+}
+
+@media (max-width: 640px) {
+  .footer-app-chrome {
+    display: none;
+  }
 }
 
 .center-svg {

@@ -273,22 +273,6 @@
   font-weight: 200;
 }
 
-.learn-more {
-  display: flex;
-  gap: 16px;
-  justify-content: center;
-  margin: 18px 0 0;
-  color: rgba(243, 243, 243, 0.55);
-  font-family: "Fira Sans", sans-serif;
-  font-size: 12px;
-  font-weight: 200;
-}
-
-.learn-more a {
-  color: rgba(243, 243, 243, 0.55);
-  font-weight: 200;
-}
-
 @media (min-width: 641px) {
   .learn-page {
     width: min(720px, calc(100% - 48px));

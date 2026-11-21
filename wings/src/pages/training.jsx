@@ -1,4 +1,3 @@
-import BetaDisclaimer from "../components/betadisclaimer";
 import Footer from "../components/footer";
 import Navbar from "../components/navbar";
 import "./training.css";
@@ -8,8 +7,6 @@ export function Training() {
   return (
     <>
       <Navbar />
-
-      <BetaDisclaimer />
 
       <div className="flex-container">
         <div className="training-container">

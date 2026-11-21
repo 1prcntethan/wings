@@ -7,7 +7,6 @@ import TutorialListHPL from "../components/hpl-tutorial-list";
 import TutorialListVPL from "../components/vpl-tutorial-list";
 import TutorialListL from "../components/legs-tutorial-list";
 import Footer from "../components/footer";
-import BetaDisclaimer from "../components/betadisclaimer";
 import TutorialListCM from "../components/coremisc-tutorial-list";
 import MuscleFinder from "../components/musclefinder";
 import Select from "react-select";
@@ -211,7 +210,6 @@ export function Tutorials() {
   return (
     <>
       <Navbar />
-      <BetaDisclaimer />
       <div className="tutorial-header">
         Here is the full list of (almost) all common calisthenics skills. This
         list will split the skills into their respective categories and list

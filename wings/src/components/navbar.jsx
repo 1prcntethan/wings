@@ -208,9 +208,6 @@ const Navbar = () => {
             </div>
           </>
         )}
-        {/* <div className="navbar__list--items navbar__list--pink">
-              <Link to = "/skillvis" className="nav-item">skillvis</Link>
-            </div> */}
       </div>
 
       <div className="mobile__list">
@@ -283,9 +280,6 @@ const Navbar = () => {
               </>
             )}
           </li>
-          {/* <div className="navbar__list--items navbar__list--pink">
-              <Link to = "/skillvis" className="nav-item">skillvis</Link>
-            </div> */}
         </ul>
       </div>
 
