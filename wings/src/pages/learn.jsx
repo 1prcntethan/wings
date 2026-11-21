@@ -4,68 +4,74 @@ import Navbar from "../components/navbar";
 import "./learn.css";
 
 const GUIDES = [
-  { title: "Gym vs Calisthenics", to: "/training/gymvscalisthenics", badge: "New" },
-  { title: "Full-body vs Split", to: "/training/fullbodyvssplit", badge: "New" },
-  { title: "Rest & Recovery", to: "/training/restandrecovery", badge: "New" },
-  { title: "General Nutrition", to: "/training/generalnutrition", badge: "New" },
+  { title: "Gym vs Calisthenics", to: "/training/gymvscalisthenics", badge: "NEW" },
+  { title: "Full-body vs Split", to: "/training/fullbodyvssplit", badge: "NEW" },
+  { title: "Rest & Recovery", to: "/training/restandrecovery", badge: "NEW" },
+  { title: "General Nutrition", to: "/training/generalnutrition", badge: "NEW" },
   { title: "Beginner Guide", to: "/training/beginnerguide", note: "for beginners" },
 ];
 
 const CARDS = [
   {
     id: "tutorials",
-    title: "Tutorials",
+    title: "tutorials",
     text: "step-by-step skill tutorials",
     to: "/tutorials",
     icon: "play",
   },
   {
     id: "terminology",
-    title: "Terminology",
+    title: "terminology",
     text: "RPE, scap, PPPU & more",
     to: "/terminology",
     icon: "list",
   },
   {
     id: "howto",
-    title: "How to use",
+    title: "how to use",
     text: "log, rank & skill tree basics",
     to: "/howtouseguide",
     icon: "help",
   },
 ];
 
+function Chevron() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="m9 5 7 7-7 7" />
+    </svg>
+  );
+}
+
 function Icon({ name }) {
   if (name === "book") {
     return (
       <svg viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M5 5.5h6.5A2 2 0 0 1 13.5 7.5V19a2 2 0 0 0-2-1.4H5zM19 5.5h-6.5A2 2 0 0 0 10.5 7.5V19a2 2 0 0 1 2-1.4H19z" />
+        <path d="M3 5.5c3-1.3 6-1.3 9 .7 3-2 6-2 9-.7V19c-3-1.3-6-1.3-9 .7-3-2-6-2-9-.7z" />
+        <path d="M12 6.2v13.5" />
       </svg>
     );
   }
   if (name === "play") {
     return (
       <svg viewBox="0 0 24 24" aria-hidden="true">
-        <circle cx="12" cy="12" r="8" />
-        <path d="M10.5 9.5v5l4.5-2.5z" />
+        <rect x="3" y="5" width="18" height="14" rx="2.5" />
+        <path d="m10 9.2 5 2.8-5 2.8z" />
       </svg>
     );
   }
   if (name === "list") {
     return (
       <svg viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M8 7h10M8 12h10M8 17h10" />
-        <circle cx="5" cy="7" r="0.8" fill="currentColor" />
-        <circle cx="5" cy="12" r="0.8" fill="currentColor" />
-        <circle cx="5" cy="17" r="0.8" fill="currentColor" />
+        <path d="M4 6h10M4 11h16M4 16h7" />
+        <circle cx="17.5" cy="16.5" r="2.5" />
       </svg>
     );
   }
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true">
-      <circle cx="12" cy="12" r="8" />
-      <path d="M9.5 9.5a2.5 2.5 0 1 1 3.2 2.4c-.7.3-1.2.8-1.2 1.6V14" />
-      <circle cx="12" cy="17" r="0.7" fill="currentColor" />
+      <circle cx="12" cy="12" r="9" />
+      <path d="M9.6 9.3a2.5 2.5 0 1 1 3.4 2.4c-.6.3-1 .8-1 1.5v.6M12 17h.01" />
     </svg>
   );
 }
@@ -91,12 +97,12 @@ export function Learn() {
     <>
       <Navbar />
       <main className="learn-page" data-screen="learn" data-ready="ready">
-        <h1>Learn</h1>
+        <h1>learn</h1>
         <label className="learn-search">
           <span className="learn-search-icon" aria-hidden="true">
             <svg viewBox="0 0 24 24">
-              <circle cx="11" cy="11" r="6" />
-              <path d="M16 16.5 20 20.5" />
+              <circle cx="11" cy="11" r="6.5" />
+              <path d="m20 20-4.2-4.2" />
             </svg>
           </span>
           <input
@@ -109,11 +115,11 @@ export function Learn() {
         {showGuides && (
           <section className="learn-guides">
             <div className="learn-guides-head">
-              <span className="learn-icon">
+              <span className="learn-icon learn-icon-hero">
                 <Icon name="book" />
               </span>
               <div>
-                <h2>Training guides</h2>
+                <h2>training guides</h2>
                 <p>Training 101 · skill paths · nutrition</p>
               </div>
             </div>
@@ -123,7 +129,7 @@ export function Learn() {
                 <span className="learn-row-meta">
                   {guide.badge && <span className="learn-badge">{guide.badge}</span>}
                   {guide.note && <span className="learn-note">{guide.note}</span>}
-                  <span aria-hidden="true">›</span>
+                  <Chevron />
                 </span>
               </Link>
             ))}
@@ -135,32 +141,23 @@ export function Learn() {
         )}
 
         <div className="learn-cards">
-          {cards
-            .filter((card) => card.id !== "howto")
-            .map((card) => (
-              <Link key={card.id} to={card.to} className="learn-card">
-                <span className="learn-icon">
-                  <Icon name={card.icon} />
-                </span>
-                <strong>{card.title}</strong>
-                <span>{card.text}</span>
-              </Link>
-            ))}
-        </div>
-        {cards
-          .filter((card) => card.id === "howto")
-          .map((card) => (
-            <Link key={card.id} to={card.to} className="learn-howto">
-              <span className="learn-icon">
+          {cards.map((card) => (
+            <Link
+              key={card.id}
+              to={card.to}
+              className={card.id === "howto" ? "learn-card learn-card-wide" : "learn-card"}
+            >
+              <span className="learn-icon learn-icon-tile">
                 <Icon name={card.icon} />
               </span>
-              <span>
-                <strong>{card.title}</strong>
-                <span>{card.text}</span>
+              <span className="learn-card-copy">
+                <h2>{card.title}</h2>
+                <p>{card.text}</p>
               </span>
-              <span aria-hidden="true">›</span>
+              {card.id === "howto" && <Chevron />}
             </Link>
           ))}
+        </div>
 
         {!showGuides && cards.length === 0 && (
           <p className="learn-empty">Nothing matches that search.</p>
