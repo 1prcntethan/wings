@@ -6,6 +6,7 @@ import { useAuth } from "./config/auth-context";
 import { Loading } from "./components/loading"
 import BackToTop from "./components/backtotop";
 import TabBar from "./components/tabbar";
+import { InstallSheet } from "./components/installguide";
 
 function guidePage(page) {
   return (
@@ -131,6 +132,7 @@ function App() {
   return (
       <HashRouter>
         <ScrollToTop>
+          <InstallSheet />
           <Suspense fallback={<Loading />}>
           <Routes>
             <Route path="/" element={<Homepage />} />

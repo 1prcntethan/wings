@@ -5,7 +5,6 @@ import "./navbar.css";
 import { useAuth } from "../config/auth-context.jsx";
 import { useLocation } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
-import InstallBanner from "./installbanner";
 import { designPreviewRequested } from "../utilites/designpreview.js";
 
 const Navbar = () => {
@@ -50,7 +49,6 @@ const Navbar = () => {
   }
 
   return (
-    <>
     <div className="navbar">
       <div className="navbar__logo">
         <Link to="/">
@@ -297,8 +295,6 @@ const Navbar = () => {
         <span></span>
       </div>
     </div>
-    <InstallBanner />
-    </>
   );
 };
 

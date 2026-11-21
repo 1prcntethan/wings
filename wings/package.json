@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "test": "node --test src/utilites/livesession.test.js src/utilites/username.test.js src/config/auth-bootstrap.test.js src/utilites/workoutstats.test.js src/utilites/skillgroups.test.js src/utilites/streakweek.test.js && npm run test:rules",
+    "test": "node --test src/utilites/installplatform.test.js src/utilites/livesession.test.js src/utilites/username.test.js src/config/auth-bootstrap.test.js src/utilites/workoutstats.test.js src/utilites/skillgroups.test.js src/utilites/streakweek.test.js && npm run test:rules",
     "test:rules": "cd .. && ./wings/node_modules/.bin/firebase emulators:exec --only firestore --project demo-wings \"cd wings && node --test --test-timeout 180000 src/config/firestore.rules.test.js\"",
     "preview": "vite preview"
   },
