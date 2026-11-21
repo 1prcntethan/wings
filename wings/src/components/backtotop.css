@@ -1,8 +1,8 @@
 .back-to-top {
   position: fixed;
-  right: 16px;
-  bottom: calc(16px + env(safe-area-inset-bottom));
-  z-index: 2;
+  right: calc(16px + var(--safe-area-right));
+  bottom: calc(16px + var(--safe-area-bottom));
+  z-index: 18;
   border: 1px solid rgba(255, 255, 255, 0.5);
   border-radius: 20px;
   background: #252525;
@@ -17,4 +17,10 @@
 
 .back-to-top:hover {
   background: #333333;
+}
+
+@media (max-width: 640px) {
+  .back-to-top {
+    bottom: calc(16px + var(--tabbar-offset));
+  }
 }

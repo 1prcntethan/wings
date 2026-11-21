@@ -13,16 +13,6 @@
 }
 
 @media (max-width: 640px) {
-  #root {
-    padding-top: env(safe-area-inset-top);
-    padding-bottom: calc(64px + env(safe-area-inset-bottom));
-  }
-
-  #root:has(.skill-tree) {
-    padding-top: 0;
-    padding-bottom: 0;
-  }
-
   .tabbar {
     position: fixed;
     z-index: 20;
@@ -32,8 +22,12 @@
     display: flex;
     justify-content: space-around;
     align-items: stretch;
-    height: calc(64px + env(safe-area-inset-bottom));
-    padding: 0 4px env(safe-area-inset-bottom);
+    height: calc(var(--tabbar-height) + var(--safe-area-bottom));
+    padding:
+      0
+      calc(4px + var(--safe-area-right))
+      var(--safe-area-bottom)
+      calc(4px + var(--safe-area-left));
     background: #1b1b1b;
     border-top: 1px solid #333;
     box-sizing: border-box;

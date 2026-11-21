@@ -387,7 +387,7 @@
     z-index: 0;
     left: 0;
     right: 0;
-    bottom: calc(64px + env(safe-area-inset-bottom));
+    bottom: var(--tabbar-offset);
     height: 148px;
     pointer-events: none;
     background: linear-gradient(
@@ -403,9 +403,9 @@
     position: fixed;
     z-index: 15;
     isolation: isolate;
-    left: 12px;
-    right: 12px;
-    bottom: calc(72px + env(safe-area-inset-bottom));
+    left: calc(12px + var(--safe-area-left));
+    right: calc(12px + var(--safe-area-right));
+    bottom: calc(8px + var(--tabbar-offset));
     padding-bottom: 8px;
   }
 
@@ -416,7 +416,7 @@
   }
 
   .wh-page {
-    padding-bottom: calc(112px + env(safe-area-inset-bottom));
+    padding-bottom: 112px;
   }
 }
 
