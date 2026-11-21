@@ -1,23 +1,17 @@
-.skill-list {
+.skill-list,
+.skill-list *,
+.skill-view,
+.skill-view * {
   box-sizing: border-box;
+}
+
+.skill-list {
   width: min(720px, 100%);
   margin: 0 auto;
-  padding: 18px 16px 28px;
+  padding: 6px 16px 28px;
   font-family: "Fira Sans", sans-serif;
-  font-weight: 400;
+  font-weight: 200;
   color: #f3f3f3;
-}
-
-.skill-list button {
-  font-family: "Major Mono Display", monospace;
-  font-weight: 400;
-  letter-spacing: 0.04em;
-}
-
-.skill-list input,
-.skill-list select {
-  font-family: "Fira Sans", sans-serif;
-  font-weight: 400;
 }
 
 .skill-list-head {
@@ -25,227 +19,256 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 14px;
+  margin: 6px 2px 14px;
+}
+
+.skill-list h1,
+.skill-view button,
+.skill-filters button,
+.skill-path h2 {
+  font-family: "Major Mono Display", monospace;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
 }
 
 .skill-list h1 {
   margin: 0;
-  font-family: "Major Mono Display", monospace;
-  font-size: clamp(1.45rem, 6vw, 1.9rem);
-  font-weight: 400;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-size: 24px;
+  letter-spacing: -0.5px;
+  line-height: 1;
 }
 
 .skill-view {
   display: flex;
-  background: #1b1b1b;
-  border: 1px solid #333;
-  border-radius: 999px;
-  padding: 2px;
+  flex: none;
+  width: 148px;
+  background: #111111;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  padding: 3px;
 }
 
 .skill-view button {
+  flex: 1;
+  height: 32px;
   border: none;
+  border-radius: 8px;
   background: transparent;
-  color: #f3f3f3;
-  border-radius: 999px;
-  padding: 7px 14px;
-  font-family: "Major Mono Display", monospace;
-  font-size: 0.62rem;
-  font-weight: 400;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  color: rgba(243, 243, 243, 0.55);
+  font-size: 13px;
+  padding: 0;
   cursor: pointer;
 }
 
 .skill-view button[aria-pressed="true"] {
-  background: #333;
+  background: #333333;
+  color: #ffffff;
 }
 
 .skill-search {
   display: flex;
   align-items: center;
-  gap: 8px;
-  border: 1px solid #333;
-  border-radius: 12px;
-  padding: 0 12px;
+  gap: 10px;
+  height: 44px;
   margin-bottom: 12px;
+  padding: 0 14px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  background: #111111;
+  color: rgba(243, 243, 243, 0.55);
 }
 
 .skill-search svg {
   width: 18px;
   height: 18px;
+  flex: none;
   fill: none;
-  stroke: #b5b5b5;
+  stroke: currentColor;
   stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .skill-search input {
   flex: 1;
   min-width: 0;
+  height: 100%;
   border: none;
   background: transparent;
   color: #f3f3f3;
   font-family: "Fira Sans", sans-serif;
-  font-size: 0.95rem;
-  padding: 12px 0;
+  font-size: 15px;
+  font-weight: 200;
+  padding: 0;
   outline: none;
+}
+
+.skill-search input::placeholder {
+  color: rgba(243, 243, 243, 0.55);
+  font-weight: 200;
 }
 
 .skill-filters {
   display: flex;
   gap: 8px;
   overflow-x: auto;
-  padding-bottom: 4px;
+  scrollbar-width: none;
 }
 
-.skill-filters button,
-.skill-pill,
-.skill-list select {
-  border: 1px solid #333;
-  background: #1b1b1b;
-  color: #f3f3f3;
+.skill-filters::-webkit-scrollbar {
+  display: none;
+}
+
+.skill-filters button {
+  height: 34px;
+  padding: 0 14px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: 999px;
-  padding: 7px 12px;
-  font-size: 0.68rem;
+  background: #111111;
+  color: #c9c9c9;
+  font-size: 12px;
+  white-space: nowrap;
+  flex: none;
   cursor: pointer;
-}
-
-.skill-filters button,
-.skill-pill {
-  font-family: "Major Mono Display", monospace;
-  font-weight: 400;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-
-.skill-list select {
-  font-family: "Fira Sans", sans-serif;
-  font-weight: 500;
-  letter-spacing: 0;
-  text-transform: lowercase;
-  appearance: none;
-  padding-right: 22px;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23b5b5b5' stroke-width='1.4'/%3E%3C/svg%3E");
-  background-position: right 8px center;
-  background-size: 10px 6px;
-  background-repeat: no-repeat;
 }
 
 .skill-filters button[aria-pressed="true"] {
   background: #b66da3;
   border-color: #b66da3;
-  color: #fff;
+  color: #ffffff;
 }
 
 .skill-legend {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px 14px;
+  gap: 8px 14px;
   list-style: none;
-  margin: 12px 0;
+  margin: 14px 2px 4px;
   padding: 0;
-  color: #b5b5b5;
-  font-size: 0.78rem;
+  color: rgba(243, 243, 243, 0.55);
+  font-family: "Fira Sans", sans-serif;
+  font-size: 11.5px;
+  font-weight: 200;
 }
 
 .skill-legend li {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
 }
 
 .skill-legend i,
 .skill-open i {
-  border-radius: 50%;
-  border: 2px solid #494949;
   display: inline-block;
+  border-radius: 50%;
   box-sizing: border-box;
-}
-
-.skill-legend i {
-  width: 10px;
-  height: 10px;
-}
-
-.skill-open i {
-  width: 22px;
-  height: 22px;
-  border-width: 3px;
   flex: none;
 }
 
-.is-mastered { color: #bbca88; border-color: #bbca88; }
-.skill-legend .is-mastered,
-.skill-open .is-mastered { background: transparent; border-color: #bbca88; }
-.is-progress { color: #b66da3; border-color: #b66da3; }
-.skill-legend .is-progress,
-.skill-open .is-progress { border-color: #b66da3; }
-.is-unlocked { color: #f3f3f3; border-color: #f3f3f3; }
-.is-locked { color: #8a8a8a; border-color: #494949; }
+.skill-legend i {
+  width: 9px;
+  height: 9px;
+  border: none;
+}
+
+.skill-legend i.is-mastered { background: #bbca88; }
+.skill-legend i.is-progress { background: #b66da3; }
+.skill-legend i.is-unlocked { background: #f3f3f3; }
+.skill-legend i.is-locked { background: rgb(73, 73, 73); }
+
+.skill-open i {
+  width: 30px;
+  height: 30px;
+  border: 3.5px solid rgb(73, 73, 73);
+  background: transparent;
+}
+
+.skill-open i.is-mastered {
+  border-color: #bbca88;
+  box-shadow: 0 0 10px rgba(113, 184, 31, 0.55);
+}
+
+.skill-open i.is-progress {
+  border-color: #b66da3;
+  box-shadow: 0 0 10px rgba(182, 109, 163, 0.7);
+}
+
+.skill-open i.is-unlocked {
+  border-color: #f3f3f3;
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.45);
+}
+
+.skill-open i.is-locked {
+  border-color: rgb(73, 73, 73);
+  box-shadow: none;
+}
 
 .skill-path {
-  margin-top: 18px;
+  margin-top: 16px;
 }
 
 .skill-path-head {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   gap: 8px;
-  align-items: baseline;
+  margin: 0 2px 8px;
 }
 
 .skill-path h2 {
   margin: 0;
   min-width: 0;
-  font-family: "Major Mono Display", monospace;
-  font-size: 0.62rem;
-  font-weight: 400;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-size: 15px;
+  line-height: 1.2;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .skill-path-head span {
-  color: #b5b5b5;
-  font-size: 0.75rem;
+  color: rgba(243, 243, 243, 0.55);
+  font-family: "Fira Sans", sans-serif;
+  font-size: 12px;
+  font-weight: 200;
   flex: none;
 }
 
 .skill-path-bar {
   height: 3px;
-  background: #333;
-  border-radius: 99px;
-  margin: 8px 0 4px;
+  margin: 0 2px 10px;
+  border-radius: 9px;
+  background: #2e2e2e;
+  overflow: hidden;
 }
 
 .skill-path-bar span {
   display: block;
   height: 100%;
-  background: #b66da3;
-  border-radius: inherit;
+  background: linear-gradient(90deg, #bbca88, #b66da3);
 }
 
-.skill-path ul {
+.skill-rows {
   list-style: none;
-  margin: 8px 0 0;
+  margin: 0;
   padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  background: #252525;
+  border: 1px solid #333333;
+  border-radius: 12px;
+  overflow: hidden;
 }
 
-.skill-path li {
+.skill-rows li {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 12px;
-  background: #252525;
-  border: 1px solid #333;
-  border-radius: 12px;
+  gap: 12px;
+  height: 58px;
+  padding: 0 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.skill-rows li:last-child {
+  border-bottom: none;
 }
 
 .skill-open {
@@ -253,86 +276,149 @@
   min-width: 0;
   display: flex;
   align-items: center;
-  gap: 10px;
-  background: transparent;
+  gap: 12px;
+  height: 100%;
+  margin: 0;
+  padding: 0;
   border: none;
+  background: transparent;
   color: inherit;
   text-align: left;
-  padding: 0;
   cursor: pointer;
   font-family: "Fira Sans", sans-serif;
+  font-weight: 200;
+  letter-spacing: 0;
+  text-transform: none;
 }
 
 .skill-open span {
   display: flex;
   flex-direction: column;
   min-width: 0;
+  line-height: 1.15;
 }
 
 .skill-open strong {
   font-family: "Fira Sans", sans-serif;
-  font-weight: 500;
+  font-weight: 400;
+  font-size: 15px;
   letter-spacing: 0;
-  text-transform: capitalize;
+  text-transform: none;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
+.skill-rows li.is-locked .skill-open strong {
+  color: rgba(243, 243, 243, 0.45);
+}
+
 .skill-open small {
-  color: #9a9a9a;
+  color: rgba(243, 243, 243, 0.55);
   font-family: "Fira Sans", sans-serif;
-  font-weight: 300;
+  font-weight: 200;
+  font-size: 11.5px;
   letter-spacing: 0;
   text-transform: none;
 }
 
-.skill-list select,
-.skill-pill {
+.skill-status {
+  position: relative;
+  margin-left: auto;
   flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  height: 32px;
+  min-width: 96px;
+  padding: 0 10px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font-family: "Fira Sans", sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1;
+  white-space: nowrap;
 }
 
-.skill-list select.is-mastered,
-.skill-pill.is-mastered {
+.skill-status svg {
+  width: 13px;
+  height: 13px;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2.4;
+}
+
+.skill-status.is-locked svg {
+  stroke-width: 2;
+}
+
+.skill-status select {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  border: none;
+  opacity: 0;
+  cursor: pointer;
+  font-family: "Fira Sans", sans-serif;
+  font-weight: 400;
+  appearance: none;
+}
+
+.skill-status select:disabled {
+  cursor: default;
+}
+
+.skill-status.is-mastered {
   color: #bbca88;
-  border-color: #6d7a52;
-  background-color: #2a3124;
+  border-color: rgba(187, 202, 136, 0.45);
+  background: rgba(187, 202, 136, 0.1);
 }
 
-.skill-list select.is-progress,
-.skill-pill.is-progress {
-  color: #f3d3ea;
-  border-color: #b66da3;
-  background-color: #3a2a38;
+.skill-status.is-progress {
+  color: #e2a9d2;
+  border-color: rgba(182, 109, 163, 0.6);
+  background: rgba(182, 109, 163, 0.16);
 }
 
-.skill-list select.is-unlocked,
-.skill-pill.is-unlocked {
+.skill-status.is-unlocked {
   color: #f3f3f3;
-  border-color: #666;
-  background-color: #1b1b1b;
+  border-color: rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.06);
 }
 
-.skill-list select.is-locked,
-.skill-pill.is-locked {
-  color: #8a8a8a;
-  border-color: #494949;
-  background-color: #1b1b1b;
+.skill-status.is-locked {
+  color: rgba(243, 243, 243, 0.4);
+  border-color: rgba(255, 255, 255, 0.12);
+  background: transparent;
 }
 
 .skill-note {
   color: #d0d0d0;
+  font-family: "Fira Sans", sans-serif;
   font-size: 0.9rem;
+  font-weight: 200;
 }
 
 .skill-note a,
 .skill-note button {
   color: #b66da3;
+  font-family: "Fira Sans", sans-serif;
+  font-weight: 200;
+  font-size: inherit;
+  letter-spacing: 0;
+  text-transform: none;
   background: none;
   border: none;
-  font: inherit;
-  cursor: pointer;
   padding: 0;
+  cursor: pointer;
 }
 
 .skill-map-bar {
@@ -340,6 +426,12 @@
   z-index: 6;
   display: flex;
   justify-content: center;
-  padding: 10px 12px 4px;
+  padding: 10px 16px 4px;
   background: #1b1b1b;
+}
+
+@media (min-width: 641px) {
+  .skill-list {
+    padding-top: 22px;
+  }
 }
