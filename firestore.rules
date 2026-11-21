@@ -17,7 +17,7 @@ service cloud.firestore {
       match /workoutLogs/{logId} {
         allow read: if isOwner(uid);
         allow create: if isOwner(uid) && isWorkoutLog();
-        allow update: if false;
+        allow update: if isOwner(uid) && isWorkoutLog();
         allow delete: if isOwner(uid);
       }
     }
@@ -161,12 +161,15 @@ function isStreakUpdate() {
 function isWorkoutLog() {
   let data = request.resource.data;
   return request.resource.size() < 20000
-    && data.keys().hasOnly(['date', 'category', 'sections', 'loggedAt'])
+    && data.keys().hasOnly(['date', 'category', 'sections', 'loggedAt', 'setCount'])
     && data.loggedAt == request.time
     && data.date is string
     && data.date.matches('^\\d{4}-\\d{2}-\\d{2}$')
     && parsedDay(data.date) <= request.time + duration.value(36, 'h')
     && data.category in ['push', 'pull', 'legs', 'full-body', 'conditioning']
+    && data.setCount is int
+    && data.setCount >= 0
+    && data.setCount <= 40
     && data.sections is map
     && data.sections.keys().hasOnly(['warmup', 'primary', 'secondary', 'volume'])
     && data.sections.keys().hasAll(['warmup', 'primary', 'secondary', 'volume'])

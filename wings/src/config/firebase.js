@@ -1,19 +1,29 @@
 import { initializeApp } from "firebase/app";
 import { getAnalytics, isSupported } from "firebase/analytics";
-import { getAuth } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
+import { connectAuthEmulator, getAuth } from "firebase/auth";
+import { connectFirestoreEmulator, getFirestore } from "firebase/firestore";
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
-const measurementId = import.meta.env.VITE_MEASUREMENT_ID;
+const viteEnv = import.meta.env || {};
+const nodeEnv = globalThis["process"]?.env;
+const useEmulators = viteEnv.VITE_USE_EMULATORS === "true" || nodeEnv?.VITE_USE_EMULATORS === "true";
+
+function envValue(name, emulatorFallback) {
+  const fromVite = typeof viteEnv[name] === "string" ? viteEnv[name] : "";
+  const fromNode = typeof nodeEnv?.[name] === "string" ? nodeEnv[name] : "";
+  return fromVite || fromNode || (useEmulators ? emulatorFallback : undefined);
+}
+
+const measurementId = envValue("VITE_MEASUREMENT_ID", "");
 
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  apiKey: envValue("VITE_FIREBASE_API_KEY", "demo-api-key"),
+  authDomain: envValue("VITE_FIREBASE_AUTH_DOMAIN", "demo-wings.firebaseapp.com"),
+  projectId: envValue("VITE_FIREBASE_PROJECT_ID", "demo-wings"),
+  storageBucket: envValue("VITE_FIREBASE_STORAGE_BUCKET", "demo-wings.appspot.com"),
+  messagingSenderId: envValue("VITE_FIREBASE_MESSAGING_SENDER_ID", "123456789"),
+  appId: envValue("VITE_FIREBASE_APP_ID", "1:123456789:web:demo"),
 };
 
 if (typeof measurementId === "string" && measurementId.trim()) {
@@ -44,6 +54,21 @@ if (app) {
     db = getFirestore(app);
   } catch (error) {
     console.error("Firestore unavailable", error);
+  }
+}
+
+if (useEmulators && auth) {
+  try {
+    connectAuthEmulator(auth, "http://127.0.0.1:9099", { disableWarnings: true });
+  } catch (error) {
+    console.error("Auth emulator connection failed", error);
+  }
+}
+if (useEmulators && db) {
+  try {
+    connectFirestoreEmulator(db, "127.0.0.1", 8080);
+  } catch (error) {
+    console.error("Firestore emulator connection failed", error);
   }
 }
 

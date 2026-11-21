@@ -5,6 +5,7 @@ import "./App.css";
 import { useAuth } from "./config/auth-context";
 import { Loading } from "./components/loading"
 import BackToTop from "./components/backtotop";
+import TabBar from "./components/tabbar";
 
 function guidePage(page) {
   return (
@@ -39,6 +40,7 @@ const Disclaimer = lazyNamed(() => import("./pages/disclaimer"), "Disclaimer");
 const WorkoutLog = lazyNamed(() => import("./pages/workoutlog"), "WorkoutLog");
 const SkillTree = lazyNamed(() => import("./pages/skilltree"), "SkillTree");
 const WorkoutSession = lazyNamed(() => import("./pages/workoutsession"), "WorkoutSession");
+const Learn = lazyNamed(() => import("./pages/learn"), "Learn");
 const AssistPu = lazyNamed(() => import("./pages/tutorials/assistpu"), "AssistPu");
 const Pushup = lazyNamed(() => import("./pages/tutorials/pushup"), "Pushup");
 const Dip = lazyNamed(() => import("./pages/tutorials/dip"), "Dip");
@@ -118,12 +120,21 @@ function App() {
     return <Loading />;
   }
 
+  function signedIn(element) {
+    if (currentUser) return element;
+    if (import.meta.env.DEV && new URLSearchParams(window.location.search).get("preview") === "1") {
+      return element;
+    }
+    return <Navigate to="/login" />;
+  }
+
   return (
       <HashRouter>
         <ScrollToTop>
           <Suspense fallback={<Loading />}>
           <Routes>
-            <Route path="/" element={<Homepage />} />
+            <Route path="/" element={currentUser ? <Navigate to="/dashboard" /> : <Homepage />} />
+            <Route path="/learn" element={<Learn />} />
             <Route path="/training" element={<Training />} />
             <Route path="/tutorials" element={<Tutorials />} />
             <Route path="/terminology" element={<Terminology />} />
@@ -133,21 +144,15 @@ function App() {
             <Route path="/install" element={<Install />} />
             <Route path="/about" element={<About />} />
             <Route path="/disclaimer" element={<Disclaimer />} />
-            <Route
-              path="/workoutlog"
-              element={currentUser ? <WorkoutLog /> : <Navigate to="/login" />}
-            />
-            <Route
-              path="/workoutlog/session"
-              element={currentUser ? <WorkoutSession /> : <Navigate to="/login" />}
-            />
+            <Route path="/workoutlog" element={signedIn(<WorkoutLog />)} />
+            <Route path="/workoutlog/session" element={signedIn(<WorkoutSession />)} />
             <Route path="/tutorials/incomplete" element={<Incomplete />} />
 
-            <Route path="/login" element={currentUser ? <Navigate to="/" /> : <LoginPage />} />
-            <Route path="/createaccount" element={currentUser ? <Navigate to="/" /> : <CreateAccountPage />} />
-            <Route path="/dashboard" element={currentUser ? <Dashboard /> : <Navigate to ="/login" />} />
+            <Route path="/login" element={currentUser ? <Navigate to="/dashboard" /> : <LoginPage />} />
+            <Route path="/createaccount" element={currentUser ? <Navigate to="/dashboard" /> : <CreateAccountPage />} />
+            <Route path="/dashboard" element={signedIn(<Dashboard />)} />
             <Route path="/settings" element={currentUser ? <Settings /> : <Navigate to="/" />} />
-            <Route path="/resetpassword" element={currentUser ? <Navigate to="/" /> : <ResetPasswordPage />} />
+            <Route path="/resetpassword" element={currentUser ? <Navigate to="/dashboard" /> : <ResetPasswordPage />} />
 
             <Route path="/training/beginnerguide" element={guidePage(<BeginnerGuide />)} />
             <Route path="/training/progoverload" element={guidePage(<ProgOverload />)} />
@@ -244,6 +249,7 @@ function App() {
           </Routes>
           </Suspense>
         </ScrollToTop>
+        <TabBar />
       </HashRouter>
   );
 }

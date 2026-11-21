@@ -6,6 +6,7 @@ import { useAuth } from "../config/auth-context.jsx";
 import { useLocation } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import InstallBanner from "./installbanner";
+import { designPreviewRequested } from "../utilites/designpreview.js";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(true);
@@ -24,6 +25,7 @@ const Navbar = () => {
   };
 
   const { currentUser } = useAuth();
+  const signedIn = Boolean(currentUser) || designPreviewRequested();
 
   const location = useLocation();
   const navigate = useNavigate();
@@ -175,7 +177,18 @@ const Navbar = () => {
             skill tree
           </Link>
         </div>
-        {currentUser ? (
+        {signedIn && (
+          <div className="navbar__list--items navbar__list--pink">
+            <Link
+              to="/dashboard"
+              className="nav-item"
+              onClick={(event) => handleNavClick(event, "/dashboard")}
+            >
+              dashboard
+            </Link>
+          </div>
+        )}
+        {signedIn ? (
           <div className="navbar__logout--container">
             <button className="logout-button nav-item" onClick={handleAccountClick}>
               <img src="account_icon.svg" alt="Account" className="account-icon-nav" />
