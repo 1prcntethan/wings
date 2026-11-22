@@ -175,17 +175,6 @@ const Navbar = () => {
             skill tree
           </Link>
         </div>
-        {signedIn && (
-          <div className="navbar__list--items navbar__list--pink">
-            <Link
-              to="/dashboard"
-              className="nav-item"
-              onClick={(event) => handleNavClick(event, "/dashboard")}
-            >
-              dashboard
-            </Link>
-          </div>
-        )}
         {signedIn ? (
           <div className="navbar__logout--container">
             <button className="logout-button nav-item" onClick={handleAccountClick}>

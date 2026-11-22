@@ -268,7 +268,7 @@ export function HandstandGuide() {
           If you’re training the handstand, follow these progressions:
           <ul>
             <li>
-              <Link to="/tutorials/pikepushup" className="guide-external-link">
+              <Link to="/tutorials/pikepu" className="guide-external-link">
                 Pike push-ups
               </Link>
             </li>
