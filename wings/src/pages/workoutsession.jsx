@@ -115,8 +115,9 @@ export function WorkoutSession() {
   }, [session.phase]);
 
   function dispatchSession(action) {
-    setNow(Date.now());
-    dispatch(action);
+    const current = Date.now();
+    setNow(current);
+    dispatch({ now: current, ...action });
   }
 
   useEffect(() => {

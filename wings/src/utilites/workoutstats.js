@@ -71,38 +71,8 @@ export function monthBounds(year, monthIndex) {
   return { start: formatDay(start), end: formatDay(end) };
 }
 
-export function yearBounds(year) {
-  return { start: `${year}-01-01`, end: `${year}-12-31` };
-}
-
 export function monthLabel(date) {
   return `${MONTHS[date.getMonth()]} ${date.getFullYear()}`;
-}
-
-export function historySkeleton(today, earliestDate) {
-  const year = today.getFullYear();
-  const month = today.getMonth();
-  const months = [];
-  for (let index = month - 1; index >= 0; index -= 1) {
-    months.push({
-      kind: "month",
-      year,
-      month: index,
-      key: `${year}-${String(index + 1).padStart(2, "0")}`,
-      label: `${MONTHS[index]} ${year}`,
-    });
-  }
-
-  let startYear = year - 1;
-  if (earliestDate instanceof Date && !Number.isNaN(earliestDate.getTime())) {
-    startYear = Math.min(startYear, earliestDate.getFullYear());
-  }
-  const floor = Math.max(startYear, year - 8);
-  const years = [];
-  for (let past = year - 1; past >= floor; past -= 1) {
-    years.push({ kind: "year", year: past, key: String(past), label: String(past) });
-  }
-  return { months, years };
 }
 
 export function groupArchiveLogs(logs, today) {
@@ -127,14 +97,11 @@ export function groupArchiveLogs(logs, today) {
   return archive;
 }
 
-export function historyPlaceholders(skeleton, archive) {
-  const entries = [...(skeleton?.months || []), ...(skeleton?.years || [])];
-  return entries.filter((entry) => {
-    const cached = archive?.[entry.key];
-    if (!cached) return false;
-    if (cached.status === "error" || cached.status === "loading") return true;
-    return Array.isArray(cached.logs) && cached.logs.length > 0;
-  });
+export function historyPlaceholders(archive) {
+  return Object.keys(archive).sort().reverse().map((key) => ({
+    key,
+    label: key.length === 4 ? key : `${MONTHS[Number(key.slice(5)) - 1]} ${key.slice(0, 4)}`,
+  }));
 }
 
 export function countLoggedSets(sections) {
@@ -178,13 +145,15 @@ export function summarizeLogs(logs) {
   return {
     workouts: list.length,
     sets,
-    durationSec: list.length > 0 && timed === list.length ? duration : null,
+    durationSec: timed > 0 ? duration : null,
+    timedWorkouts: timed,
   };
 }
 
 export function formatTrainedTime(seconds) {
   if (seconds == null || !Number.isFinite(Number(seconds))) return "—";
-  const minutes = Math.max(0, Math.round(Number(seconds) / 60));
+  if (seconds < 60) return `${Math.max(0, Math.floor(seconds))}s`;
+  const minutes = Math.round(Number(seconds) / 60);
   const hours = Math.floor(minutes / 60);
   const remain = minutes % 60;
   if (hours <= 0) return `${remain}m`;
@@ -281,7 +250,8 @@ export function formatLogDateCompact(key) {
 
 export function formatWorkoutDurationLabel(seconds) {
   if (seconds == null || !Number.isFinite(Number(seconds))) return null;
-  const minutes = Math.max(0, Math.round(Number(seconds) / 60));
+  if (seconds < 60) return `${Math.max(0, Math.floor(seconds))}s`;
+  const minutes = Math.round(Number(seconds) / 60);
   const hours = Math.floor(minutes / 60);
   const remain = minutes % 60;
   if (hours <= 0) return `${remain} min`;

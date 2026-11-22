@@ -73,6 +73,7 @@ async function main() {
     formatDate,
     getFitnessDateObject,
     getUserDoc,
+    getOlderWorkoutPage,
     getWorkoutLogsByDate,
     getWorkoutStats,
     saveWorkoutLog,
@@ -151,8 +152,8 @@ async function main() {
     id: "1",
     patch: { name: "Dip", sets: 1, measure: "reps", restSec: 90 },
   });
-  session = sessionReducer(session, { type: "start", now: Date.now() });
-  session = sessionReducer(session, { type: "completeSet", value: "8", now: Date.now() });
+  session = sessionReducer(session, { type: "start", now: 1000 });
+  session = sessionReducer(session, { type: "completeSet", value: "8", now: 66000 });
   const sessionLog = sessionToLog(session, today);
   const sessionId = await saveWorkoutLog(uid, sessionLog);
   saved.push({ offset: 0, sets: 1, category: "push", name: "Dip", date: today, id: sessionId });
@@ -164,6 +165,7 @@ async function main() {
     sessionSnap.exists()
       && sessionSnap.data().category === "push"
       && sessionSnap.data().setCount === 1
+      && sessionSnap.data().durationSec === 65
       && sessionCredit.reason === "already-logged"
       && user.streak.current === 1,
     `id ${sessionId}, setCount ${sessionSnap.data()?.setCount}, streak ${user.streak.current}`,
@@ -205,6 +207,15 @@ async function main() {
     `docs ${beforeCount} -> ${afterCount}, category ${after.data()?.category}, streak ${user.streak.current}`,
   );
 
+  await updateWorkoutLog(uid, sessionId, {
+    ...sessionLog,
+    durationSec: 999,
+    sections: sectionsFor("Dip", 1),
+  });
+  const editedSession = await getDoc(doc(db, "users", uid, "workoutLogs", sessionId));
+  record("editing a live workout preserves its duration", editedSession.data().durationSec === 65,
+    `duration ${editedSession.data().durationSec}s`);
+
   let updateRejected = false;
   try {
     await updateDoc(doc(db, "users", uid, "workoutLogs", target.id), { category: "pull" });
@@ -235,13 +246,30 @@ async function main() {
     const range = statRangeById(id);
     const stats = await getWorkoutStats(uid, range);
     const expected = expectedStats(saved, oldDate, oldId, seeded.ok, range, today, rangeBounds);
-    const match = stats.workouts === expected.workouts && stats.sets === expected.sets;
+    const match = stats.workouts === expected.workouts && stats.sets === expected.sets
+      && stats.durationSec === 65 && stats.timedWorkouts === 1;
     record(
       `stats ${range.label}`,
       match,
       `got ${stats.workouts} workouts / ${stats.sets} sets, expected ${expected.workouts} / ${expected.sets}`,
     );
   }
+
+  const archiveDate = shiftKey(month.start, -1);
+  const sameDateIds = await Promise.all(Array.from({ length: 21 }, () =>
+    saveWorkoutLog(uid, { date: archiveDate, category: "push", sections: sectionsFor("Dip", 1) }),
+  ));
+  const firstPage = await getOlderWorkoutPage(uid, month.start);
+  const secondPage = await getOlderWorkoutPage(uid, month.start, firstPage.nextCursor);
+  const archiveRows = [...firstPage.logs, ...secondPage.logs];
+  const archiveIds = new Set(archiveRows.map((row) => row.id));
+  record(
+    "archive cursor pages across same-day workouts without duplicates or skips",
+    firstPage.logs.length === 20 && firstPage.nextCursor !== null && secondPage.nextCursor === null
+      && archiveRows.length === archiveIds.size && sameDateIds.every((id) => archiveIds.has(id))
+      && archiveRows.every((row) => row.date < month.start),
+    `page sizes ${firstPage.logs.length} and ${secondPage.logs.length}`,
+  );
 
   if (seeded.ok) {
     const oldDoc = monthLogs.find((log) => log.id === oldId) || (await getWorkoutLogsByDate(uid, oldDate, oldDate))[0];

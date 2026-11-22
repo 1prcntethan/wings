@@ -5,7 +5,6 @@ import {
   formatTrainedTime,
   groupArchiveLogs,
   historyPlaceholders,
-  historySkeleton,
   rangeBounds,
   statRangeById,
   summarizeLogs,
@@ -51,35 +50,23 @@ test("range bounds are inclusive and all-time has no date window", () => {
   assert.equal(rangeBounds(today, statRangeById("all")), null);
 });
 
-test("history placeholders are older months, then past years", () => {
-  const skeleton = historySkeleton(today, new Date(2025, 2, 1));
-  assert.equal(skeleton.months[0].label, "October 2026");
-  assert.equal(skeleton.months.at(-1).label, "January 2026");
-  assert.deepEqual(skeleton.years.map((year) => year.label), ["2025"]);
-
-  const capped = historySkeleton(today, new Date(2010, 0, 1));
-  assert.equal(capped.years[0].label, "2025");
-  assert.equal(capped.years.at(-1).label, "2018");
-});
-
 test("history folds only include months and years that have workouts", () => {
-  const skeleton = historySkeleton(today, new Date(2025, 2, 1));
   const archive = groupArchiveLogs(
     [
       { id: "nov", date: "2026-11-02" },
       { id: "oct", date: "2026-10-04" },
-      { id: "old", date: "2025-06-10" },
+      { id: "old", date: "2015-06-10" },
     ],
     today,
   );
   assert.equal(archive["2026-10"].logs[0].id, "oct");
-  assert.equal(archive["2025"].logs[0].id, "old");
+  assert.equal(archive["2015"].logs[0].id, "old");
   assert.equal(archive["2026-11"], undefined);
   assert.deepEqual(
-    historyPlaceholders(skeleton, archive).map((entry) => entry.key),
-    ["2026-10", "2025"],
+    historyPlaceholders(archive).map((entry) => entry.label),
+    ["October 2026", "2015"],
   );
-  assert.deepEqual(historyPlaceholders(skeleton, {}), []);
+  assert.deepEqual(historyPlaceholders({}), []);
 });
 
 test("set totals prefer a stored count and fall back to sections", () => {
@@ -99,6 +86,13 @@ test("set totals prefer a stored count and fall back to sections", () => {
   assert.equal(formatTrainedTime(720), "12m");
   assert.equal(formatTrainedTime(null), "—");
   assert.equal(summarizeLogs([{ sections }]).durationSec, null);
+  assert.deepEqual(summarizeLogs([{ setCount: 1, durationSec: 24 }, { setCount: 2 }]), {
+    workouts: 2,
+    sets: 3,
+    durationSec: 24,
+    timedWorkouts: 1,
+  });
+  assert.equal(formatTrainedTime(24), "24s");
 });
 
 test("a workout credits the streak only on the fitness day it was saved for", () => {

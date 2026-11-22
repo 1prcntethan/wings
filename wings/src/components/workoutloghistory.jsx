@@ -29,6 +29,14 @@ function IconCopy() {
   );
 }
 
+function IconEdit() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="m15 5 4 4M5 19l4-1 11-11a2.8 2.8 0 0 0-4-4L5 14l-1 5z" />
+    </svg>
+  );
+}
+
 function IconShare() {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -55,7 +63,7 @@ function IconTrash() {
   );
 }
 
-function LogCard({ log, onCopy, onDelete, pendingDelete, onConfirmDelete, onCancelDelete, deleting }) {
+function LogCard({ log, onCopy, onEdit, onDelete, pendingDelete, onConfirmDelete, onCancelDelete, deleting }) {
   const [sharing, setSharing] = useState(false);
   const [shareError, setShareError] = useState(null);
   const summary = logSummary(log);
@@ -99,6 +107,9 @@ function LogCard({ log, onCopy, onDelete, pendingDelete, onConfirmDelete, onCanc
           <span className="wh-icon-row">
             <button type="button" aria-label="Copy workout" disabled={log.pending} onClick={() => onCopy(log)}>
               <IconCopy />
+            </button>
+            <button type="button" aria-label="Edit workout" disabled={log.pending} onClick={() => onEdit(log)}>
+              <IconEdit />
             </button>
             <button
               type="button"
@@ -165,11 +176,12 @@ export default function WorkoutHistory({
   onRetryCurrent,
   placeholders,
   archive,
-  archiveError,
-  onRetryArchive,
+  archiveStatus,
+  onLoadOlder,
   openKeys,
   onToggle,
   onCopy,
+  onEdit,
   onDelete,
   pendingDelete,
   onConfirmDelete,
@@ -179,7 +191,7 @@ export default function WorkoutHistory({
   onStartSession,
   onLogWorkout,
 }) {
-  const cardProps = { onCopy, onDelete, pendingDelete, onConfirmDelete, onCancelDelete, deleting };
+  const cardProps = { onCopy, onEdit, onDelete, pendingDelete, onConfirmDelete, onCancelDelete, deleting };
 
   return (
     <div className="wh-history">
@@ -224,13 +236,16 @@ export default function WorkoutHistory({
         <div className="wh-stats" aria-busy={statsStatus === "loading"}>
           <p><b>{stats ? stats.workouts : "…"}</b><span>workouts</span></p>
           <p>
-            <b title="Duration is not stored on workout logs.">
+            <b>
               {stats ? formatTrainedTime(stats.durationSec) : "…"}
             </b>
-            <span>time trained</span>
+            <span>tracked time</span>
           </p>
           <p><b>{stats ? stats.sets : "…"}</b><span>total sets</span></p>
         </div>
+      )}
+      {statsStatus === "ready" && stats?.timedWorkouts > 0 && stats.timedWorkouts < stats.workouts && (
+        <p className="wh-note">Tracked time includes {stats.timedWorkouts} of {stats.workouts} workouts.</p>
       )}
       {stats?.partialSets && (
         <p className="wh-note">
@@ -267,15 +282,9 @@ export default function WorkoutHistory({
         <LogList logs={currentLogs} filter={filter} query={query} {...cardProps} />
       )}
       {deleteError && <p className="wh-error">{deleteError}</p>}
-      {archiveError && (
-        <p className="wh-error">
-          {archiveError}{" "}
-          <button type="button" onClick={onRetryArchive}>retry</button>
-        </p>
-      )}
       {placeholders.map((entry) => {
         const open = Boolean(openKeys[entry.key]);
-        const cached = archive[entry.key];
+        const logs = archive[entry.key].logs;
         return (
           <section key={entry.key} className="wh-fold-wrap">
             <button
@@ -289,24 +298,22 @@ export default function WorkoutHistory({
             </button>
             {open && (
               <div className="wh-fold-panel">
-                {cached?.status === "loading" && <p className="wh-empty">Loading...</p>}
-                {cached?.status === "error" && (
-                  <p className="wh-error">
-                    Couldn't load these workouts.{" "}
-                    <button type="button" onClick={() => onToggle(entry, true)}>retry</button>
-                  </p>
-                )}
-                {cached?.status === "ready" && cached.logs.length === 0 && (
-                  <p className="wh-empty">No workouts then.</p>
-                )}
-                {cached?.status === "ready" && cached.logs.length > 0 && (
-                  <LogList logs={cached.logs} filter={filter} query={query} {...cardProps} />
-                )}
+                <LogList logs={logs} filter={filter} query={query} {...cardProps} />
               </div>
             )}
           </section>
         );
       })}
+      {archiveStatus === "loading" && <p className="wh-empty" role="status">Loading older workouts...</p>}
+      {archiveStatus === "error" && (
+        <p className="wh-error">
+          Couldn't load older workouts.{" "}
+          <button type="button" onClick={onLoadOlder}>retry</button>
+        </p>
+      )}
+      {archiveStatus === "ready" && (
+        <button type="button" className="wh-fold" onClick={onLoadOlder}>Load older workouts</button>
+      )}
       <div className="wh-actions">
         <button type="button" className="wh-ghost" onClick={onLogWorkout}>+ Log workout</button>
         <button type="button" className="wh-go" onClick={onStartSession}>start session</button>
