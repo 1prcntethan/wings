@@ -12,9 +12,11 @@ import {
   where,
   orderBy,
   limit,
+  startAfter,
   getDocs,
   getAggregateFromServer,
   getCountFromServer,
+  count,
   sum,
   writeBatch,
 } from "firebase/firestore";
@@ -45,11 +47,12 @@ export async function updateWorkoutLog(uid, logId, workoutData) {
   if (!uid || typeof logId !== "string" || !/^[A-Za-z0-9]+$/.test(logId)) {
     throw new Error("Missing workout.");
   }
-  const payload = { ...(workoutData || {}) };
-  delete payload.setCount;
-  const setCount = Math.min(MAX_STORED_SETS, countLoggedSets(payload.sections));
+  const { date, category, sections } = workoutData;
+  const setCount = Math.min(MAX_STORED_SETS, countLoggedSets(sections));
   await updateDoc(doc(db, "users", uid, "workoutLogs", logId), {
-    ...payload,
+    date,
+    category,
+    sections,
     setCount,
     loggedAt: serverTimestamp(),
   });
@@ -74,6 +77,20 @@ export async function getWorkoutLogsByDate(uid, startDate, endDate) {
   return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
 }
 
+const HISTORY_PAGE_SIZE = 20;
+
+export async function getOlderWorkoutPage(uid, beforeDate, cursor = null) {
+  const logsRef = collection(db, "users", uid, "workoutLogs");
+  const constraints = [where("date", "<", beforeDate), orderBy("date", "desc")];
+  if (cursor) constraints.push(startAfter(cursor));
+  const snap = await getDocs(query(logsRef, ...constraints, limit(HISTORY_PAGE_SIZE + 1)));
+  const page = snap.docs.slice(0, HISTORY_PAGE_SIZE);
+  return {
+    logs: page.map((row) => ({ id: row.id, ...row.data() })),
+    nextCursor: snap.size > HISTORY_PAGE_SIZE ? page.at(-1) : null,
+  };
+}
+
 export async function getLatestWorkoutLog(uid) {
   const logsRef = collection(db, "users", uid, "workoutLogs");
   const byDate = await getDocs(query(logsRef, orderBy("date", "desc"), limit(1)));
@@ -86,14 +103,19 @@ export async function getLatestWorkoutLog(uid) {
 export async function getWorkoutStats(uid, range, today = getFitnessDateObject()) {
   const logsRef = collection(db, "users", uid, "workoutLogs");
   if (!range || range.kind === "all") {
-    const [counted, summed] = await Promise.all([
+    const [counted, summed, timed] = await Promise.all([
       getCountFromServer(logsRef),
       getAggregateFromServer(logsRef, { sets: sum("setCount") }),
+      getAggregateFromServer(query(logsRef, where("durationSec", ">=", 0)), {
+        seconds: sum("durationSec"),
+        workouts: count(),
+      }),
     ]);
     return {
       workouts: counted.data().count,
       sets: Number(summed.data().sets) || 0,
-      durationSec: null,
+      durationSec: timed.data().workouts ? timed.data().seconds : null,
+      timedWorkouts: timed.data().workouts,
       partialSets: true,
     };
   }

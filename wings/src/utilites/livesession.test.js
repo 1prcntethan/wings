@@ -3,6 +3,7 @@ import test from "node:test";
 import {
   REST_STEPS,
   blankSession,
+  durationMs,
   effortError,
   parseDraft,
   planError,
@@ -115,6 +116,7 @@ test("the last set ends the workout with no rest", () => {
   state = sessionReducer(state, { type: "completeSet", value: "5", now: 20 });
   assert.equal(state.phase, "summary");
   assert.equal(state.endsAt, null);
+  assert.equal(sessionToLog(state, "2026-10-27").durationSec, 1);
 });
 
 test("ending early keeps completed sets and drops the rest", () => {
@@ -122,10 +124,14 @@ test("ending early keeps completed sets and drops the rest", () => {
   state = sessionReducer(state, { type: "completeSet", value: "10", now: 1_000 });
   state = sessionReducer(state, { type: "skipRest" });
   state = sessionReducer(state, { type: "completeSet", value: "6", now: 2_000 });
-  state = sessionReducer(state, { type: "endWorkout" });
+  state = sessionReducer(state, { type: "endWorkout", now: 65_000 });
+  state = parseDraft(serializeDraft(state));
+  assert.equal(durationMs(state, 90_000), 65_000);
 
   const log = sessionToLog(state, "2026-10-27");
-  assert.deepEqual(Object.keys(log), ["date", "category", "sections"]);
+  assert.equal(log.durationSec, 65);
+  assert.equal(normalizeWorkoutLog(log).durationSec, 65);
+  assert.equal(normalizeWorkoutLog({ date: log.date }).durationSec, undefined);
   assert.deepEqual(Object.keys(log.sections.volume[0]), [
     "name",
     "sets",

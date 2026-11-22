@@ -315,4 +315,29 @@ describe("skill progress rules", { concurrency: 1 }, () => {
       }),
     );
   });
+
+  test("workout duration is optional on create and immutable on edit", async () => {
+    const uid = "duration-owner";
+    const db = await createUser(uid);
+    const logs = collection(db, "users", uid, "workoutLogs");
+    const workout = {
+      date: utcDay(),
+      category: "push",
+      setCount: 1,
+      sections: { warmup: [], primary: [], secondary: [], volume: [] },
+      loggedAt: serverTimestamp(),
+    };
+    for (const durationSec of [-1, 2.5, null, "60"]) {
+      await assertDenied(addDoc(logs, { ...workout, durationSec }));
+    }
+    const manual = await assertSucceeds(addDoc(logs, workout));
+    const timed = await assertSucceeds(addDoc(logs, { ...workout, durationSec: 65 }));
+    const edit = { category: "pull", loggedAt: serverTimestamp() };
+    await assertSucceeds(updateDoc(timed, edit));
+    await assertDenied(updateDoc(timed, { ...edit, durationSec: 66 }));
+    await assertDenied(updateDoc(timed, { ...edit, durationSec: deleteField() }));
+    await assertDenied(updateDoc(manual, { ...edit, durationSec: 65 }));
+    assert.equal((await getDoc(timed)).data().durationSec, 65);
+  });
+
 });

@@ -21,22 +21,22 @@ import {
   deleteWorkoutLog,
   formatDate,
   getFitnessDateObject,
-  getUserDoc,
+  getOlderWorkoutPage,
   getWorkoutLogsByDate,
   getWorkoutStats,
   saveWorkoutLog,
+  updateWorkoutLog,
 } from "../config/firestore.js";
 import {
   DEFAULT_STAT_RANGE,
+  formatTrainedTime,
   groupArchiveLogs,
   historyPlaceholders,
-  historySkeleton,
   monthBounds,
   monthLabel,
   rangeBounds,
   statRangeById,
   summarizeLogs,
-  yearBounds,
 } from "../utilites/workoutstats.js";
 
 // ─── section config ────────────────────────────────────────────────────────────
@@ -411,16 +411,18 @@ export function WorkoutLog() {
   const navigate = useNavigate();
   const location = useLocation();
   const formRef = useRef(null);
-  const archiveRef = useRef({});
+  const archiveCursor = useRef(null);
+  const changedLogs = useRef(new Set());
+  const savingLock = useRef(false);
   const previewRef = useRef(null);
   const [sessionDraft, setSessionDraft] = useState(null);
   const [confirmDiscardDraft, setConfirmDiscardDraft] = useState(false);
+  const [editingLog, setEditingLog] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState(blankLog());
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState(null);
   const [streakWarning, setStreakWarning] = useState(null);
-  const [createdAt, setCreatedAt] = useState(null);
   const [rangeId, setRangeId] = useState(DEFAULT_STAT_RANGE);
   const [stats, setStats] = useState(null);
   const [statsStatus, setStatsStatus] = useState("loading");
@@ -430,9 +432,12 @@ export function WorkoutLog() {
   const [currentStatus, setCurrentStatus] = useState("loading");
   const [currentError, setCurrentError] = useState(null);
   const [currentRetry, setCurrentRetry] = useState(0);
-  const [archive, setArchive] = useState({});
-  const [archiveError, setArchiveError] = useState(null);
-  const [archiveRetry, setArchiveRetry] = useState(0);
+  const [olderLogs, setOlderLogs] = useState([]);
+  const [archiveStatus, setArchiveStatus] = useState("loading");
+  const [archiveRequest, setArchiveRequest] = useState(0);
+  const today = getFitnessDateObject();
+  const monthStart = monthBounds(today.getFullYear(), today.getMonth()).start;
+  const [canLoadArchive, setCanLoadArchive] = useState(false);
   const [openKeys, setOpenKeys] = useState({});
   const [filter, setFilter] = useState("all");
   const [query, setQuery] = useState("");
@@ -454,34 +459,6 @@ export function WorkoutLog() {
       setSessionDraft(null);
     }
   }, []);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    async function loadUser() {
-      const preview = await loadDesignPreview();
-      if (cancelled) return;
-      if (preview) {
-        previewRef.current = preview;
-        setCreatedAt(new Date(new Date().getFullYear() - 1, 0, 1));
-        return;
-      }
-      if (!currentUser) return;
-      try {
-        const data = await getUserDoc(currentUser.uid);
-        if (cancelled || !data) return;
-        const created = data.createdAt;
-        setCreatedAt(typeof created?.toDate === "function" ? created.toDate() : null);
-      } catch {
-        if (!cancelled) setCreatedAt(null);
-      }
-    }
-
-    loadUser();
-    return () => {
-      cancelled = true;
-    };
-  }, [currentUser]);
 
   useEffect(() => {
     let cancelled = false;
@@ -549,11 +526,13 @@ export function WorkoutLog() {
             (log) => log.date >= bounds.start && log.date <= bounds.end,
           ),
         );
+        setCanLoadArchive(true);
         setCurrentStatus("ready");
         return;
       }
       if (!currentUser) {
         setCurrentLogs([]);
+        setCanLoadArchive(true);
         setCurrentStatus("ready");
         return;
       }
@@ -562,12 +541,18 @@ export function WorkoutLog() {
       try {
         const rows = await getWorkoutLogsByDate(currentUser.uid, bounds.start, bounds.end);
         if (!cancelled) {
-          setCurrentLogs(rows.map((row) => normalizeWorkoutLog(row)));
+          const rowsFromServer = rows.filter((row) => !changedLogs.current.has(row.id));
+          setCurrentLogs((logs) => [
+            ...logs.filter((log) => log.pending || changedLogs.current.has(log.id)),
+            ...rowsFromServer.map(normalizeWorkoutLog),
+          ]);
+          setCanLoadArchive(true);
           setCurrentStatus("ready");
         }
       } catch {
         if (!cancelled) {
           setCurrentError("Couldn't load this month.");
+          setCanLoadArchive(true);
           setCurrentStatus("error");
         }
       }
@@ -580,43 +565,36 @@ export function WorkoutLog() {
   }, [currentUser, currentRetry]);
 
   useEffect(() => {
+    if (!canLoadArchive) return;
     let cancelled = false;
 
     async function loadArchive() {
-      setArchiveError(null);
-      const preview = previewRef.current || (await loadDesignPreview());
-      if (cancelled) return;
-      const todayDate = getFitnessDateObject();
-      const previous = monthBounds(todayDate.getFullYear(), todayDate.getMonth() - 1);
-      if (preview) {
-        previewRef.current = preview;
-        const logs = preview.previewWorkoutLogs(todayDate).filter(
-          (log) => log.date <= previous.end,
-        );
-        archiveRef.current = groupArchiveLogs(logs, todayDate);
-        setArchive({ ...archiveRef.current });
-        return;
-      }
-      if (!currentUser) {
-        archiveRef.current = {};
-        setArchive({});
-        return;
-      }
-      const start = `${todayDate.getFullYear() - 8}-01-01`;
       try {
-        const rows = await getWorkoutLogsByDate(currentUser.uid, start, previous.end);
+        const preview = previewRef.current || (await loadDesignPreview());
         if (cancelled) return;
-        archiveRef.current = groupArchiveLogs(
-          rows.map((row) => normalizeWorkoutLog(row)),
-          todayDate,
-        );
-        setArchive({ ...archiveRef.current });
-      } catch {
-        if (!cancelled) {
-          archiveRef.current = {};
-          setArchive({});
-          setArchiveError("Couldn't load older workouts.");
+        if (preview) {
+          const rows = preview.previewWorkoutLogs(getFitnessDateObject());
+          setOlderLogs(rows.filter((log) => log.date < monthStart));
+          setArchiveStatus("done");
+          return;
         }
+        if (!currentUser) {
+          setArchiveStatus("done");
+          return;
+        }
+        const { logs, nextCursor } = await getOlderWorkoutPage(
+          currentUser.uid, monthStart, archiveCursor.current,
+        );
+        if (cancelled) return;
+        const rows = logs.filter((log) => !changedLogs.current.has(log.id)).map(normalizeWorkoutLog);
+        setOlderLogs((prev) => {
+          const loadedIds = new Set(prev.map((log) => log.id));
+          return [...prev, ...rows.filter((log) => !loadedIds.has(log.id))];
+        });
+        archiveCursor.current = nextCursor;
+        setArchiveStatus(nextCursor ? "ready" : "done");
+      } catch {
+        if (!cancelled) setArchiveStatus("error");
       }
     }
 
@@ -624,7 +602,13 @@ export function WorkoutLog() {
     return () => {
       cancelled = true;
     };
-  }, [currentUser, archiveRetry]);
+  }, [currentUser, monthStart, canLoadArchive, archiveRequest]);
+
+  function loadMoreHistory() {
+    if (archiveStatus === "loading") return;
+    setArchiveStatus("loading");
+    setArchiveRequest((count) => count + 1);
+  }
 
   function updateExercise(sectionKey, index, field, value) {
     setFormData((prev) => {
@@ -687,38 +671,16 @@ export function WorkoutLog() {
   }
 
   function forgetLog(logId) {
-    setCurrentLogs((prev) => prev.filter((row) => row.id !== logId));
-    for (const [key, entry] of Object.entries(archiveRef.current)) {
-      if (!entry?.logs) continue;
-      archiveRef.current[key] = {
-        ...entry,
-        logs: entry.logs.filter((row) => row.id !== logId),
-      };
-    }
-    setArchive({ ...archiveRef.current });
+    setCurrentLogs((logs) => logs.filter((log) => log.id !== logId));
+    setOlderLogs((logs) => logs.filter((log) => log.id !== logId));
   }
 
   function rememberLog(log) {
-    const todayDate = getFitnessDateObject();
-    const bounds = monthBounds(todayDate.getFullYear(), todayDate.getMonth());
-    if (log.date >= bounds.start && log.date <= bounds.end) {
-      setCurrentLogs((prev) => [log, ...prev.filter((row) => row.id !== log.id)]);
-      return;
+    if (log.date >= monthStart) {
+      setCurrentLogs((logs) => [log, ...logs.filter((row) => row.id !== log.id)]);
+    } else {
+      setOlderLogs((logs) => [log, ...logs.filter((row) => row.id !== log.id)]);
     }
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(String(log.date || ""))) return;
-    const logYear = Number(String(log.date).slice(0, 4));
-    const key = logYear === todayDate.getFullYear()
-      ? String(log.date).slice(0, 7)
-      : String(logYear);
-    const existing = archiveRef.current[key];
-    const logs = existing?.status === "ready" && Array.isArray(existing.logs)
-      ? existing.logs
-      : [];
-    archiveRef.current[key] = {
-      status: "ready",
-      logs: [log, ...logs.filter((row) => row.id !== log.id)],
-    };
-    setArchive({ ...archiveRef.current });
   }
 
   async function handleSave() {
@@ -732,7 +694,8 @@ export function WorkoutLog() {
       setSaveError(error);
       return;
     }
-    if (saving) return;
+    if (savingLock.current || deleting) return;
+    savingLock.current = true;
 
     const snapshot = formData;
     const savedShape = sanitizeWorkout(formData);
@@ -740,6 +703,24 @@ export function WorkoutLog() {
     setSaveError(null);
     setStreakWarning(null);
     setSaving(true);
+    if (editingLog) {
+      try {
+        await updateWorkoutLog(currentUser.uid, editingLog.id, savedShape);
+        changedLogs.current.add(editingLog.id);
+        forgetLog(editingLog.id);
+        rememberLog({ ...editingLog, ...savedShape });
+        setEditingLog(null);
+        setShowForm(false);
+        setStatsRetry((count) => count + 1);
+      } catch {
+        setSaveError("Failed to save changes. Please try again.");
+      } finally {
+        savingLock.current = false;
+        setSaving(false);
+      }
+      return;
+    }
+
     forgetLog(tempId);
     rememberLog({ id: tempId, ...savedShape, pending: true });
     setFormData(blankLog());
@@ -747,6 +728,7 @@ export function WorkoutLog() {
 
     try {
       const savedId = await saveWorkoutLog(currentUser.uid, savedShape);
+      changedLogs.current.add(savedId);
       forgetLog(tempId);
       rememberLog({ id: savedId, ...savedShape, pending: false });
       try {
@@ -761,6 +743,7 @@ export function WorkoutLog() {
       setShowForm(true);
       setSaveError("Failed to save. Please try again.");
     } finally {
+      savingLock.current = false;
       setSaving(false);
     }
   }
@@ -783,17 +766,20 @@ export function WorkoutLog() {
     setConfirmDiscardDraft(false);
   }
 
-  function copyWorkout(log) {
+  function openWorkoutForm(log = null, edit = false) {
+    if (savingLock.current) return;
     const sections = {};
     SECTIONS.forEach((section) => {
-      const saved = Array.isArray(log.sections?.[section.key]) ? log.sections[section.key] : [];
+      const saved = log?.sections?.[section.key] ?? [];
       sections[section.key] = Array.from({ length: section.max }, (_, index) =>
         fromSavedExercise(saved[index]),
       );
     });
+    setSaveError(null);
+    setEditingLog(edit ? log : null);
     setFormData({
-      date: formatDate(getFitnessDateObject()),
-      category: WORKOUT_CATEGORIES.includes(log.category) ? log.category : "push",
+      date: edit ? log.date : formatDate(getFitnessDateObject()),
+      category: WORKOUT_CATEGORIES.includes(log?.category) ? log.category : "push",
       sections,
     });
     setShowForm(true);
@@ -802,45 +788,22 @@ export function WorkoutLog() {
     }, 0);
   }
 
-  async function fetchArchive(entry) {
-    if (!currentUser) {
-      archiveRef.current[entry.key] = { status: "ready", logs: [] };
-      setArchive({ ...archiveRef.current });
-      return;
-    }
-    archiveRef.current[entry.key] = { status: "loading", logs: [] };
-    setArchive({ ...archiveRef.current });
-    const bounds = entry.kind === "year" ? yearBounds(entry.year) : monthBounds(entry.year, entry.month);
-    try {
-      const rows = await getWorkoutLogsByDate(currentUser.uid, bounds.start, bounds.end);
-      archiveRef.current[entry.key] = {
-        status: "ready",
-        logs: rows.map((row) => normalizeWorkoutLog(row)),
-      };
-    } catch {
-      archiveRef.current[entry.key] = { status: "error", logs: [] };
-    }
-    setArchive({ ...archiveRef.current });
-  }
-
-  function toggleArchive(entry, force) {
-    if (!force && openKeys[entry.key]) {
-      setOpenKeys((prev) => ({ ...prev, [entry.key]: false }));
-      return;
-    }
-    setOpenKeys((prev) => ({ ...prev, [entry.key]: true }));
-    const cached = archiveRef.current[entry.key];
-    if (!force && (cached?.status === "ready" || cached?.status === "loading")) return;
-    fetchArchive(entry);
+  function toggleArchive(entry) {
+    setOpenKeys((prev) => ({ ...prev, [entry.key]: !prev[entry.key] }));
   }
 
   async function confirmDelete(log) {
-    if (!currentUser || deleting) return;
+    if (!currentUser || deleting || savingLock.current) return;
     setDeleting(true);
     setDeleteError(null);
     try {
       await deleteWorkoutLog(currentUser.uid, log.id);
+      changedLogs.current.add(log.id);
       forgetLog(log.id);
+      if (editingLog?.id === log.id) {
+        setEditingLog(null);
+        setShowForm(false);
+      }
       setPendingDelete(null);
       setStatsRetry((count) => count + 1);
     } catch {
@@ -850,9 +813,9 @@ export function WorkoutLog() {
     }
   }
 
-  const today = getFitnessDateObject();
-  const skeleton = historySkeleton(today, createdAt);
-  const placeholders = historyPlaceholders(skeleton, archive);
+  const byNewestDate = (a, b) => b.date.localeCompare(a.date);
+  const archive = groupArchiveLogs([...olderLogs].sort(byNewestDate), today);
+  const placeholders = historyPlaceholders(archive);
 
   return (
     <>
@@ -872,17 +835,18 @@ export function WorkoutLog() {
           searchOpen={searchOpen}
           onToggleSearch={() => setSearchOpen((open) => !open)}
           monthTitle={monthLabel(today)}
-          currentLogs={currentLogs}
+          currentLogs={[...currentLogs].sort(byNewestDate)}
           currentStatus={currentStatus}
           currentError={currentError}
           onRetryCurrent={() => setCurrentRetry((count) => count + 1)}
           placeholders={placeholders}
           archive={archive}
-          archiveError={archiveError}
-          onRetryArchive={() => setArchiveRetry((count) => count + 1)}
+          archiveStatus={canLoadArchive ? archiveStatus : null}
+          onLoadOlder={loadMoreHistory}
           openKeys={openKeys}
           onToggle={toggleArchive}
-          onCopy={copyWorkout}
+          onCopy={(log) => openWorkoutForm(log)}
+          onEdit={(log) => openWorkoutForm(log, true)}
           onDelete={(log) => {
             setDeleteError(null);
             setPendingDelete(log.id);
@@ -893,18 +857,16 @@ export function WorkoutLog() {
           deleting={deleting}
           deleteError={deleteError}
           onStartSession={handleStartFresh}
-          onLogWorkout={() => {
-            setFormData(blankLog());
-            setShowForm(true);
-            window.setTimeout(() => {
-              formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-            }, 0);
-          }}
+          onLogWorkout={() => openWorkoutForm()}
         />
 
         {showForm && (
           <div className="workout-container" ref={formRef}>
             <div className="wl-form">
+              {editingLog && <h2>Edit workout</h2>}
+              {editingLog?.durationSec != null && (
+                <p className="wl-label">Duration: {formatTrainedTime(editingLog.durationSec)}</p>
+              )}
               <div className="wl-form-top">
                 <div className="wl-field">
                   <label className="wl-label">Date</label>
@@ -947,12 +909,14 @@ export function WorkoutLog() {
 
               {saveError && <p className="wl-error">{saveError}</p>}
               <button className="log-workout" onClick={handleSave} disabled={saving} type="button">
-                {saving ? "saving..." : "save workout"}
+                {saving ? "saving..." : editingLog ? "save changes" : "save workout"}
               </button>
               <button
                 className="log-workout"
                 type="button"
+                disabled={saving}
                 onClick={() => {
+                  setEditingLog(null);
                   setShowForm(false);
                 }}
               >

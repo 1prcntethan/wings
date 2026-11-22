@@ -35,6 +35,7 @@ export function blankSession() {
     cursor: null,
     endsAt: null,
     startedAt: null,
+    finishedAt: null,
   };
 }
 
@@ -65,6 +66,9 @@ export function normalizeWorkoutLog(raw) {
     date: typeof source.date === "string" ? source.date : "",
     category,
     sections,
+    ...(Number.isFinite(source.durationSec) && source.durationSec >= 0
+      ? { durationSec: source.durationSec }
+      : {}),
     pending: Boolean(source.pending),
   };
 }
@@ -98,8 +102,9 @@ export function formatClock(ms) {
 }
 
 export function durationMs(state, now) {
-  if (typeof state?.startedAt !== "number" || typeof now !== "number") return 0;
-  return Math.max(0, now - state.startedAt);
+  const end = state?.finishedAt ?? now;
+  if (!Number.isFinite(state?.startedAt) || !Number.isFinite(end)) return 0;
+  return Math.max(0, end - state.startedAt);
 }
 
 export function effortError(measure, value) {
@@ -227,7 +232,11 @@ function patchExercise(exercise, patch) {
   return next;
 }
 
-function advance(state) {
+function finishWorkout(state, finishedAt) {
+  return { ...state, phase: "summary", finishedAt, endsAt: null, cursor: null };
+}
+
+function advance(state, now) {
   const exercise = state.exercises[state.cursor.exerciseIndex];
   if (exercise.efforts.length < exercise.sets) {
     return {
@@ -241,9 +250,7 @@ function advance(state) {
     };
   }
   const nextIndex = state.cursor.exerciseIndex + 1;
-  if (nextIndex >= state.exercises.length) {
-    return { ...state, phase: "summary", endsAt: null, cursor: null };
-  }
+  if (nextIndex >= state.exercises.length) return finishWorkout(state, now);
   return {
     ...state,
     phase: "exercising",
@@ -328,7 +335,7 @@ export function sessionReducer(state, action) {
       const finishedExercise = efforts.length >= exercise.sets;
       const lastExercise = index === exercises.length - 1;
       if (finishedExercise && lastExercise) {
-        return { ...updated, phase: "summary", endsAt: null, cursor: null };
+        return finishWorkout(updated, action.now);
       }
       return {
         ...updated,
@@ -338,17 +345,17 @@ export function sessionReducer(state, action) {
     }
     case "skipRest": {
       if (state.phase !== "resting") return state;
-      return advance(state);
+      return advance(state, action.now);
     }
     case "restFinished": {
       if (state.phase !== "resting") return state;
       if (typeof action.now !== "number" || typeof state.endsAt !== "number") return state;
       if (action.now < state.endsAt) return state;
-      return advance(state);
+      return advance(state, action.now);
     }
     case "endWorkout": {
       if (state.phase !== "exercising" && state.phase !== "resting") return state;
-      return { ...state, phase: "summary", endsAt: null, cursor: null };
+      return finishWorkout(state, action.now);
     }
     default:
       return state;
@@ -377,6 +384,9 @@ export function sessionToLog(state, date) {
   }
   return {
     date,
+    ...(Number.isFinite(state.startedAt) && Number.isFinite(state.finishedAt)
+      ? { durationSec: Math.ceil(durationMs(state) / 1000) }
+      : {}),
     category: state.category,
     sections,
   };
