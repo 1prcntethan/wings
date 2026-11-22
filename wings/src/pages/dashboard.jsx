@@ -280,6 +280,7 @@ export function Dashboard() {
           </p>
         ) : (
           <div className="dash-grid">
+            <div className="dash-col">
             <section className="dash-card dash-streak">
               <div className="dash-streak-top">
                 <span className="dash-flame" aria-hidden="true">
@@ -339,6 +340,71 @@ export function Dashboard() {
               {logError && <p className="dash-note">{logError}</p>}
             </section>
 
+            <section className="dash-block dash-last-block">
+              <div className="dash-kicker">
+                <span>last workout</span>
+                <Link to="/workoutlog">view workout log</Link>
+              </div>
+              <div className="dash-card dash-last">
+              {!latest ? (
+                <p className="dash-note">No workouts yet. Start a session when you train.</p>
+              ) : (
+                <>
+                  <div className="dash-last-meta">
+                    <span className={`dash-cat dash-cat--${latest.category}`}>{latest.category}</span>
+                    <span className="dash-last-when">
+                      {formatLogDateCompact(latest.date)}
+                      {lastDurationLabel && <> · {lastDurationLabel}</>}
+                    </span>
+                  </div>
+                  <ul className="dash-last-rows">
+                    {logExerciseRows(latest).map((row) => (
+                      <li key={row.name}>
+                        <span>{row.name}</span>
+                        <span>{row.detail}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <div className="dash-last-actions">
+                    <button type="button" className="dash-repeat" onClick={repeatWorkout}>
+                      <svg className="dash-btn-icon" viewBox="0 0 24 24" aria-hidden="true">
+                        <path
+                          d="M12 5V2L7 7l5 5V9c2.8 0 5 2.2 5 5a5 5 0 0 1-5 5 5 5 0 0 1-4.9-4H5.1A7 7 0 0 0 12 21a7 7 0 0 0 0-14z"
+                          fill="currentColor"
+                        />
+                      </svg>
+                      <span>{draft ? "resume" : "repeat"}</span>
+                    </button>
+                    <Link className="dash-details" to="/workoutlog">
+                      details
+                    </Link>
+                  </div>
+                </>
+              )}
+              </div>
+            </section>
+
+            <section className="dash-block dash-month-block dash-desktop-only">
+              <div className="dash-kicker">
+                <span>this month</span>
+              </div>
+              <div className="dash-card dash-month">
+              <div className="dash-month-stats">
+                <p><b>{monthStats?.workouts ?? 0}</b><span>workouts</span></p>
+                <p>
+                  <b title="Duration is not stored on workout logs.">
+                    {formatTrainedTime(monthStats?.durationSec)}
+                  </b>
+                  <span>time trained</span>
+                </p>
+                <p><b>{monthStats?.sets ?? 0}</b><span>total sets</span></p>
+              </div>
+              <p className="dash-note">{monthName}</p>
+              </div>
+            </section>
+
+            </div>
+            <div className="dash-col">
             <section className="dash-block dash-rank-block">
               <div className="dash-kicker">
                 <span>rank</span>
@@ -410,50 +476,8 @@ export function Dashboard() {
               </div>
             </section>
 
-            <section className="dash-block dash-last-block">
-              <div className="dash-kicker">
-                <span>last workout</span>
-                <Link to="/workoutlog">view workout log</Link>
-              </div>
-              <div className="dash-card dash-last">
-              {!latest ? (
-                <p className="dash-note">No workouts yet. Start a session when you train.</p>
-              ) : (
-                <>
-                  <div className="dash-last-meta">
-                    <span className={`dash-cat dash-cat--${latest.category}`}>{latest.category}</span>
-                    <span className="dash-last-when">
-                      {formatLogDateCompact(latest.date)}
-                      {lastDurationLabel && <> · {lastDurationLabel}</>}
-                    </span>
-                  </div>
-                  <ul className="dash-last-rows">
-                    {logExerciseRows(latest).map((row) => (
-                      <li key={row.name}>
-                        <span>{row.name}</span>
-                        <span>{row.detail}</span>
-                      </li>
-                    ))}
-                  </ul>
-                  <div className="dash-last-actions">
-                    <button type="button" className="dash-repeat" onClick={repeatWorkout}>
-                      <svg className="dash-btn-icon" viewBox="0 0 24 24" aria-hidden="true">
-                        <path
-                          d="M12 5V2L7 7l5 5V9c2.8 0 5 2.2 5 5a5 5 0 0 1-5 5 5 5 0 0 1-4.9-4H5.1A7 7 0 0 0 12 21a7 7 0 0 0 0-14z"
-                          fill="currentColor"
-                        />
-                      </svg>
-                      <span>{draft ? "resume" : "repeat"}</span>
-                    </button>
-                    <Link className="dash-details" to="/workoutlog">
-                      details
-                    </Link>
-                  </div>
-                </>
-              )}
-              </div>
-            </section>
-
+            </div>
+            <div className="dash-col">
             <section className="dash-block dash-squad-block" aria-label="Squad, coming soon">
               <div className="dash-kicker">
                 <span>squad</span>
@@ -489,25 +513,6 @@ export function Dashboard() {
               </div>
             </section>
 
-            <section className="dash-block dash-month-block dash-desktop-only">
-              <div className="dash-kicker">
-                <span>this month</span>
-              </div>
-              <div className="dash-card dash-month">
-              <div className="dash-month-stats">
-                <p><b>{monthStats?.workouts ?? 0}</b><span>workouts</span></p>
-                <p>
-                  <b title="Duration is not stored on workout logs.">
-                    {formatTrainedTime(monthStats?.durationSec)}
-                  </b>
-                  <span>time trained</span>
-                </p>
-                <p><b>{monthStats?.sets ?? 0}</b><span>total sets</span></p>
-              </div>
-              <p className="dash-note">{monthName}</p>
-              </div>
-            </section>
-
             <section className="dash-block dash-guides-block dash-desktop-only">
               <div className="dash-kicker">
                 <span>new guides</span>
@@ -525,6 +530,7 @@ export function Dashboard() {
               </ul>
               </div>
             </section>
+            </div>
           </div>
         )}
       </main>
