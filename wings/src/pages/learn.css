@@ -99,8 +99,15 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 16px 16px 12px;
+  padding: 16px 16px 14px;
   background: linear-gradient(135deg, #331c32, #252525 70%);
+}
+
+.learn-guides-head > div {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
 }
 
 .learn-icon {
@@ -227,8 +234,8 @@
 .learn-cards {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  margin-top: 10px;
+  gap: 14px;
+  margin-top: 28px;
 }
 
 .learn-card {
@@ -242,12 +249,14 @@
 
 .learn-card h2 {
   font-size: 15px;
-  line-height: 1.15;
+  line-height: 1.2;
+  margin-bottom: 2px;
 }
 
 .learn-card-copy {
   display: flex;
   flex-direction: column;
+  gap: 8px;
   min-width: 0;
 }
 

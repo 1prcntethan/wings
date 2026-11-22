@@ -245,7 +245,9 @@
 .skill-path-bar span {
   display: block;
   height: 100%;
-  background: linear-gradient(90deg, #bbca88, #b66da3);
+  background: linear-gradient(90deg, #b66da3, #bbca88);
+  background-size: calc(100% / var(--fill, 1)) 100%;
+  background-repeat: no-repeat;
 }
 
 .skill-rows {

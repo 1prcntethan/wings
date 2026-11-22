@@ -126,6 +126,51 @@ function isSkillUpdate() {
     && changedSkillOk(skills, diff);
 }
 
+function streakShapeOk(streak) {
+  return streak.keys().hasOnly(['current', 'longest', 'lastLog'])
+    || streak.keys().hasOnly(['current', 'longest', 'lastLog', 'lastLogType']);
+}
+
+function streakDayType(streak, dayType) {
+  return !streak.keys().hasAny(['lastLogType']) || streak.lastLogType == dayType;
+}
+
+function isRestToWorkoutUpgrade(previousStreak, next, previousWorkout, previousRest) {
+  let nextStreak = next.streak;
+  let nextLog = nextStreak.lastLog;
+  return previousStreak.lastLog is string
+    && previousStreak.lastLog == nextLog
+    && previousStreak.get('lastLogType', '') == 'rest'
+    && nextStreak.lastLogType == 'workout'
+    && nextStreak.current == previousStreak.current
+    && nextStreak.longest == previousStreak.longest
+    && next.workout == previousWorkout + 1
+    && next.rest == previousRest - 1
+    && previousRest >= 1;
+}
+
+function isNormalStreakDayLog(previousStreak, next, previousWorkout, previousRest) {
+  let nextStreak = next.streak;
+  let nextCurrent = nextStreak.current;
+  let nextLongest = nextStreak.longest;
+  let nextLog = nextStreak.lastLog;
+  return lastLogMovesForward(previousStreak.lastLog, nextLog)
+    && nextCurrent == expectedCurrent(previousStreak, nextLog)
+    && nextLongest == expectedLongest(previousStreak.longest, nextCurrent)
+  && (
+      (
+        next.workout == previousWorkout + 1
+        && next.rest == previousRest
+        && streakDayType(nextStreak, 'workout')
+      )
+      || (
+        next.rest == previousRest + 1
+        && next.workout == previousWorkout
+        && streakDayType(nextStreak, 'rest')
+      )
+    );
+}
+
 function isStreakUpdate() {
   let changed = request.resource.data.diff(resource.data).affectedKeys();
   let next = request.resource.data;
@@ -140,7 +185,7 @@ function isStreakUpdate() {
   let nextLongest = next.streak.longest;
   let nextLog = next.streak.lastLog;
   return changed.hasOnly(['streak', 'workout', 'rest'])
-    && next.streak.keys().hasOnly(['current', 'longest', 'lastLog'])
+    && streakShapeOk(next.streak)
     && nextCurrent is int
     && nextLongest is int
     && next.workout is int
@@ -148,14 +193,11 @@ function isStreakUpdate() {
     && previousStreak.current is int
     && previousStreak.longest is int
     && plausibleDay(nextLog)
-    && lastLogMovesForward(previousStreak.lastLog, nextLog)
-    && nextCurrent == expectedCurrent(previousStreak, nextLog)
-    && nextLongest == expectedLongest(previousStreak.longest, nextCurrent)
     && next.workout >= 0
     && next.rest >= 0
     && (
-      (next.workout == previousWorkout + 1 && next.rest == previousRest)
-      || (next.rest == previousRest + 1 && next.workout == previousWorkout)
+      isNormalStreakDayLog(previousStreak, next, previousWorkout, previousRest)
+      || isRestToWorkoutUpgrade(previousStreak, next, previousWorkout, previousRest)
     );
 }
 

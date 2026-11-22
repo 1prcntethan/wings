@@ -16,7 +16,7 @@ const CARDS = [
   {
     id: "tutorials",
     title: "tutorials",
-    text: "step-by-step skill tutorials",
+    text: "complete skill tutorials",
     to: "/tutorials",
     icon: "play",
   },

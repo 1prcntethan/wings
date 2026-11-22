@@ -47,8 +47,16 @@ export function weekDots(today, streak, restDates = []) {
   return labels.map((label, index) => {
     const key = formatDay(shift(monday, index));
     let state = "missed";
-    if (logged.has(key) && rest.has(key)) state = "rest";
-    else if (logged.has(key)) state = "logged";
+    if (logged.has(key)) {
+      const restToday =
+        key === todayKey
+        && streak?.lastLog === todayKey
+        && streak?.lastLogType === "rest";
+      const restMark =
+        restToday
+        || (rest.has(key) && !(key === todayKey && streak?.lastLogType === "workout"));
+      state = restMark ? "rest" : "logged";
+    }
     else if (key === todayKey) state = "today";
     else if (key > todayKey) state = "future";
     return { label, key, state };

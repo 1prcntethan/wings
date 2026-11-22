@@ -33,8 +33,8 @@ function IconSkills() {
 function IconLearn() {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
-      <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+      <path d="M3 5.5c3-1.3 6-1.3 9 .7 3-2 6-2 9-.7V19c-3-1.3-6-1.3-9 .7-3-2-6-2-9-.7z" />
+      <path d="M12 6.2v13.5" />
     </svg>
   );
 }

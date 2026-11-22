@@ -392,7 +392,13 @@ export function Dashboard() {
               <div className="dash-month-stats">
                 <p><b>{monthStats?.workouts ?? 0}</b><span>workouts</span></p>
                 <p>
-                  <b title="Duration is not stored on workout logs.">
+                  <b
+                    title={
+                      monthStats?.durationSec == null && (monthStats?.timedWorkouts ?? 0) === 0
+                        ? "Time trained adds up from workouts that recorded duration, like live sessions."
+                        : undefined
+                    }
+                  >
                     {formatTrainedTime(monthStats?.durationSec)}
                   </b>
                   <span>time trained</span>
@@ -465,7 +471,7 @@ export function Dashboard() {
                     <li key={skill.id}>
                       <i className={`is-${skill.status === "in progress" ? "progress" : skill.status}`} />
                       <span>
-                        <strong>{skill.title.toLowerCase()}</strong>
+                        <strong>{skill.title}</strong>
                         <small>{skill.group} · {skill.rp} Rp</small>
                       </span>
                       <em>{skill.status}</em>

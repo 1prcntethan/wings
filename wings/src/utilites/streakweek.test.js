@@ -29,11 +29,20 @@ test("a broken streak does not fill past days", () => {
 test("a rest day in the live streak uses the rest mark", () => {
   const dots = weekDots(
     new Date(2026, 10, 20),
-    { current: 4, lastLog: "2026-11-19" },
+    { current: 4, lastLog: "2026-11-19", lastLogType: "rest" },
     ["2026-11-19"],
   );
   assert.deepEqual(
     dots.map((dot) => dot.state),
     ["logged", "logged", "logged", "rest", "today", "future", "future"],
   );
+});
+
+test("a workout after a rest day shows logged, not rest", () => {
+  const dots = weekDots(
+    new Date(2026, 10, 20),
+    { current: 4, lastLog: "2026-11-20", lastLogType: "workout" },
+    ["2026-11-20"],
+  );
+  assert.equal(dots.find((dot) => dot.key === "2026-11-20")?.state, "logged");
 });

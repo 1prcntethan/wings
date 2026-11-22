@@ -156,7 +156,12 @@ export function SkillList({
               <span>{mastered} / {group.skills.length} mastered</span>
             </div>
             <div className="skill-path-bar" aria-hidden="true">
-              <span style={{ width: `${width}%` }} />
+              <span
+                style={{
+                  width: `${width}%`,
+                  "--fill": `${Math.max(width / 100, 0.001)}`,
+                }}
+              />
             </div>
             <ul className="skill-rows">
               {group.skills.map((skill) => {

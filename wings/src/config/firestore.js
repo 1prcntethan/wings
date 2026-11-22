@@ -29,6 +29,7 @@ import {
   summarizeLogs,
   workoutDateCreditsStreak,
 } from "../utilites/workoutstats.js";
+import { buildStreakUpdate as buildStreakUpdateCore } from "../utilites/streakupdate.js";
 
 export async function saveWorkoutLog(uid, workoutData) {
   const payload = { ...(workoutData || {}) };
@@ -233,34 +234,7 @@ export function displayedStreak(streak, todayDate = getFitnessDateObject()) {
 }
 
 export function buildStreakUpdate(data, type) {
-  const streak = data.streak || {
-    current: 0,
-    longest: 0,
-    lastLog: null,
-  };
-
-  const workoutCounter = Number(data.workout) || 0;
-  const restCounter = Number(data.rest) || 0;
-
-  const todayDate = getFitnessDateObject();
-  const today = formatDate(todayDate);
-
-  if (streak.lastLog === today) return null;
-
-  const yesterdayStr = formatDate(shiftDate(todayDate, -1));
-
-  const newCurrent = streak.lastLog === yesterdayStr ? streak.current + 1 : 1;
-  const newLongest = Math.max(streak.longest, newCurrent);
-
-  return {
-    streak: {
-      current: newCurrent,
-      longest: newLongest,
-      lastLog: today,
-    },
-    workout: type === "workout" ? workoutCounter + 1 : workoutCounter,
-    rest: type === "rest" ? restCounter + 1 : restCounter,
-  };
+  return buildStreakUpdateCore(data, type, getFitnessDateObject());
 }
 
 export async function logWorkout(uid, type) {
@@ -270,7 +244,7 @@ export async function logWorkout(uid, type) {
     const snap = await transaction.get(ref);
     if (!snap.exists()) return null;
 
-    const updates = buildStreakUpdate(snap.data(), type);
+    const updates = buildStreakUpdateCore(snap.data(), type, getFitnessDateObject());
     if (!updates) return null;
 
     transaction.update(ref, updates);
