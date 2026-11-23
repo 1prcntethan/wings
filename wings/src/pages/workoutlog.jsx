@@ -16,6 +16,7 @@ import {
   restSeconds,
 } from "../utilites/livesession.js";
 import WorkoutHistory from "../components/workoutloghistory.jsx";
+import { UnverifiedNotice } from "../components/unverified.jsx";
 import {
   creditWorkoutStreak,
   deleteWorkoutLog,
@@ -29,15 +30,16 @@ import {
 } from "../config/firestore.js";
 import {
   DEFAULT_STAT_RANGE,
-  formatTrainedTime,
   groupArchiveLogs,
   historyPlaceholders,
   monthBounds,
   monthLabel,
+  parseDurationMinutes,
   rangeBounds,
   statRangeById,
   summarizeLogs,
 } from "../utilites/workoutstats.js";
+import { reportError } from "../config/sentry.js";
 
 // ─── section config ────────────────────────────────────────────────────────────
 // Each section has a label, a max number of exercises, and a hint shown in the UI.
@@ -229,6 +231,11 @@ function validateWorkout(formData) {
   const today = getFitnessDateObject();
   today.setHours(0, 0, 0, 0);
   if (entered > today) return "That date is still in the future.";
+  const earliest = new Date(today);
+  earliest.setDate(earliest.getDate() - 366);
+  if (entered < earliest) return "That date is more than a year ago.";
+  const duration = parseDurationMinutes(formData.minutes);
+  if (duration.error) return duration.error;
   if (!WORKOUT_CATEGORIES.includes(formData.category)) {
     return "Pick a workout category.";
   }
@@ -285,6 +292,7 @@ function blankLog() {
   return {
     date: formatDate(getFitnessDateObject()),
     category: "push",
+    minutes: "",
     sections,
   };
 }
@@ -423,6 +431,7 @@ export function WorkoutLog() {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState(null);
   const [streakWarning, setStreakWarning] = useState(null);
+  const [sessionNote, setSessionNote] = useState(null);
   const [rangeId, setRangeId] = useState(DEFAULT_STAT_RANGE);
   const [stats, setStats] = useState(null);
   const [statsStatus, setStatsStatus] = useState("loading");
@@ -433,11 +442,11 @@ export function WorkoutLog() {
   const [currentError, setCurrentError] = useState(null);
   const [currentRetry, setCurrentRetry] = useState(0);
   const [olderLogs, setOlderLogs] = useState([]);
-  const [archiveStatus, setArchiveStatus] = useState("loading");
+  const [archiveStatus, setArchiveStatus] = useState("idle");
   const [archiveRequest, setArchiveRequest] = useState(0);
   const today = getFitnessDateObject();
   const monthStart = monthBounds(today.getFullYear(), today.getMonth()).start;
-  const [canLoadArchive, setCanLoadArchive] = useState(false);
+  const [historyRequested, setHistoryRequested] = useState(false);
   const [openKeys, setOpenKeys] = useState({});
   const [filter, setFilter] = useState("all");
   const [query, setQuery] = useState("");
@@ -449,6 +458,9 @@ export function WorkoutLog() {
   useEffect(() => {
     if (typeof location.state?.streakWarning === "string") {
       setStreakWarning(location.state.streakWarning);
+    }
+    if (location.state?.autoEnded) {
+      setSessionNote("This session auto-ended at 4 hours.");
     }
   }, [location.state]);
 
@@ -495,7 +507,8 @@ export function WorkoutLog() {
           setStats(next);
           setStatsStatus("ready");
         }
-      } catch {
+      } catch (error) {
+        reportError(error, { where: "getWorkoutStats" });
         if (!cancelled) {
           setStatsError("Couldn't load those stats.");
           setStatsStatus("error");
@@ -526,13 +539,11 @@ export function WorkoutLog() {
             (log) => log.date >= bounds.start && log.date <= bounds.end,
           ),
         );
-        setCanLoadArchive(true);
         setCurrentStatus("ready");
         return;
       }
       if (!currentUser) {
         setCurrentLogs([]);
-        setCanLoadArchive(true);
         setCurrentStatus("ready");
         return;
       }
@@ -546,13 +557,12 @@ export function WorkoutLog() {
             ...logs.filter((log) => log.pending || changedLogs.current.has(log.id)),
             ...rowsFromServer.map(normalizeWorkoutLog),
           ]);
-          setCanLoadArchive(true);
           setCurrentStatus("ready");
         }
-      } catch {
+      } catch (error) {
+        reportError(error, { where: "getWorkoutLogsByDate" });
         if (!cancelled) {
           setCurrentError("Couldn't load this month.");
-          setCanLoadArchive(true);
           setCurrentStatus("error");
         }
       }
@@ -565,7 +575,7 @@ export function WorkoutLog() {
   }, [currentUser, currentRetry]);
 
   useEffect(() => {
-    if (!canLoadArchive) return;
+    if (!historyRequested) return;
     let cancelled = false;
 
     async function loadArchive() {
@@ -593,7 +603,8 @@ export function WorkoutLog() {
         });
         archiveCursor.current = nextCursor;
         setArchiveStatus(nextCursor ? "ready" : "done");
-      } catch {
+      } catch (error) {
+        reportError(error, { where: "getOlderWorkoutPage" });
         if (!cancelled) setArchiveStatus("error");
       }
     }
@@ -602,7 +613,7 @@ export function WorkoutLog() {
     return () => {
       cancelled = true;
     };
-  }, [currentUser, monthStart, canLoadArchive, archiveRequest]);
+  }, [currentUser, monthStart, historyRequested, archiveRequest]);
 
   function loadMoreHistory() {
     if (archiveStatus === "loading") return;
@@ -663,11 +674,24 @@ export function WorkoutLog() {
           };
         });
     });
-    return {
+    const duration = parseDurationMinutes(data.minutes);
+    const saved = {
       date: data.date,
       category: data.category,
       sections,
     };
+    if (duration.durationSec != null) {
+      const original = Number(data.originalDurationSec);
+      if (
+        Number.isInteger(original)
+        && Math.floor(original / 60) === duration.durationSec / 60
+      ) {
+        saved.durationSec = original;
+      } else {
+        saved.durationSec = duration.durationSec;
+      }
+    }
+    return saved;
   }
 
   function forgetLog(logId) {
@@ -777,9 +801,12 @@ export function WorkoutLog() {
     });
     setSaveError(null);
     setEditingLog(edit ? log : null);
+    const seconds = Number(log?.durationSec);
     setFormData({
       date: edit ? log.date : formatDate(getFitnessDateObject()),
       category: WORKOUT_CATEGORIES.includes(log?.category) ? log.category : "push",
+      minutes: edit && Number.isFinite(seconds) ? String(Math.floor(seconds / 60)) : "",
+      originalDurationSec: edit && Number.isFinite(seconds) ? seconds : undefined,
       sections,
     });
     setShowForm(true);
@@ -820,6 +847,7 @@ export function WorkoutLog() {
   return (
     <>
       <Navbar />
+      <UnverifiedNotice />
       <main className="wh-page" data-screen="log" data-ready={currentStatus}>
         <WorkoutHistory
           rangeId={rangeId}
@@ -841,8 +869,15 @@ export function WorkoutLog() {
           onRetryCurrent={() => setCurrentRetry((count) => count + 1)}
           placeholders={placeholders}
           archive={archive}
-          archiveStatus={canLoadArchive ? archiveStatus : null}
-          onLoadOlder={loadMoreHistory}
+          archiveStatus={historyRequested ? archiveStatus : null}
+          onLoadOlder={() => {
+            if (!historyRequested) {
+              setArchiveStatus("loading");
+              setHistoryRequested(true);
+              return;
+            }
+            loadMoreHistory();
+          }}
           openKeys={openKeys}
           onToggle={toggleArchive}
           onCopy={(log) => openWorkoutForm(log)}
@@ -864,9 +899,6 @@ export function WorkoutLog() {
           <div className="workout-container" ref={formRef}>
             <div className="wl-form">
               {editingLog && <h2>Edit workout</h2>}
-              {editingLog?.durationSec != null && (
-                <p className="wl-label">Duration: {formatTrainedTime(editingLog.durationSec)}</p>
-              )}
               <div className="wl-form-top">
                 <div className="wl-field">
                   <label className="wl-label">Date</label>
@@ -894,6 +926,19 @@ export function WorkoutLog() {
                     <option value="full-body">full body</option>
                     <option value="conditioning">conditioning</option>
                   </select>
+                </div>
+                <div className="wl-field">
+                  <label className="wl-label" htmlFor="workout-minutes">minutes</label>
+                  <input
+                    id="workout-minutes"
+                    className="wl-input"
+                    inputMode="numeric"
+                    value={formData.minutes}
+                    placeholder="optional"
+                    onChange={(event) =>
+                      setFormData((prev) => ({ ...prev, minutes: event.target.value }))
+                    }
+                  />
                 </div>
               </div>
 
@@ -966,6 +1011,7 @@ export function WorkoutLog() {
           </div>
         )}
 
+        {sessionNote && <p className="wh-note">{sessionNote}</p>}
         {streakWarning && <p className="wl-error">{streakWarning}</p>}
       </main>
     </>

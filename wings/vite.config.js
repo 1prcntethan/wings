@@ -3,11 +3,38 @@ import react from "@vitejs/plugin-react";
 import { VitePWA } from "vite-plugin-pwa";
 
 export default defineConfig({
+  build: {
+    rollupOptions: {
+      output: {
+        entryFileNames: "assets/entry-[hash].js",
+        chunkFileNames: "assets/[name]-[hash].js",
+        assetFileNames: "assets/[name]-[hash][extname]",
+      },
+    },
+  },
   plugins: [
     react(),
     VitePWA({
-      registerType: "autoUpdate",
-      injectRegister: "auto",
+      registerType: "prompt",
+      injectRegister: null,
+      workbox: {
+        globPatterns: ["index.html", "assets/entry-*.js", "assets/index-*.css"],
+        runtimeCaching: [
+          {
+            urlPattern: /\/assets\/.*\.(?:js|css)$/i,
+            handler: "StaleWhileRevalidate",
+            options: { cacheName: "wings-chunks" },
+          },
+          {
+            urlPattern: /\.(?:png|jpg|jpeg|svg|gif|webp|ico)$/i,
+            handler: "CacheFirst",
+            options: {
+              cacheName: "wings-images",
+              expiration: { maxEntries: 200, maxAgeSeconds: 60 * 60 * 24 * 30 },
+            },
+          },
+        ],
+      },
       includeAssets: [
         "wingslogo.ico",
         "wingslogo192.png",

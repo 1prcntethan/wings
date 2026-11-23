@@ -1,8 +1,6 @@
 import { skillDiff } from "./skilldifficulties.js";
 import { skillTime } from "./skilltime.js";
 import { skillTitle } from "./skilltitles.js";
-import { skillImage } from "./skillImage.jsx";
-
 export const skillObjects = new Map();
 
 
@@ -16,7 +14,7 @@ export class Skill {
         this.name = name;
         this.difficulty = skillDiff.get(name);
         this.years = skillTime.get(name);
-        this.skillImage = skillImage.get(name);
+        this.skillImage = null;
     }
 
     getName() {

@@ -121,8 +121,14 @@ function assertUid(uid) {
 async function readReservations(store, handles) {
   const reservations = new Map();
   for (const handle of handles) {
-    const snap = await store.get({ collection: "usernames", id: handle });
-    reservations.set(handle, snap?.exists ? snap.data : null);
+    try {
+      const snap = await store.get({ collection: "usernames", id: handle });
+      reservations.set(handle, snap?.exists ? snap.data : null);
+    } catch (error) {
+      // A handle owned by someone else cannot be read. That denial means taken.
+      if (error?.code !== "permission-denied") throw error;
+      reservations.set(handle, { uid: "" });
+    }
   }
   return reservations;
 }
@@ -163,7 +169,7 @@ export async function commitUsernameClaim(store, uid, rawUsername) {
   return plan;
 }
 
-export async function deleteUserIdentity(store, uid) {
+export async function deleteUserIdentity(store, uid, options = {}) {
   assertUid(uid);
   const userRef = { collection: "users", id: uid };
   const userSnap = await store.get(userRef);
@@ -174,6 +180,6 @@ export async function deleteUserIdentity(store, uid) {
   for (const handle of releases) {
     await store.delete({ collection: "usernames", id: handle });
   }
-  if (userData) await store.delete(userRef);
+  if (userData && !options.keepUserDoc) await store.delete(userRef);
   return { userExisted: Boolean(userData), releases };
 }

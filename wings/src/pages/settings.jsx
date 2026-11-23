@@ -5,16 +5,19 @@ import Footer from "../components/footer";
 import { useAuth } from "../config/auth-context.jsx";
 import {
   doDeleteAuthUser,
+  doLinkGoogle,
   doReauthenticate,
   doReauthenticateWithGoogle,
   doSignOut,
 } from "../config/auth.js";
-import { deleteAccountData, getUserDoc, updateUsername } from "../config/firestore.js";
+import { deleteAccountData, deleteUserDocument, getUserDoc, updateUsername } from "../config/firestore.js";
+import { reportError } from "../config/sentry.js";
 import {
   accountErrorMessage,
   normalizeUsername,
   usernameError,
 } from "../utilites/account.js";
+import { UnverifiedNotice } from "../components/unverified.jsx";
 import "./settings.css";
 
 function signInMethod(user) {
@@ -46,8 +49,13 @@ export function Settings() {
   const [deleteError, setDeleteError] = useState("");
   const [deleting, setDeleting] = useState(false);
   const [dataDeleted, setDataDeleted] = useState(false);
+  const [linking, setLinking] = useState(false);
+  const [linkMessage, setLinkMessage] = useState("");
+  const [linkError, setLinkError] = useState("");
 
-  const busy = saving || signingOut || deleting;
+  const providers = currentUser?.providerData?.map((provider) => provider.providerId) ?? [];
+  const canLinkGoogle = providers.includes("password") && !providers.includes("google.com");
+  const busy = saving || signingOut || deleting || linking;
 
   useEffect(() => {
     if (!currentUser) return;
@@ -69,7 +77,8 @@ export function Settings() {
         setDraft(name);
         setProfileStatus("ready");
       })
-      .catch(() => {
+      .catch((error) => {
+        reportError(error, { where: "settings-profile" });
         if (!cancelled) setProfileStatus("error");
       });
 
@@ -151,11 +160,31 @@ export function Settings() {
         setDataDeleted(true);
         setDeletePassword("");
       }
+      await deleteUserDocument(currentUser.uid);
       await doDeleteAuthUser();
       navigate("/", { replace: true });
     } catch (error) {
+      if (!String(error?.code || "").startsWith("auth/")) {
+        reportError(error, { where: "delete-account" });
+      }
       setDeleteError(accountErrorMessage(error));
       setDeleting(false);
+    }
+  }
+
+  async function handleLinkGoogle() {
+    if (busy || !canLinkGoogle) return;
+    setLinking(true);
+    setLinkError("");
+    setLinkMessage("");
+    try {
+      await doLinkGoogle();
+      await currentUser.reload();
+      setLinkMessage("Google is linked. You can sign in with it next time.");
+    } catch (error) {
+      setLinkError(accountErrorMessage(error));
+    } finally {
+      setLinking(false);
     }
   }
 
@@ -166,6 +195,7 @@ export function Settings() {
   return (
     <>
       <Navbar />
+      <UnverifiedNotice />
       <div className="settings">
         <h1 className="settings-title">account</h1>
 
@@ -253,6 +283,31 @@ export function Settings() {
             </div>
           </form>
         </section>
+
+        {canLinkGoogle && (
+          <section className="settings-card">
+            <h2>google</h2>
+            <p className="settings-help">
+              Link Google to this password account so either method can sign in.
+            </p>
+            {linkMessage && (
+              <p className="settings-message settings-message--ok">{linkMessage}</p>
+            )}
+            {linkError && (
+              <p className="settings-message settings-message--error">{linkError}</p>
+            )}
+            <div className="settings-actions">
+              <button
+                type="button"
+                className="settings-button settings-button--primary"
+                onClick={handleLinkGoogle}
+                disabled={busy}
+              >
+                {linking ? "linking..." : "link google"}
+              </button>
+            </div>
+          </section>
+        )}
 
         <section className="settings-card settings-card--danger">
           <h2>delete account</h2>

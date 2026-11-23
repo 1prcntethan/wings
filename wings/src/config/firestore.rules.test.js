@@ -9,9 +9,11 @@ import {
 import {
   addDoc,
   collection,
+  deleteDoc,
   deleteField,
   doc,
   getDoc,
+  getDocs,
   setDoc,
   setLogLevel,
   updateDoc,
@@ -316,7 +318,7 @@ describe("skill progress rules", { concurrency: 1 }, () => {
     );
   });
 
-  test("workout duration is optional on create and immutable on edit", async () => {
+  test("workout duration is optional and can be edited within four hours", async () => {
     const uid = "duration-owner";
     const db = await createUser(uid);
     const logs = collection(db, "users", uid, "workoutLogs");
@@ -327,17 +329,70 @@ describe("skill progress rules", { concurrency: 1 }, () => {
       sections: { warmup: [], primary: [], secondary: [], volume: [] },
       loggedAt: serverTimestamp(),
     };
-    for (const durationSec of [-1, 2.5, null, "60"]) {
+    for (const durationSec of [-1, 2.5, null, "60", 14401]) {
       await assertDenied(addDoc(logs, { ...workout, durationSec }));
     }
     const manual = await assertSucceeds(addDoc(logs, workout));
     const timed = await assertSucceeds(addDoc(logs, { ...workout, durationSec: 65 }));
     const edit = { category: "pull", loggedAt: serverTimestamp() };
-    await assertSucceeds(updateDoc(timed, edit));
-    await assertDenied(updateDoc(timed, { ...edit, durationSec: 66 }));
-    await assertDenied(updateDoc(timed, { ...edit, durationSec: deleteField() }));
-    await assertDenied(updateDoc(manual, { ...edit, durationSec: 65 }));
-    assert.equal((await getDoc(timed)).data().durationSec, 65);
+    await assertSucceeds(updateDoc(timed, { ...edit, durationSec: 120 }));
+    await assertSucceeds(updateDoc(manual, { ...edit, durationSec: 65 }));
+    await assertDenied(updateDoc(timed, { ...edit, durationSec: 14401 }));
+    await assertSucceeds(updateDoc(timed, { ...edit, durationSec: deleteField() }));
+    assert.equal((await getDoc(timed)).data().durationSec, undefined);
+    assert.equal((await getDoc(manual)).data().durationSec, 65);
+  });
+
+  test("workout dates allow a year of backfill and reject the far future", async () => {
+    const uid = "date-owner";
+    const db = await createUser(uid);
+    const logs = collection(db, "users", uid, "workoutLogs");
+    const workout = {
+      category: "push",
+      setCount: 1,
+      sections: { warmup: [], primary: [], secondary: [], volume: [] },
+      loggedAt: serverTimestamp(),
+    };
+    const shift = (days) => {
+      const date = new Date();
+      date.setUTCDate(date.getUTCDate() + days);
+      return date.toISOString().slice(0, 10);
+    };
+    await assertSucceeds(addDoc(logs, { ...workout, date: shift(-30) }));
+    await assertDenied(addDoc(logs, { ...workout, date: shift(-400) }));
+    await assertDenied(addDoc(logs, { ...workout, date: shift(10) }));
+  });
+
+  test("a handle is readable by its owner and only one reservation can be held", async () => {
+    const uid = "name-owner";
+    const db = await createUser(uid);
+    const other = dbFor("name-other");
+    await assertSucceeds(getDoc(doc(db, "usernames", "free-handle")));
+    await assertDenied(setDoc(doc(db, "usernames", "ada"), { uid, username: "Ada" }));
+    await assertSucceeds(updateDoc(userDoc(db, uid), { username: "Ada", usernameLower: "ada" }));
+    await assertSucceeds(setDoc(doc(db, "usernames", "ada"), { uid, username: "Ada" }));
+    await assertSucceeds(getDoc(doc(db, "usernames", "ada")));
+    await assertDenied(getDoc(doc(other, "usernames", "ada")));
+    await assertDenied(getDocs(collection(db, "usernames")));
+
+    await assertDenied(updateDoc(userDoc(db, uid), { username: "Bea", usernameLower: "bea" }));
+    await assertSucceeds(deleteDoc(doc(db, "usernames", "ada")));
+    await assertSucceeds(updateDoc(userDoc(db, uid), { username: "Bea", usernameLower: "bea" }));
+    await assertSucceeds(setDoc(doc(db, "usernames", "bea"), { uid, username: "Bea" }));
+    await assertDenied(setDoc(doc(db, "usernames", "ada"), { uid, username: "Ada" }));
+  });
+
+  test("a deleting profile cannot change skills and the tombstone is private", async () => {
+    const uid = "deleting-owner";
+    const db = await createUser(uid);
+    const other = dbFor("deleting-other");
+    await assertSucceeds(updateDoc(userDoc(db, uid), { deleting: true }));
+    await assertDenied(skillWrite(db, uid, "dip", 1));
+    await assertSucceeds(setDoc(doc(db, "deletions", uid), { deleting: true }));
+    await assertSucceeds(getDoc(doc(db, "deletions", uid)));
+    await assertDenied(getDoc(doc(other, "deletions", uid)));
+    await assertDenied(setDoc(doc(other, "deletions", uid), { deleting: true }));
+    await assertSucceeds(deleteDoc(userDoc(db, uid)));
   });
 
 });

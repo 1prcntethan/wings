@@ -80,11 +80,11 @@ export function MuscleUp() {
                   </li>
                 </ul>
 
-                <label className="read-more-label" for="skill-read-more">
+                <label className="read-more-label" htmlFor="skill-read-more">
                   Show less
                 </label>
               </div>
-              <label className="read-more-label" for="skill-read-more">
+              <label className="read-more-label" htmlFor="skill-read-more">
                 Read more...
               </label>
             </div>
@@ -122,11 +122,11 @@ export function MuscleUp() {
       />
       <TutorialReturn />
       {svgDivider.get("2")}
-      <div class="technique-form-container">
-        <div class="technique-form">
-          <div class="skill-section-title">technique & form</div>
-          <div class="technique-form-content">
-            <div class="technique-form-text">
+      <div className="technique-form-container">
+        <div className="technique-form">
+          <div className="skill-section-title">technique & form</div>
+          <div className="technique-form-content">
+            <div className="technique-form-text">
               Good Form Cues:
               <ul>
                 <li>Elbows drive downward</li>
@@ -136,7 +136,7 @@ export function MuscleUp() {
                 <li>Pull AROUND the bar, not to the bar (C-shaped motion) </li>
               </ul>
             </div>
-            <div class="technique-form-text">
+            <div className="technique-form-text">
               Bad Form Cues:
               <ul>
                 <li>Flared elbows</li>

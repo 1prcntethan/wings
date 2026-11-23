@@ -1,8 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { onAuthStateChanged } from "firebase/auth";
 import { subscribeAuthBoot } from "./auth-bootstrap";
-import { auth } from "./firebase";
-import { ensureUserDoc } from "./firestore";
+import { reportError } from "./sentry.js";
 
 const AuthContext = createContext();
 
@@ -19,17 +17,42 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    return subscribeAuthBoot({
-      auth,
-      onAuthStateChanged,
-      ensureUserDoc,
-      onChange(next) {
-        setCurrentUser(next.currentUser);
-        setUserLoggedIn(next.userLoggedIn);
-        setDbReady(next.dbReady);
-        setLoading(next.loading);
-      },
-    });
+    let active = true;
+    let unsubscribe = () => {};
+
+    Promise.all([
+      import("./firebase.js"),
+      import("firebase/auth"),
+      import("./firestore.js"),
+    ])
+      .then(([firebaseMod, authMod, firestoreMod]) => {
+        if (!active) return;
+        unsubscribe = subscribeAuthBoot({
+          auth: firebaseMod.auth,
+          onAuthStateChanged: authMod.onAuthStateChanged,
+          ensureUserDoc: firestoreMod.ensureUserDoc,
+          onChange(next) {
+            setCurrentUser(next.currentUser);
+            setUserLoggedIn(next.userLoggedIn);
+            setDbReady(next.dbReady);
+            setLoading(next.loading);
+          },
+        });
+      })
+      .catch((error) => {
+        reportError(error, { where: "auth-boot" });
+        console.error("Auth boot failed", error);
+        if (!active) return;
+        setCurrentUser(null);
+        setUserLoggedIn(false);
+        setDbReady(true);
+        setLoading(false);
+      });
+
+    return () => {
+      active = false;
+      unsubscribe();
+    };
   }, []);
 
   return (

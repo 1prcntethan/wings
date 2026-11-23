@@ -1,7 +1,8 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import "./progressionchart.css";
-import { svgIcon } from '../utilites/svg-icons.jsx';
+import { Drawing } from '../utilites/drawings/drawing.jsx';
+import { loadSvgIcon } from '../utilites/svg-icons.jsx';
 
 
 export default function ProgressionChart(skill) {
@@ -18,7 +19,7 @@ export default function ProgressionChart(skill) {
                     <div className="progression-chart-container">
                         <div className="prog-chart-item"> 
                             <Link to ={skill.link1} className="svg-icon" >
-                                {svgIcon.get(skill.svg1)}
+                                <Drawing load={loadSvgIcon} name={skill.svg1} />
                             </Link>
                         </div>
 
@@ -26,7 +27,7 @@ export default function ProgressionChart(skill) {
                     
                         <div className="prog-chart-item">
                             <Link to ={skill.link2} className="svg-icon" >
-                                {svgIcon.get(skill.svg2)}
+                                <Drawing load={loadSvgIcon} name={skill.svg2} />
                             </Link>
                         </div>
                         
@@ -35,7 +36,7 @@ export default function ProgressionChart(skill) {
 
                         <div className="prog-chart-item">
                             <Link to ={skill.link3} className="svg-icon" >
-                                {svgIcon.get(skill.svg3)}
+                                <Drawing load={loadSvgIcon} name={skill.svg3} />
                             </Link>
                         </div>
 
@@ -43,7 +44,7 @@ export default function ProgressionChart(skill) {
 
                         <div className="prog-chart-item">
                             <Link to ={skill.link4} className="svg-icon" >
-                                {svgIcon.get(skill.svg4)}
+                                <Drawing load={loadSvgIcon} name={skill.svg4} />
                             </Link>
                         </div>
 
@@ -51,7 +52,7 @@ export default function ProgressionChart(skill) {
 
                         <div className="prog-chart-item">
                             <Link to ={skill.link5} className="svg-icon" >
-                                {svgIcon.get(skill.svg5)}
+                                <Drawing load={loadSvgIcon} name={skill.svg5} />
                             </Link>
                         </div>
                     </div>

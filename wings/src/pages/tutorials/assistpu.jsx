@@ -80,11 +80,11 @@ export function AssistPu() {
                   </li>
                 </ul>
 
-                <label className="read-more-label" for="skill-read-more">
+                <label className="read-more-label" htmlFor="skill-read-more">
                   Show less
                 </label>
               </div>
-              <label className="read-more-label" for="skill-read-more">
+              <label className="read-more-label" htmlFor="skill-read-more">
                 Read more...
               </label>
             </div>
@@ -119,10 +119,10 @@ export function AssistPu() {
       />
       <TutorialReturn />
       {svgDivider.get("2")}
-      <div class="technique-form-container">
-        <div class="technique-form">
-          <div class="skill-section-title">technique & form</div>
-          <div class="technique-form-content">
+      <div className="technique-form-container">
+        <div className="technique-form">
+          <div className="skill-section-title">technique & form</div>
+          <div className="technique-form-content">
             <div>
               Good Form Cues:
               <ul>

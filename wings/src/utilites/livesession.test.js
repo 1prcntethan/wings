@@ -13,6 +13,10 @@ import {
   sessionFromLog,
   sessionReducer,
   sessionToLog,
+  MAX_DURATION_SEC,
+  MAX_SESSION_MS,
+  capSession,
+  sessionExceeded,
 } from "./livesession.js";
 
 function named(state, id, patch) {
@@ -255,4 +259,16 @@ test("a draft round-trips and junk does not", () => {
   assert.equal(parseDraft("{"), null);
   assert.equal(parseDraft(JSON.stringify({ phase: "nope" })), null);
   assert.equal(parseDraft(""), null);
+});
+
+test("a live session auto-ends at four hours and the saved duration is capped", () => {
+  let state = sessionReducer(readyPlan(), { type: "start", now: 1_000 });
+  assert.equal(sessionExceeded(state, 1_000 + MAX_SESSION_MS - 1), false);
+  assert.equal(sessionReducer(state, { type: "autoEnd", now: 1_000 + MAX_SESSION_MS - 1 }), state);
+  const ended = sessionReducer(state, { type: "autoEnd", now: 1_000 + MAX_SESSION_MS });
+  assert.equal(ended.autoEnded, true);
+  assert.equal(ended.finishedAt, 1_000 + MAX_SESSION_MS);
+  state = capSession({ ...state, startedAt: 0 });
+  const log = sessionToLog(state, "2026-11-20");
+  assert.equal(log.durationSec, MAX_DURATION_SEC);
 });
