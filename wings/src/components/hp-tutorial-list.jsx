@@ -114,7 +114,7 @@ export default function TutorialListHP() {
                     </div>
                     <br />
                     <br />
-                    <Drawing load={loadSkillImage} name={title} />
+                    <Drawing load={loadSkillImage} name={title} svgId={title === "NA" ? "NA" : "skill-image"} />
                   </div>
                   <div className="skill-content--right">
                     Skill Difficulty: {skillDiff.get(title)}

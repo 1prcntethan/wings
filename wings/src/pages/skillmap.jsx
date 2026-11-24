@@ -1111,6 +1111,12 @@ const initialEdges = [
   },
 ];
 
+function treeSvgId(name) {
+  if (name === "NA") return "NA";
+  if (typeof name === "string" && name.startsWith("color-")) return "color-size";
+  return "tree-size";
+}
+
 function getColor(type) {
   if (type === undefined) {
     return "skill-locked";
@@ -1172,7 +1178,7 @@ const SkillNode = ({ data }) => {
             zIndex: -1,
           }}
         />
-        <Drawing load={loadSkillTreeIcon} name={data.svg} />
+        <Drawing load={loadSkillTreeIcon} name={data.svg} svgId={treeSvgId(data.svg)} />
         {tracked && (
           <div
             className={getColor(userSkills?.[skillDB.get(data.link)])}

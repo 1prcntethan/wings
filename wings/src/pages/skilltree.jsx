@@ -79,7 +79,7 @@ const SkillWindow = () => {
       <div className="skill-window close">
         <div className="skill-window-content">
           <div className="skill-window__svg-container">
-            <svg className="skill-window__svg"><Drawing load={loadSkillImage} name={skill} /></svg>
+            <svg className="skill-window__svg"><Drawing load={loadSkillImage} name={skill} svgId={skill === "NA" ? "NA" : "skill-image"} /></svg>
           </div>
           <div className="skill-window__text">
             <div className="skill-window__title">{skillTitle.get(skill)}</div>
