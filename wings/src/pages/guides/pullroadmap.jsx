@@ -117,6 +117,7 @@ export function PullRmp() {
           and progressing your way through it. Nonetheless, the OAP is still a
           very cool skill to have.
         </div>
+        <div className="guide-heading">front lever</div>
         <div className="guide-text">
           The front lever, on the other hand, is a bit more complicated. First,
           you’ll start with{" "}
@@ -146,6 +147,7 @@ export function PullRmp() {
           </Link>
           .
         </div>
+        <div className="guide-heading">holds</div>
         <div className="guide-text">
           Your training for this will look similar to planche; you’ll hold the
           <strong> hardest, most specific variation</strong> for the front lever. Then, move on to
@@ -155,6 +157,7 @@ export function PullRmp() {
           and that’s probably why FL is much easier to learn compared to PL,
           which targets the small shoulders.
         </div>
+        <div className="guide-heading">rows</div>
         <div className="guide-text">
           Through all of this, you might have been training the FL Row
           variations, and this will greatly benefit you when learning the FL

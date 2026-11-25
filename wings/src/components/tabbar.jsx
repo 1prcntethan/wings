@@ -50,7 +50,7 @@ function IconAccount() {
 
 function activeTab(pathname, signedIn) {
   if (pathname.startsWith("/workoutlog")) return "log";
-  if (pathname.startsWith("/skilltree") || pathname.startsWith("/skillvis")) return "skills";
+  if (pathname.startsWith("/skilltree")) return "skills";
   if (
     pathname.startsWith("/learn") ||
     pathname.startsWith("/training") ||

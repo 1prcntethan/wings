@@ -1,47 +1,34 @@
 .yt-tutorial {
     display: flex;
     flex-direction: column;
-    padding: 20px;
+    align-items: center;
+    box-sizing: border-box;
+    width: 100%;
+    padding: 0 16px 32px;
     background-color: #252525;
-
-    @media screen and (max-width: 768px) {
-        padding: 0 0;
-        
-    }
 }
 
 .yt-tutorial-content {
     display: flex;
     flex-direction: column;
-    padding: 20px;
-    width: auto;
+    align-items: stretch;
+    gap: 16px;
+    box-sizing: border-box;
+    width: min(860px, 100%);
 }
 
 .yt-tutorial-item {
-    display: flex;
-    flex-direction: column;
-    padding: 5% 10%;
-    justify-content: center;
-    align-items: center;
-    width: 80%;
-    height: 40vw;
-
-    @media (max-width: 768px) {
-        width: 100%;
-        height: 50vw;
-        padding: 20px 0;
-        
-    }
+    width: 100%;
+    flex: none;
+    aspect-ratio: 16 / 9;
+    min-height: 180px;
+    background-color: #111111;
 }
 
 .yt-tutorial-iframe {
-    width: 80%;
+    display: block;
+    width: 100%;
     height: 100%;
-    border: none;
-
-    @media (max-width: 768px) {
-        width: 90%;
-        height: 100%;
-        
-    }
+    aspect-ratio: 16 / 9;
+    border: 0;
 }

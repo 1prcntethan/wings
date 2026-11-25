@@ -1,65 +1,74 @@
 .howto-text {
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  font-size: 20px;
-  line-height: 2;
-  margin: 20px;
-  padding: 40px;
-
-  @media (max-width: 768px) {
-    margin: 0px;
-  }
-   @media (max-width: 500px) {
-    margin: 0px;
-    padding: 10px;
-  }
-}
-
-.howto-text > p {
-  font-family: Fira Sans;
-  font-weight: 200;
-
-  @media (max-width: 768px) {
-    font-size: 18px;
-    line-height: 2;
-  }
-
-}
-
-.howto-text > ol > li > strong {
-  font-family: Major Mono Display;
-  font-weight: bold;
-
-  @media (max-width: 768px) {
-    font-size: 18px;
-    line-height: 2;
-  }
-}
-
-.howto-text > ol > li {
-  font-family: Fira Sans;
-  font-weight: 200;
-
-  @media (max-width: 768px) {
-    font-size: 18px;
-    line-height: 2;
-  }
-  @media (max-width: 500px) {
-    font-size: 16px;
-  }
+  width: min(760px, 100%);
+  margin: 0 auto;
+  padding: 28px 20px 56px;
+  font-size: 18px;
+  line-height: 1.6;
 }
 
 .howto-title {
-  font-size: 36px;
-  margin-bottom: 10px;
-  @media (max-width: 768px) {
-    font-size: 28px;
-    margin-bottom: 5px;
-    
-  }
-  @media (max-width: 500px) {
-    font-size: 24px;
-  }
+  margin: 0 0 12px;
+  font-size: 28px;
+  line-height: 1.2;
+}
+
+.howto-text > p {
+  margin: 0 0 20px;
+  font-family: "Fira Sans", sans-serif;
+  font-weight: 200;
+}
+
+.howto-text > ol {
+  list-style: none;
+  counter-reset: howto-step;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+}
+
+.howto-text > ol > li {
+  counter-increment: howto-step;
+  position: relative;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 16px 16px 16px 60px;
+  background: #252525;
+  border: 1px solid #333;
+  border-radius: 12px;
+  font-family: "Fira Sans", sans-serif;
+  font-weight: 200;
+  line-height: 1.6;
+}
+
+.howto-text > ol > li::before {
+  content: counter(howto-step);
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  background: #1b1b1b;
+  border: 1px solid #444;
+  font-family: "Major Mono Display", monospace;
+  font-size: 14px;
+  font-weight: 400;
+}
+
+.howto-text > ol > li > strong {
+  display: block;
+  margin-bottom: 6px;
+  font-family: "Major Mono Display", monospace;
+  font-weight: 400;
+  font-size: 15px;
+  line-height: 1.35;
 }
 
 .howto-img {
@@ -67,5 +76,24 @@
   width: 100%;
   max-width: 100%;
   height: auto;
-  margin: 12px 0;
+  margin: 16px 0 4px;
+  border: 1px solid #333;
+  border-radius: 12px;
+  background: #1b1b1b;
+}
+
+@media (max-width: 500px) {
+  .howto-text {
+    padding: 20px 14px 40px;
+    font-size: 16px;
+  }
+
+  .howto-title {
+    font-size: 22px;
+  }
+
+  .howto-text > ol > li {
+    padding: 14px 14px 14px 54px;
+    font-size: 16px;
+  }
 }

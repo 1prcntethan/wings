@@ -52,7 +52,7 @@ export function WorkoutSession() {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState(null);
   const [confirmDiscard, setConfirmDiscard] = useState(false);
-  const [confirmLeave, setConfirmLeave] = useState(false);
+  const [leaveTo, setLeaveTo] = useState(null);
   const savingLock = useRef(false);
 
   useEffect(() => {
@@ -148,13 +148,13 @@ export function WorkoutSession() {
   }
 
   useEffect(() => {
-    if (!confirmLeave) return undefined;
+    if (!leaveTo) return undefined;
     function onKey(event) {
-      if (event.key === "Escape") setConfirmLeave(false);
+      if (event.key === "Escape") setLeaveTo(null);
     }
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [confirmLeave]);
+  }, [leaveTo]);
 
   function discard() {
     try {
@@ -228,7 +228,7 @@ export function WorkoutSession() {
         }
       >
         {showExit && (
-          <button type="button" className="ls-back ls-exit" onClick={() => setConfirmLeave(true)}>
+          <button type="button" className="ls-back ls-exit" onClick={() => setLeaveTo("/dashboard")}>
             dashboard
           </button>
         )}
@@ -263,7 +263,7 @@ export function WorkoutSession() {
                 <SessionPlan
                   session={session}
                   dispatch={dispatchSession}
-                  onBack={() => setConfirmLeave(true)}
+                  onBack={() => setLeaveTo("/workoutlog")}
                   onDiscard={() => setConfirmDiscard(true)}
                 />
               </>
@@ -281,7 +281,7 @@ export function WorkoutSession() {
             onDiscard={discard}
           />
         )}
-        {confirmLeave && (
+        {leaveTo && (
           <div className="ls-sheet" role="dialog" aria-modal="true" aria-labelledby="ls-leave-title">
             <div className="ls-sheet-card">
               <h1 id="ls-leave-title" className="ls-display">
@@ -289,10 +289,10 @@ export function WorkoutSession() {
               </h1>
               <p>This workout stays on this device. You can come back to it from the workout log.</p>
               <div className="ls-actions">
-                <button type="button" className="ls-primary" onClick={() => navigate("/dashboard")}>
-                  go to dashboard
+                <button type="button" className="ls-primary" onClick={() => navigate(leaveTo)}>
+                  {leaveTo === "/workoutlog" ? "back" : "go to dashboard"}
                 </button>
-                <button type="button" className="ls-ghost" autoFocus onClick={() => setConfirmLeave(false)}>
+                <button type="button" className="ls-ghost" autoFocus onClick={() => setLeaveTo(null)}>
                   stay
                 </button>
               </div>

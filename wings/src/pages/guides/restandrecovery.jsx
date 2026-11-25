@@ -29,6 +29,7 @@ export function RestAndRecovery() {
           extremely detrimental to your success.
         </div>
 
+        <div className="guide-heading">sleep</div>
         <div className="guide-text">
           Firstly, always try to get{" "}
           <strong>7-8 hours of sleep MINIMUM</strong>. The time you spend
@@ -40,6 +41,7 @@ export function RestAndRecovery() {
           adequate sleep.
         </div>
 
+        <div className="guide-heading">diet</div>
         <div className="guide-text">
           Next,{" "}
           <Link to="/training/generalnutrition" className="guide-external-link">
@@ -53,6 +55,7 @@ export function RestAndRecovery() {
           overall, help you recover faster and stronger.
         </div>
 
+        <div className="guide-heading">overtraining</div>
         <div className="guide-text">
           Overtraining is another mistake many people make. Ever felt super sore
           in the following days after a workout? This can be both good and bad.
@@ -79,6 +82,7 @@ export function RestAndRecovery() {
           don’t have to worry about soreness affecting your workout performance.
         </div>
 
+        <div className="guide-heading">fatigue</div>
         <div className="guide-text">
           Finally, we need to talk about fatigue accumulation. Mostly for{" "}
           <Link
@@ -94,6 +98,7 @@ export function RestAndRecovery() {
           progress.
         </div>
 
+        <div className="guide-heading">deload weeks</div>
         <div className="guide-text">
           To combat this, we can use <strong>deload weeks</strong>, where we
           purposely go down in intensity and or volume to allow the body to more

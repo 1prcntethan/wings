@@ -20,6 +20,14 @@ function IconSearch() {
   );
 }
 
+function IconPlay() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M8 6.5v11l10-5.5-10-5.5z" />
+    </svg>
+  );
+}
+
 function IconCopy() {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -63,7 +71,20 @@ function IconTrash() {
   );
 }
 
-function LogCard({ log, onCopy, onEdit, onDelete, pendingDelete, onConfirmDelete, onCancelDelete, deleting }) {
+function LogCard({
+  log,
+  onCopy,
+  onStart,
+  onEdit,
+  onDelete,
+  pendingDelete,
+  onConfirmDelete,
+  onCancelDelete,
+  deleting,
+  pendingStart,
+  onConfirmStart,
+  onCancelStart,
+}) {
   const [sharing, setSharing] = useState(false);
   const [shareError, setShareError] = useState(null);
   const summary = logSummary(log);
@@ -103,8 +124,21 @@ function LogCard({ log, onCopy, onEdit, onDelete, pendingDelete, onConfirmDelete
               Keep
             </button>
           </span>
+        ) : pendingStart === log.id ? (
+          <span className="wh-confirm">
+            Replace the workout in progress?
+            <button type="button" onClick={() => onConfirmStart(log)}>
+              start
+            </button>
+            <button type="button" onClick={onCancelStart}>
+              keep
+            </button>
+          </span>
         ) : (
           <span className="wh-icon-row">
+            <button type="button" aria-label="Start live session" disabled={log.pending} onClick={() => onStart(log)}>
+              <IconPlay />
+            </button>
             <button type="button" aria-label="Copy workout" disabled={log.pending} onClick={() => onCopy(log)}>
               <IconCopy />
             </button>
@@ -181,17 +215,33 @@ export default function WorkoutHistory({
   openKeys,
   onToggle,
   onCopy,
+  onStart,
   onEdit,
   onDelete,
   pendingDelete,
   onConfirmDelete,
   onCancelDelete,
   deleting,
+  pendingStart,
+  onConfirmStart,
+  onCancelStart,
   deleteError,
   onStartSession,
   onLogWorkout,
 }) {
-  const cardProps = { onCopy, onEdit, onDelete, pendingDelete, onConfirmDelete, onCancelDelete, deleting };
+  const cardProps = {
+    onCopy,
+    onStart,
+    onEdit,
+    onDelete,
+    pendingDelete,
+    onConfirmDelete,
+    onCancelDelete,
+    deleting,
+    pendingStart,
+    onConfirmStart,
+    onCancelStart,
+  };
 
   return (
     <div className="wh-history">

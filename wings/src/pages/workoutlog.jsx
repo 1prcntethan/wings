@@ -425,6 +425,7 @@ export function WorkoutLog() {
   const previewRef = useRef(null);
   const [sessionDraft, setSessionDraft] = useState(null);
   const [confirmDiscardDraft, setConfirmDiscardDraft] = useState(false);
+  const [pendingStart, setPendingStart] = useState(null);
   const [editingLog, setEditingLog] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState(blankLog());
@@ -780,6 +781,19 @@ export function WorkoutLog() {
     navigate("/workoutlog/session", { state: { fresh: true } });
   }
 
+  function openSessionFromLog(log) {
+    navigate("/workoutlog/session", { state: { fresh: true, log } });
+  }
+
+  function handleStartFromLog(log) {
+    if (sessionDraft) {
+      setPendingDelete(null);
+      setPendingStart(log.id);
+      return;
+    }
+    openSessionFromLog(log);
+  }
+
   function discardDraft() {
     try {
       localStorage.removeItem(DRAFT_KEY);
@@ -881,15 +895,20 @@ export function WorkoutLog() {
           openKeys={openKeys}
           onToggle={toggleArchive}
           onCopy={(log) => openWorkoutForm(log)}
+          onStart={handleStartFromLog}
           onEdit={(log) => openWorkoutForm(log, true)}
           onDelete={(log) => {
             setDeleteError(null);
+            setPendingStart(null);
             setPendingDelete(log.id);
           }}
           pendingDelete={pendingDelete}
           onConfirmDelete={confirmDelete}
           onCancelDelete={() => setPendingDelete(null)}
           deleting={deleting}
+          pendingStart={pendingStart}
+          onConfirmStart={(log) => openSessionFromLog(log)}
+          onCancelStart={() => setPendingStart(null)}
           deleteError={deleteError}
           onStartSession={handleStartFresh}
           onLogWorkout={() => openWorkoutForm()}

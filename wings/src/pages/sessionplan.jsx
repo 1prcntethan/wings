@@ -89,7 +89,7 @@ export function SessionPlan({ session, dispatch, onBack, onDiscard }) {
     <div className="ls-plan">
       <header className="ls-head">
         <button type="button" className="ls-back" onClick={onBack}>
-          dashboard
+          back
         </button>
         <h1>plan workout</h1>
       </header>

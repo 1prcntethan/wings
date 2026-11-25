@@ -6,6 +6,7 @@ import { Link } from "react-router-dom";
 import { svgDivider } from "../../utilites/svg-divider";
 import { skillMuscle } from "../../utilites/skillmuscles";
 import TutorialReturn from "../../components/tutorialreturn";
+import YTTutorial from "../../components/yttutorials";
 import Footer from "../../components/footer";
 
 export function StraddleFLRow() {
@@ -133,6 +134,7 @@ export function StraddleFLRow() {
         </div>
       </div>
       {svgDivider.get("3")}
+      <YTTutorial identifier="straddle-fl-row" />
       <Footer />
     </>
   );

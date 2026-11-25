@@ -37,6 +37,7 @@ export function BeginnerWorkout() {
           training.
         </div>
 
+        <div className="guide-heading">warm-up</div>
         <div className="guide-text">
           Before your main sets, you need to <strong>warm up</strong>. Make sure
           to warm up each body part you’ll be exercising. Arm circles for the
@@ -44,6 +45,7 @@ export function BeginnerWorkout() {
           wrists for push ups.
         </div>
 
+        <div className="guide-heading">exercise choice</div>
         <div className="guide-text">
           For complete beginners, pick an exercise for{" "}
           <strong>each muscle group</strong>: chest, shoulders, bicep, tricep,
@@ -71,6 +73,7 @@ export function BeginnerWorkout() {
           </Link>
           for a general strength goal!
         </div>
+        <div className="guide-heading">when it gets long</div>
         <div className="guide-text">
           As you build more strength, or if your workout becomes too tiring, you
           can slowly transition to a strength focused workout. This means doing
@@ -95,6 +98,7 @@ export function BeginnerWorkout() {
           <strong>perceived difficulty should stay pretty constant</strong>,
           which is why we frontload the difficult exercises first.
         </div>
+        <div className="guide-heading">more exercises</div>
         <div className="guide-text">
           After the next easier exercises, choose another 1 or 2 exercises. Make
           sure to have variation. For example, on a push day, make sure to hit
@@ -104,6 +108,7 @@ export function BeginnerWorkout() {
           Finally, finish with any accessories that help with understanding the
           activation of skills or exercises.
         </div>
+        <div className="guide-heading">planning the split</div>
         <div className="guide-text">
           Also, you need to plan your split. Which days will be push? Which days
           will be pull? Make sure to alternate; there shouldn’t be two push days
@@ -111,6 +116,7 @@ export function BeginnerWorkout() {
           and pull skills are typically 2x a week for each. This might look like
           push D1, pull D2, rest, push D3, pull D4 etc.
         </div>
+        <div className="guide-heading">rest</div>
         <div className="guide-text">
           And that’s it! Throughout the workout, remember to adequately rest,
           and accumulate enough volume and stimulus. The goal in this stage is

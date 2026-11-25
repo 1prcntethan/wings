@@ -70,6 +70,7 @@ export function FrontLeverGuide() {
 
       <div className="guide-container">
         <div className="guide-heading">front lever i</div>
+        <div className="guide-heading">pull-ups</div>
 
         <div className="guide-text">
           So, you want to learn the Front Lever. First, you should start with
@@ -79,6 +80,7 @@ export function FrontLeverGuide() {
           transfer over really well to the front lever.
         </div>
 
+        <div className="guide-heading">tuck front lever</div>
         <div className="guide-text">
           Once you have decent pulling strength, the first progression you will
           start with is the{" "}
@@ -120,6 +122,7 @@ export function FrontLeverGuide() {
           That’s the progressive overload.
         </div>
 
+        <div className="guide-heading">pike front lever</div>
         <div className="guide-text">
           The{" "}
           <Link to="/tutorials/pikefl" className="guide-external-link">
@@ -135,6 +138,7 @@ export function FrontLeverGuide() {
           to you to use them or not.
         </div>
 
+        <div className="guide-heading">advanced tuck</div>
         <div className="guide-text">
           Once you’re in the{" "}
           <Link to="/tutorials/advtuckfl" className="guide-external-link">
@@ -177,6 +181,7 @@ export function FrontLeverGuide() {
           </strong>
           .
         </div>
+        <div className="guide-heading">pelvis and abs</div>
         <div className="guide-text">
           In this progression, you will focus on the same things as the last.
           However, some things you’ll notice: Your{" "}
@@ -197,6 +202,7 @@ export function FrontLeverGuide() {
           <strong>open/neutral pelvis position</strong>, as well as strengthen
           your abs for this stretched position.
         </div>
+        <div className="guide-heading">front lever rows</div>
         <div className="guide-text">
           At this stage, you probably have enough strength to start working on
           <Link to="/tutorials/advtuckflrow" className="guide-external-link">
@@ -210,6 +216,7 @@ export function FrontLeverGuide() {
           </Link>
           .
         </div>
+        <div className="guide-heading">straddle</div>
         <div className="guide-text">
           Again, your goal for the{" "}
           <Link to="/tutorials/superadvtuckfl" className="guide-external-link">
@@ -251,6 +258,7 @@ export function FrontLeverGuide() {
           addition, the lever arm has gotten much longer, and the exercise is
           much harder.
         </div>
+        <div className="guide-heading">training it</div>
         <div className="guide-text">
           There’s really nothing to do besides to work on the skill. Train hard,
           use{" "}
@@ -274,6 +282,7 @@ export function FrontLeverGuide() {
           you’ll have the strength to do <strong>Full FL negatives</strong>.
           Soon, you’ll be able to do <strong>FL raises with momentum</strong>.
         </div>
+        <div className="guide-heading">full front lever</div>
         <div className="guide-text">
           Finally, with time, you will be able to hold the{" "}
           <Link to="/tutorials/fullfl" className="guide-external-link">
@@ -288,6 +297,7 @@ export function FrontLeverGuide() {
           </Link>{" "}
           as your progressions, because it’s the closest to the real thing.
         </div>
+        <div className="guide-heading">bands</div>
         <div className="guide-text">
           If you’re having trouble transitioning from one progression to the
           next, consider using <strong>resistance bands</strong>. Use the

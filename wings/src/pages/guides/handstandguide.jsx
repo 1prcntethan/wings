@@ -194,6 +194,7 @@ export function HandstandGuide() {
           This is why you can aim to train the handstand{" "}
           <strong>everyday</strong>, if you want maximum progress.
         </div>
+        <div className="guide-heading">wall</div>
         <div className="guide-text">
           To begin training, find a wall you can kick up to, and do wall
           handstands with your <strong>back</strong> to the wall. At first,
@@ -207,6 +208,7 @@ export function HandstandGuide() {
           However, don’t push through <strong>intense pain</strong>, and stop if
           the <strong>headaches persist unreasonably</strong>.
         </div>
+        <div className="guide-heading">balance</div>
         <div className="guide-text">
           Once you’re used to the general handstand movement, you can start
           working on balance. In order to balance, you have to keep your center
@@ -240,6 +242,7 @@ export function HandstandGuide() {
           spot where you’re using your fingers to stop yourself from falling
           forward.
         </div>
+        <div className="guide-heading">freestanding</div>
         <div className="guide-text">
           Once you’ve learned to balance, you can start attempting freestanding
           handstands off the wall. Start with your hands on the ground, shoulder
@@ -251,6 +254,7 @@ export function HandstandGuide() {
           <strong>shoulders are above your wrists</strong>, and imagine trying
           to stack your hips on your shoulders.
         </div>
+        <div className="guide-heading">comfort</div>
         <div className="guide-text">
           After a while, you will feel more and more accommodated to the
           handstand movement. It can take a week to multiple months to learn the

@@ -191,6 +191,11 @@
   gap: 8px;
 }
 
+.wh-card-foot,
+.wh-confirm {
+  flex-wrap: wrap;
+}
+
 .wh-card-top {
   justify-content: flex-start;
 }
@@ -290,8 +295,8 @@
 }
 
 .wh-icon-row button {
-  width: 38px;
-  height: 38px;
+  width: 44px;
+  height: 44px;
   display: grid;
   place-items: center;
   padding: 0;
@@ -313,7 +318,8 @@
 
 .wh-confirm button,
 .wh-error button {
-  padding: 6px 8px;
+  min-height: 44px;
+  padding: 8px 12px;
   font-family: "Major Mono Display", monospace;
   font-size: 0.62rem;
   letter-spacing: 0.04em;
