@@ -8,11 +8,13 @@ import {
   displayedStreak,
   formatDate,
   getFitnessDateObject,
+  ensureUserDoc,
   getLatestWorkoutLog,
   getUserDoc,
-  getWorkoutLogsByDate,
+  getWorkoutStats,
   logWorkout,
 } from "../config/firestore.js";
+import { reportError } from "../config/sentry.js";
 import { skillRP, skillRPDenominator } from "../utilites/skilltorp.js";
 import { highestReached } from "../utilites/skillgroups.js";
 import { weekDots } from "../utilites/streakweek.js";
@@ -27,6 +29,7 @@ import {
   monthLabel,
   summarizeLogs,
 } from "../utilites/workoutstats.js";
+import { UnverifiedNotice } from "../components/unverified.jsx";
 import "./dashboard.css";
 
 const GUIDES = [
@@ -148,12 +151,12 @@ export function Dashboard() {
 
       if (!currentUser) return;
       const today = getFitnessDateObject();
-      const bounds = monthBounds(today.getFullYear(), today.getMonth());
       try {
-        const [data, log, monthLogs] = await Promise.all([
+        await ensureUserDoc(currentUser);
+        const [data, log, month] = await Promise.all([
           getUserDoc(currentUser.uid),
           getLatestWorkoutLog(currentUser.uid),
-          getWorkoutLogsByDate(currentUser.uid, bounds.start, bounds.end),
+          getWorkoutStats(currentUser.uid, { kind: "month" }, today),
         ]);
         if (cancelled) return;
         if (!data) {
@@ -168,10 +171,11 @@ export function Dashboard() {
         setRestCounter(Number(data.rest) || 0);
         setUsername(typeof data.username === "string" ? data.username : "");
         setLatest(log ? normalizeWorkoutLog(log) : null);
-        setMonthStats(summarizeLogs(monthLogs));
+        setMonthStats(month);
         setMonthName(monthLabel(today));
         setStatus("ready");
-      } catch {
+      } catch (error) {
+        reportError(error, { where: "dashboard" });
         if (cancelled) return;
         setLoadError("Couldn't load your progress.");
         setStatus("error");
@@ -260,6 +264,7 @@ export function Dashboard() {
   return (
     <>
       <Navbar />
+      <UnverifiedNotice />
       <main className="dash-page" data-screen="dashboard" data-ready={status}>
         <header className="dash-greet">
           <p className="dash-date">{headingDate(new Date())}</p>

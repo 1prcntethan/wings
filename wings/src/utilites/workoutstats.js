@@ -12,6 +12,19 @@ export const DEFAULT_STAT_RANGE = "30d";
 
 export const MAX_STORED_SETS = 40;
 
+export const MAX_DURATION_MINUTES = 240;
+
+export function parseDurationMinutes(raw) {
+  const text = String(raw ?? "").trim();
+  if (text === "") return { durationSec: undefined };
+  if (!/^\d+$/.test(text)) return { error: "Duration needs to be whole minutes." };
+  const minutes = Number(text);
+  if (minutes > MAX_DURATION_MINUTES) {
+    return { error: "Duration can't be longer than 4 hours (240 minutes)." };
+  }
+  return { durationSec: minutes * 60 };
+}
+
 export const LOG_FILTERS = [
   { id: "all", label: "All" },
   { id: "push", label: "Push" },

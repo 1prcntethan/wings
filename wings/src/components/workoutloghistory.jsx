@@ -249,7 +249,7 @@ export default function WorkoutHistory({
       )}
       {stats?.partialSets && (
         <p className="wh-note">
-          All-time sets include workouts saved with a set total. Older logs still count as workouts.
+          Sets include workouts saved with a set total. Older logs still count as workouts.
         </p>
       )}
       <div className="wh-filters wh-cat-filters" role="group" aria-label="Category">
@@ -304,6 +304,9 @@ export default function WorkoutHistory({
           </section>
         );
       })}
+      {archiveStatus == null && (
+        <button type="button" className="wh-fold" onClick={onLoadOlder}>Show older workouts</button>
+      )}
       {archiveStatus === "loading" && <p className="wh-empty" role="status">Loading older workouts...</p>}
       {archiveStatus === "error" && (
         <p className="wh-error">

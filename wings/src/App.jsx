@@ -7,6 +7,8 @@ import { Loading } from "./components/loading"
 import BackToTop from "./components/backtotop";
 import TabBar from "./components/tabbar";
 import { InstallSheet } from "./components/installguide";
+import { UpdateToast } from "./components/updatetoast.jsx";
+import { ExpiredSessionSaver } from "./components/sessionexpiry.jsx";
 
 function guidePage(page) {
   return (
@@ -34,6 +36,7 @@ const Tutorials = lazyNamed(() => import("./pages/tutorials"), "Tutorials");
 const Terminology = lazyNamed(() => import("./pages/terminology"), "Terminology");
 const SkillVis = lazyNamed(() => import("./pages/skillvis"), "SkillVis");
 const Incomplete = lazyNamed(() => import("./pages/incomplete"), "Incomplete");
+const NotFound = lazyNamed(() => import("./pages/notfound"), "NotFound");
 const HowTo = lazyNamed(() => import("./pages/howto"), "HowTo");
 const Install = lazyNamed(() => import("./pages/install"), "Install");
 const About = lazyNamed(() => import("./pages/about"), "About");
@@ -116,23 +119,36 @@ function ScrollToTop({ children }) {
 
 function App() {
   const { currentUser, loading, dbReady } = useAuth();
+  const pending = loading || !dbReady;
+  const preview = import.meta.env.DEV
+    && new URLSearchParams(window.location.search).get("preview") === "1";
 
-  if(loading || !dbReady) {
-    return <Loading />;
-  }
+  useEffect(() => {
+    try {
+      sessionStorage.removeItem("wings-chunk-reload");
+    } catch {
+      // A later failed chunk can still reload once.
+    }
+  }, []);
 
   function signedIn(element) {
-    if (currentUser) return element;
-    if (import.meta.env.DEV && new URLSearchParams(window.location.search).get("preview") === "1") {
-      return element;
-    }
+    if (pending && !preview) return <Loading />;
+    if (currentUser || preview) return element;
     return <Navigate to="/login" />;
+  }
+
+  function guestOnly(element) {
+    if (pending) return <Loading />;
+    if (currentUser) return <Navigate to="/dashboard" />;
+    return element;
   }
 
   return (
       <HashRouter>
         <ScrollToTop>
           <InstallSheet />
+          <UpdateToast />
+          <ExpiredSessionSaver />
           <Suspense fallback={<Loading />}>
           <Routes>
             <Route path="/" element={<Homepage />} />
@@ -150,11 +166,11 @@ function App() {
             <Route path="/workoutlog/session" element={signedIn(<WorkoutSession />)} />
             <Route path="/tutorials/incomplete" element={<Incomplete />} />
 
-            <Route path="/login" element={currentUser ? <Navigate to="/dashboard" /> : <LoginPage />} />
-            <Route path="/createaccount" element={currentUser ? <Navigate to="/dashboard" /> : <CreateAccountPage />} />
+            <Route path="/login" element={guestOnly(<LoginPage />)} />
+            <Route path="/createaccount" element={guestOnly(<CreateAccountPage />)} />
             <Route path="/dashboard" element={signedIn(<Dashboard />)} />
-            <Route path="/settings" element={currentUser ? <Settings /> : <Navigate to="/" />} />
-            <Route path="/resetpassword" element={currentUser ? <Navigate to="/dashboard" /> : <ResetPasswordPage />} />
+            <Route path="/settings" element={pending ? <Loading /> : currentUser ? <Settings /> : <Navigate to="/" />} />
+            <Route path="/resetpassword" element={guestOnly(<ResetPasswordPage />)} />
 
             <Route path="/training/beginnerguide" element={guidePage(<BeginnerGuide />)} />
             <Route path="/training/progoverload" element={guidePage(<ProgOverload />)} />
@@ -247,7 +263,7 @@ function App() {
             <Route path="/tutorials/squat" element={<Squat />} />
             <Route path="/tutorials/splitsquat" element={<SplitSquat />} />
 
-            <Route path="*" element={<Navigate to="/tutorials/incomplete" />} />
+            <Route path="*" element={<NotFound />} />
           </Routes>
           </Suspense>
         </ScrollToTop>

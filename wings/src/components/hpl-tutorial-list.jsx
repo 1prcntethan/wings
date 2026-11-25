@@ -7,7 +7,8 @@ import { skillTitle } from '../utilites/skilltitles';
 import { skillDiff } from '../utilites/skilldifficulties';
 import { skillTime } from '../utilites/skilltime';
 import { skillLinks } from '../utilites/skillLinks';
-import { skillImage } from "../utilites/skillImage";
+import { Drawing } from "../utilites/drawings/drawing.jsx";
+import { loadSkillImage } from "../utilites/skillImage.jsx";
 import { incompleteList } from '../utilites/incompleteskills.js';
 
 
@@ -87,7 +88,7 @@ export default function TutorialListHPL() {
                     </div>
                     <br />
                     <br />
-                    {skillImage.get(title)}
+                    <Drawing load={loadSkillImage} name={title} svgId={title === "NA" ? "NA" : "skill-image"} />
                   </div>
                   <div className="skill-content--right">
                     Skill Difficulty: {skillDiff.get(title)}

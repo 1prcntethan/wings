@@ -10,15 +10,19 @@ const fileSkillIcons = [
   "v-sit",
 ];
 
+export function fileSkillElement(name, elementId) {
+  if (!fileSkillIcons.includes(name)) return null;
+  return (
+    <img
+      id={elementId}
+      src={`skills/${name}.svg`}
+      alt={name.replaceAll("-", " ")}
+    />
+  );
+}
+
 export function registerFileSkillIcons(map, elementId) {
   for (const name of fileSkillIcons) {
-    map.set(
-      name,
-      <img
-        id={elementId}
-        src={`skills/${name}.svg`}
-        alt={name.replaceAll("-", " ")}
-      />,
-    );
+    map.set(name, fileSkillElement(name, elementId));
   }
 }

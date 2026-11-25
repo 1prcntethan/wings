@@ -5,15 +5,39 @@ import {
   signOut,
   signInWithEmailAndPassword,
   sendPasswordResetEmail,
+  sendEmailVerification,
   deleteUser,
   reauthenticateWithCredential,
   reauthenticateWithPopup,
+  linkWithPopup,
+  linkWithCredential,
   EmailAuthProvider,
+  GoogleAuthProvider,
 } from "firebase/auth";
-import { GoogleAuthProvider } from "firebase/auth";
+
+let pendingGoogleCredential = null;
+
+export function captureGoogleCredential(error) {
+  pendingGoogleCredential = GoogleAuthProvider.credentialFromError(error) || null;
+  return pendingGoogleCredential;
+}
+
+export async function linkPendingGoogleCredential(user = auth?.currentUser) {
+  if (!pendingGoogleCredential || !user) return false;
+  const credential = pendingGoogleCredential;
+  pendingGoogleCredential = null;
+  await linkWithCredential(user, credential);
+  return true;
+}
 
 export const doCreateUserWithEmailAndPassword = async (email, password) => {
-  return await createUserWithEmailAndPassword(auth, email, password);
+  const credential = await createUserWithEmailAndPassword(auth, email, password);
+  try {
+    await sendEmailVerification(credential.user);
+  } catch (error) {
+    console.error("Verification email failed", error);
+  }
+  return credential;
 };
 
 export const doSignInWithEmailAndPassword = async (email, password) => {
@@ -47,6 +71,16 @@ export async function doReauthenticateWithGoogle() {
     });
   }
   await reauthenticateWithPopup(user, new GoogleAuthProvider());
+}
+
+export async function doLinkGoogle() {
+  const user = auth.currentUser;
+  if (!user) {
+    throw Object.assign(new Error("Not signed in"), {
+      code: "auth/invalid-credential",
+    });
+  }
+  await linkWithPopup(user, new GoogleAuthProvider());
 }
 
 export async function doDeleteAuthUser() {

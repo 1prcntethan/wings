@@ -3,9 +3,9 @@ import "../components/svg-divider.css";
 export const svgDivider = new Map([
   [
     "0",
-    <div class="divider">
+    <div className="divider">
       <svg
-        class="svg-divider"
+        className="svg-divider"
         viewBox="0 0 6711 1328"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
@@ -72,9 +72,9 @@ export const svgDivider = new Map([
   ],
   [
     "1",
-    <div class="divider">
+    <div className="divider">
       <svg
-        class="svg-divider"
+        className="svg-divider"
         viewBox="0 0 6711 1328"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
@@ -141,9 +141,9 @@ export const svgDivider = new Map([
   ],
   [
     "2",
-    <div class="divider">
+    <div className="divider">
       <svg
-        class="svg-divider"
+        className="svg-divider"
         viewBox="0 0 6711 1328"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
@@ -210,9 +210,9 @@ export const svgDivider = new Map([
   ],
   [
     "3",
-    <div class="divider">
+    <div className="divider">
       <svg
-        class="svg-divider"
+        className="svg-divider"
         viewBox="0 0 6711 1328"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"

@@ -1,5 +1,4 @@
 import { initializeApp } from "firebase/app";
-import { getAnalytics, isSupported } from "firebase/analytics";
 import { connectAuthEmulator, getAuth } from "firebase/auth";
 import { connectFirestoreEmulator, getFirestore } from "firebase/firestore";
 // TODO: Add SDKs for Firebase products that you want to use
@@ -78,22 +77,39 @@ if (useEmulators && db) {
 function enableAnalytics() {
   if (!app || !firebaseConfig.measurementId) return;
 
-  try {
-    isSupported()
-      .then((supported) => {
-        if (!supported) return;
-        try {
-          analytics = getAnalytics(app);
-        } catch (error) {
-          console.error("Firebase Analytics unavailable", error);
-        }
-      })
-      .catch((error) => {
+  import("firebase/analytics")
+    .then(({ getAnalytics, isSupported }) => isSupported().then((supported) => {
+      if (!supported) return;
+      try {
+        analytics = getAnalytics(app);
+      } catch (error) {
         console.error("Firebase Analytics unavailable", error);
+      }
+    }))
+    .catch((error) => {
+      console.error("Firebase Analytics unavailable", error);
+    });
+}
+
+function enableAppCheck() {
+  const siteKey = envValue("VITE_APPCHECK_SITE_KEY", "");
+  if (!app || typeof siteKey !== "string" || !siteKey.trim()) return;
+  const providerName = String(envValue("VITE_APPCHECK_PROVIDER", "enterprise") || "enterprise").toLowerCase();
+
+  import("firebase/app-check")
+    .then((appCheck) => {
+      const provider = providerName === "v3"
+        ? new appCheck.ReCaptchaV3Provider(siteKey.trim())
+        : new appCheck.ReCaptchaEnterpriseProvider(siteKey.trim());
+      appCheck.initializeAppCheck(app, {
+        provider,
+        isTokenAutoRefreshEnabled: true,
       });
-  } catch (error) {
-    console.error("Firebase Analytics unavailable", error);
-  }
+    })
+    .catch((error) => {
+      console.error("App Check unavailable", error);
+    });
 }
 
 enableAnalytics();
+enableAppCheck();

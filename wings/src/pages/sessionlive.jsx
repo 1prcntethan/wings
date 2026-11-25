@@ -30,6 +30,9 @@ export function SessionLive({ session, dispatch, now, onSave, saving, saveError,
     return (
       <div className="ls-live ls-live--done">
         <h1 className="ls-display">workout done</h1>
+        {session.autoEnded && (
+          <p className="ls-empty">This session auto-ended at 4 hours.</p>
+        )}
         <p className="ls-duration">{formatClock(durationMs(session, now))}</p>
         {done.length === 0 ? (
           <p className="ls-empty">Nothing was completed, so there is nothing to save.</p>

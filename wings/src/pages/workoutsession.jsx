@@ -9,14 +9,18 @@ import {
 } from "../config/firestore.js";
 import {
   DRAFT_KEY,
+  MAX_SESSION_MS,
   blankSession,
+  capSession,
   hasLoggedWork,
   parseDraft,
   serializeDraft,
+  sessionExceeded,
   sessionFromLog,
   sessionReducer,
   sessionToLog,
 } from "../utilites/livesession.js";
+import { reportError } from "../config/sentry.js";
 import { SessionPlan } from "./sessionplan.jsx";
 import { SessionLive } from "./sessionlive.jsx";
 import "./workoutsession.css";
@@ -32,6 +36,7 @@ function readStoredDraft() {
 function createInitial(routeState) {
   if (!routeState?.fresh) {
     const saved = readStoredDraft();
+    if (saved && sessionExceeded(saved, Date.now())) return capSession(saved);
     if (saved) return saved;
   }
   if (routeState?.log) return sessionFromLog(routeState.log);
@@ -60,7 +65,6 @@ export function WorkoutSession() {
       }
       localStorage.setItem(DRAFT_KEY, serializeDraft(session));
     } catch {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- localStorage throws on this turn
       setSaveError("Couldn't keep a backup of this session on this device.");
     }
   }, [session]);
@@ -84,6 +88,29 @@ export function WorkoutSession() {
       document.removeEventListener("visibilitychange", onVisible);
     };
   }, [session.phase, session.endsAt]);
+
+  useEffect(() => {
+    if (session.phase !== "exercising" && session.phase !== "resting") return undefined;
+    const tick = () => {
+      const current = Date.now();
+      setNow(current);
+      if (sessionExceeded(session, current)) {
+        dispatch({ type: "autoEnd", now: current });
+      }
+    };
+    const delay = Math.max(0, (session.startedAt || 0) + MAX_SESSION_MS - Date.now());
+    const timeout = window.setTimeout(tick, delay);
+    const poll = window.setInterval(tick, 15000);
+    const onVisible = () => {
+      if (document.visibilityState === "visible") tick();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      window.clearTimeout(timeout);
+      window.clearInterval(poll);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, [session]);
 
   useEffect(() => {
     if (session.phase !== "exercising" && session.phase !== "resting") return undefined;
@@ -157,13 +184,36 @@ export function WorkoutSession() {
       } catch {
         // The workout is already saved.
       }
-      navigate("/workoutlog", streakWarning ? { state: { streakWarning } } : undefined);
-    } catch {
+      navigate("/workoutlog", {
+        state: {
+          ...(streakWarning ? { streakWarning } : {}),
+          ...(session.autoEnded ? { autoEnded: true } : {}),
+        },
+      });
+    } catch (error) {
+      reportError(error, { where: "saveWorkoutLog" });
       savingLock.current = false;
       setSaveError("Couldn't save that workout. Your session is still here.");
       setSaving(false);
     }
   }
+
+  const autoSaved = useRef(false);
+  useEffect(() => {
+    if (!session.autoEnded || autoSaved.current || !currentUser) return;
+    autoSaved.current = true;
+    if (!hasLoggedWork(session)) {
+      try {
+        localStorage.removeItem(DRAFT_KEY);
+      } catch {
+        // The summary still explains that the session ended.
+      }
+      return;
+    }
+    save();
+    // save closes over the capped session from this render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session.autoEnded, currentUser]);
 
   const showExit =
     Boolean(currentUser) && (session.phase !== "planning" || confirmDiscard);

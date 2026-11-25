@@ -11,26 +11,52 @@ service cloud.firestore {
     match /users/{uid} {
       allow read: if isOwner(uid);
       allow create: if isOwner(uid) && isNewUser();
-      allow update: if isOwner(uid) && (isSkillUpdate() || isStreakUpdate() || isUsernameUpdate());
+      // Separate allows so a username write does not also evaluate the skill
+      // rules. One combined condition exceeds the 1000-expression cap when a
+      // transaction also getAfter()s this document.
+      allow update: if isOwner(uid) && isDeletionFlag();
+      allow update: if isOwner(uid)
+        && resource.data.get('deleting', false) != true
+        && isUsernameUpdate(database);
+      allow update: if isOwner(uid)
+        && resource.data.get('deleting', false) != true
+        && isStreakUpdate();
+      allow update: if isOwner(uid)
+        && resource.data.get('deleting', false) != true
+        && isSkillUpdate();
       allow delete: if isOwner(uid);
 
       match /workoutLogs/{logId} {
         allow read: if isOwner(uid);
         allow create: if isOwner(uid) && isWorkoutLog();
-        allow update: if isOwner(uid) && isWorkoutLog()
-          && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['durationSec']);
+        allow update: if isOwner(uid) && isWorkoutLog();
         allow delete: if isOwner(uid);
       }
     }
 
     match /usernames/{handle} {
-      allow get: if isSignedIn();
+      // Missing handles can be probed so a claim can tell "free" from "taken"
+      // without reading another account. Listing stays closed.
+      allow get: if isSignedIn() && (
+        resource == null || resource.data.uid == request.auth.uid
+      );
       allow list: if false;
-      allow create: if isUsernameReservation(handle);
-      allow update: if isUsernameReservation(handle)
+      allow create: if isUsernameReservation(handle, database);
+      allow update: if isUsernameReservation(handle, database)
         && resource.data.uid == request.auth.uid
         && request.resource.data.uid == resource.data.uid;
       allow delete: if isSignedIn() && resource.data.uid == request.auth.uid;
+    }
+
+    // Tombstone written before the profile document is removed. ensureUserDoc
+    // refuses to recreate a profile while this exists.
+    match /deletions/{uid} {
+      allow get: if isOwner(uid);
+      allow list: if false;
+      allow create, update: if isOwner(uid)
+        && request.resource.data.keys().hasOnly(['deleting'])
+        && request.resource.data.deleting == true;
+      allow delete: if false;
     }
   }
 }
@@ -57,16 +83,36 @@ function isDisplayName(name) {
     && !name.matches('.* $');
 }
 
-function isUsernameReservation(handle) {
+function isUsernameReservation(handle, database) {
   let data = request.resource.data;
   let name = data.username;
+  let userPath = /databases/$(database)/documents/users/$(request.auth.uid);
+  // The profile is written before the reservation. getAfter() of the user
+  // document in the same commit re-runs its skill rules and exceeds the cap.
   return isSignedIn()
     && isHandle(handle)
     && data.keys().hasOnly(['uid', 'username'])
     && data.uid is string
     && data.uid == request.auth.uid
     && isDisplayName(name)
-    && name.lower() == handle;
+    && name.lower() == handle
+    && exists(userPath)
+    && get(userPath).data.get('usernameLower', '') == handle
+    && get(userPath).data.get('username', '') == name;
+}
+
+function previousHandleReleased(database) {
+  let previous = resource.data.get('usernameLower', '');
+  return previous == ''
+    || previous == request.resource.data.get('usernameLower', '')
+    || !exists(/databases/$(database)/documents/usernames/$(previous));
+}
+
+function isDeletionFlag() {
+  let data = request.resource.data;
+  return data.keys().hasAny(['deleting'])
+    && data.deleting == true
+    && data.diff(resource.data).affectedKeys().hasOnly(['deleting']);
 }
 
 function isNewUser() {
@@ -96,13 +142,14 @@ function isNewUser() {
     && data.skills.pull == null;
 }
 
-function isUsernameUpdate() {
-  let changed = request.resource.data.diff(resource.data).affectedKeys();
-  let name = request.resource.data.username;
-  let lower = request.resource.data.usernameLower;
-  return changed.hasOnly(['username', 'usernameLower'])
-    && name is string
+function isUsernameUpdate(database) {
+  let data = request.resource.data;
+  let name = data.get('username', null);
+  let lower = data.get('usernameLower', null);
+  return name is string
     && lower is string
+    && data.diff(resource.data).affectedKeys().hasOnly(['username', 'usernameLower'])
+    && previousHandleReleased(database)
     && (
       (name == '' && lower == '')
       || (isDisplayName(name) && lower == name.lower())
@@ -110,15 +157,20 @@ function isUsernameUpdate() {
 }
 
 function isSkillUpdate() {
-  let changed = request.resource.data.diff(resource.data).affectedKeys();
+  let data = request.resource.data;
+  return data.keys().hasAll(['skills', 'updatedAt'])
+    && data.diff(resource.data).affectedKeys().hasOnly(['skills', 'updatedAt'])
+    && skillFieldsOk();
+}
+
+function skillFieldsOk() {
   let skills = request.resource.data.skills;
   let diff = skills.diff(beforeSkills());
   // One skill key is added or changed. Checking every skill here used to
   // exceed the 1000-expression cap, so only that key is validated below.
   // 120 covers the catalog plus push/pull and some legacy keys, and keeps
   // the key lookup itself under the cap.
-  return changed.hasOnly(['skills', 'updatedAt'])
-    && request.resource.data.updatedAt == request.time
+  return request.resource.data.updatedAt == request.time
     && skills is map
     && skills.size() <= 120
     && diff.removedKeys().size() == 0
@@ -172,6 +224,13 @@ function isNormalStreakDayLog(previousStreak, next, previousWorkout, previousRes
 }
 
 function isStreakUpdate() {
+  let next = request.resource.data;
+  return next.keys().hasAll(['streak', 'workout', 'rest'])
+    && next.diff(resource.data).affectedKeys().hasOnly(['streak', 'workout', 'rest'])
+    && streakFieldsOk();
+}
+
+function streakFieldsOk() {
   let changed = request.resource.data.diff(resource.data).affectedKeys();
   let next = request.resource.data;
   let previousStreak = resource.data.get('streak', {
@@ -207,9 +266,10 @@ function isWorkoutLog() {
     && data.keys().hasOnly(['date', 'category', 'sections', 'loggedAt', 'setCount', 'durationSec'])
     && data.loggedAt == request.time
     && (!data.keys().hasAny(['durationSec'])
-      || (data.durationSec is int && data.durationSec >= 0))
+      || (data.durationSec is int && data.durationSec >= 0 && data.durationSec <= 14400))
     && data.date is string
     && data.date.matches('^\\d{4}-\\d{2}-\\d{2}$')
+    && parsedDay(data.date) >= request.time - duration.value(366, 'd')
     && parsedDay(data.date) <= request.time + duration.value(36, 'h')
     && data.category in ['push', 'pull', 'legs', 'full-body', 'conditioning']
     && data.setCount is int

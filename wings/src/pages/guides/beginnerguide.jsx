@@ -42,7 +42,7 @@ export function BeginnerGuide() {
           off to your friends!
         </div>
 
-        <img src="straddle HS pic.jpg" className="guide-image" />
+        <img src="straddle HS pic.jpg" className="guide-image" alt="Straddle handstand" />
         <br />
 
         <div className="guide-text">

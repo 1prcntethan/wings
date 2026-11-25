@@ -1,7 +1,10 @@
 import {
+  captureGoogleCredential,
   doSignInWithEmailAndPassword,
   doSignInWithGoogle,
+  linkPendingGoogleCredential,
 } from "../config/auth.js";
+import { accountErrorMessage } from "../utilites/account.js";
 import { useAuth } from "../config/auth-context.jsx";
 import { useState } from "react";
 import { Link } from "react-router-dom";
@@ -13,45 +16,43 @@ export const LoginPage = () => {
   const { userLoggedIn } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [formError, setFormError] = useState("");
   const navigate = useNavigate();
 
   const onSignInSubmit = async (e) => {
     e.preventDefault();
+    if (busy) return;
+    setBusy(true);
+    setFormError("");
     try {
-      await doSignInWithEmailAndPassword(email, password);
+      const credential = await doSignInWithEmailAndPassword(email, password);
+      try {
+        await linkPendingGoogleCredential(credential.user);
+      } catch {
+        // Sign-in worked. Google can be linked from settings.
+      }
       navigate("/dashboard", { replace: true });
     } catch (error) {
-      const errorCode = error.code;
-      const errorMessage = error.message;
-
-      console.error("Firebase Auth Error: ", errorCode, errorMessage);
-
-      switch (errorCode) {
-        case "auth/invalid-credential":
-          alert("Invalid credentials. Please try again.");
-          break;
-        case "auth/invalid-email":
-          alert("Invalid email address format. Please check and try again.");
-          break;
-        case "auth/too-many-requests":
-          alert("Too many requests. Please try again later.");
-          break;
-        case "auth/network-request-failed":
-          alert("Network error. Please try again later.");
-          break;
-        default:
-          alert("An error occurred. Please try again later.");
-      } 
+      setFormError(accountErrorMessage(error));
+      setBusy(false);
     }
   };
 
   const onGoogleSignIn = async (e) => {
     e.preventDefault();
+    if (busy) return;
+    setBusy(true);
+    setFormError("");
     try {
       await doSignInWithGoogle();
-        navigate("/dashboard", { replace: true });
+      navigate("/dashboard", { replace: true });
     } catch (error) {
-      console.log(error);
+      if (error?.code === "auth/account-exists-with-different-credential") {
+        captureGoogleCredential(error);
+      }
+      setFormError(accountErrorMessage(error));
+      setBusy(false);
     }
   };
 
@@ -310,16 +311,18 @@ export const LoginPage = () => {
                 </div>
               </div>
 
+              {formError && <p className="signup-form__error">{formError}</p>}
               <div className="signup-form__submit-box">
-                <button className="signup-form__submits" type="submit">
+                <button className="signup-form__submits" type="submit" disabled={busy}>
                   {" "}
-                  Sign In{" "}
+                  {busy ? "Signing in..." : "Sign In"}{" "}
                 </button>
                 <p> OR </p>
                 <button
                   className="signup-form__submits"
                   type="button"
                   onClick={onGoogleSignIn}
+                  disabled={busy}
                 >
                   {" "}
                   Sign in with Google{" "}

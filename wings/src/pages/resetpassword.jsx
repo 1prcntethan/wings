@@ -1,32 +1,32 @@
 import { doSendPasswordResetEmail } from "../config/auth.js";
-import { auth } from "../config/firebase.js"
+import { auth } from "../config/firebase.js";
+import { accountErrorMessage } from "../utilites/account.js";
 import { useAuth } from "../config/auth-context.jsx";
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { useNavigate } from "react-router-dom";
 
 import "./loginpage.css";
 
 export function ResetPasswordPage() {
   const { userLoggedIn } = useAuth();
   const [email, setEmail] = useState("");
-  const navigate = useNavigate();
-  
+  const [busy, setBusy] = useState(false);
+  const [formError, setFormError] = useState("");
+  const [sent, setSent] = useState(false);
 
   const onResetSubmit = async (e) => {
     e.preventDefault();
+    if (busy) return;
+    setBusy(true);
+    setFormError("");
     try {
       await doSendPasswordResetEmail(auth, email);
-      alert("Password reset email sent. Please check your email.");
-        navigate("/login", { replace: true });
+      setSent(true);
+      setBusy(false);
     } catch (error) {
-      const errorCode = error.code;
-      const errorMessage = error.message;
-
-      console.error("Firebase Auth Error: ", errorCode, errorMessage);
-
-      alert("Failed to send password reset email. Please try again later.");
-    } 
+      setFormError(accountErrorMessage(error));
+      setBusy(false);
+    }
   };
 
   return (
@@ -235,10 +235,14 @@ export function ResetPasswordPage() {
                 />
               </div>
 
+              {sent && (
+                <p className="signup-form__ok">Password reset email sent. Check your inbox.</p>
+              )}
+              {formError && <p className="signup-form__error">{formError}</p>}
               <div className="signup-form__submit-box">
-                <button className="signup-form__submits" type="submit">
+                <button className="signup-form__submits" type="submit" disabled={busy}>
                   {" "}
-                  Send verification email{" "}
+                  {busy ? "Sending..." : "Send password reset email"}{" "}
                 </button>
               </div>
               </form>

@@ -7,6 +7,7 @@ import {
   historyPlaceholders,
   rangeBounds,
   statRangeById,
+  parseDurationMinutes,
   summarizeLogs,
   workoutDateCreditsStreak,
 } from "./workoutstats.js";
@@ -99,4 +100,13 @@ test("a workout credits the streak only on the fitness day it was saved for", ()
   assert.equal(workoutDateCreditsStreak("2026-11-20", "2026-11-20"), true);
   assert.equal(workoutDateCreditsStreak("2026-11-19", "2026-11-20"), false);
   assert.equal(workoutDateCreditsStreak("", "2026-11-20"), false);
+});
+
+test("duration minutes are optional and capped at four hours", () => {
+  assert.deepEqual(parseDurationMinutes(""), { durationSec: undefined });
+  assert.deepEqual(parseDurationMinutes("0"), { durationSec: 0 });
+  assert.deepEqual(parseDurationMinutes("90"), { durationSec: 5400 });
+  assert.equal(parseDurationMinutes("241").error, "Duration can't be longer than 4 hours (240 minutes).");
+  assert.equal(parseDurationMinutes("1.5").error, "Duration needs to be whole minutes.");
+  assert.equal(formatTrainedTime(0), "0s");
 });

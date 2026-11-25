@@ -24,6 +24,10 @@ export const DEFAULT_REST = 90;
 
 export const MAX_SETS = 4;
 
+export const MAX_DURATION_SEC = 4 * 60 * 60;
+
+export const MAX_SESSION_MS = MAX_DURATION_SEC * 1000;
+
 const PHASES = ["planning", "exercising", "resting", "summary"];
 
 export function blankSession() {
@@ -357,9 +361,27 @@ export function sessionReducer(state, action) {
       if (state.phase !== "exercising" && state.phase !== "resting") return state;
       return finishWorkout(state, action.now);
     }
+    case "autoEnd": {
+      if (!sessionExceeded(state, action.now)) return state;
+      return capSession(state);
+    }
     default:
       return state;
   }
+}
+
+export function sessionExceeded(state, now) {
+  return (state?.phase === "exercising" || state?.phase === "resting")
+    && Number.isFinite(state.startedAt)
+    && Number.isFinite(now)
+    && now - state.startedAt >= MAX_SESSION_MS;
+}
+
+export function capSession(state) {
+  return {
+    ...finishWorkout(state, state.startedAt + MAX_SESSION_MS),
+    autoEnded: true,
+  };
 }
 
 export function sessionToLog(state, date) {
@@ -382,14 +404,51 @@ export function sessionToLog(state, date) {
       restSec: restSeconds(exercise.restSec) ?? DEFAULT_REST,
     });
   }
+  const durationSec = storedDurationSec(state);
   return {
     date,
-    ...(Number.isFinite(state.startedAt) && Number.isFinite(state.finishedAt)
-      ? { durationSec: Math.ceil(durationMs(state) / 1000) }
-      : {}),
+    ...(durationSec == null ? {} : { durationSec }),
     category: state.category,
     sections,
   };
+}
+
+function storedDurationSec(state) {
+  if (!Number.isFinite(state?.startedAt) || !Number.isFinite(state?.finishedAt)) return undefined;
+  const seconds = Math.ceil(Math.max(0, state.finishedAt - state.startedAt) / 1000);
+  return Math.min(MAX_DURATION_SEC, Math.max(0, seconds));
+}
+
+const FINALIZE_LOCK = "wings-session-finalize-lock";
+
+export function claimExpiredDraft(now = Date.now()) {
+  let raw = null;
+  try {
+    raw = localStorage.getItem(DRAFT_KEY);
+  } catch {
+    return null;
+  }
+  const draft = parseDraft(raw);
+  const expired = sessionExceeded(draft, now);
+  const capped = Boolean(draft?.autoEnded) && draft?.phase === "summary";
+  if (!expired && !capped) return null;
+  try {
+    if (localStorage.getItem(FINALIZE_LOCK)) return null;
+    localStorage.setItem(FINALIZE_LOCK, "1");
+    localStorage.removeItem(DRAFT_KEY);
+  } catch {
+    return null;
+  }
+  return { draft: expired ? capSession(draft) : draft, raw };
+}
+
+export function finishClaim(raw, saved) {
+  try {
+    if (!saved && raw) localStorage.setItem(DRAFT_KEY, raw);
+    localStorage.removeItem(FINALIZE_LOCK);
+  } catch {
+    // A leftover lock blocks a second save until storage works again.
+  }
 }
 
 export function serializeDraft(state) {
