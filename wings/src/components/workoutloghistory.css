@@ -353,10 +353,19 @@
 }
 
 .wh-actions {
-  display: grid;
-  grid-template-columns: 1fr 1.2fr;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
   gap: 8px;
   margin-top: 16px;
+}
+
+@media (min-width: 641px) {
+  .wh-actions .wh-ghost,
+  .wh-actions .wh-go {
+    min-width: 168px;
+    min-height: 44px;
+  }
 }
 
 .wh-ghost,
@@ -406,6 +415,8 @@
   }
 
   .wh-actions {
+    display: grid;
+    grid-template-columns: 1fr 1.2fr;
     position: fixed;
     z-index: 15;
     isolation: isolate;

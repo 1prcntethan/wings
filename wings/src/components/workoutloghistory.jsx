@@ -314,6 +314,10 @@ export default function WorkoutHistory({
           </button>
         ))}
       </div>
+      <div className="wh-actions">
+        <button type="button" className="wh-ghost" onClick={onLogWorkout}>+ Log workout</button>
+        <button type="button" className="wh-go" onClick={onStartSession}>start session</button>
+      </div>
       {query.trim() && (
         <p className="wh-note">Search checks workouts that are already loaded.</p>
       )}
@@ -367,10 +371,6 @@ export default function WorkoutHistory({
       {archiveStatus === "ready" && (
         <button type="button" className="wh-fold" onClick={onLoadOlder}>Load older workouts</button>
       )}
-      <div className="wh-actions">
-        <button type="button" className="wh-ghost" onClick={onLogWorkout}>+ Log workout</button>
-        <button type="button" className="wh-go" onClick={onStartSession}>start session</button>
-      </div>
     </div>
   );
 }

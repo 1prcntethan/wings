@@ -4,6 +4,7 @@ import { accountErrorMessage } from "../utilites/account.js";
 import { useAuth } from "../config/auth-context.jsx";
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { HomeLogoLink } from "../components/homelogo.jsx";
 
 import "./loginpage.css";
 
@@ -30,7 +31,8 @@ export function ResetPasswordPage() {
   };
 
   return (
-    <>
+    <div className="login-page">
+      <HomeLogoLink />
       <div className="login-container">
         <div className="signup-block">
           <div className="signup-form">
@@ -169,6 +171,6 @@ export function ResetPasswordPage() {
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 }

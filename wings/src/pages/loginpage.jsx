@@ -9,6 +9,7 @@ import { useAuth } from "../config/auth-context.jsx";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
+import { HomeLogoLink } from "../components/homelogo.jsx";
 import "./loginpage.css";
 
 
@@ -72,7 +73,8 @@ export const LoginPage = () => {
   };
 
   return (
-    <>
+    <div className="login-page">
+      <HomeLogoLink />
       <div className="login-container">
         <div className="signup-block">
           <div className="signup-form">
@@ -252,6 +254,6 @@ export const LoginPage = () => {
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 }
