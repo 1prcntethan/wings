@@ -302,6 +302,10 @@ export default function WorkoutHistory({
           Sets include workouts saved with a set total. Older logs still count as workouts.
         </p>
       )}
+      <div className="wh-actions">
+        <button type="button" className="wh-ghost" onClick={onLogWorkout}>+ log workout</button>
+        <button type="button" className="wh-go" onClick={onStartSession}>start session</button>
+      </div>
       <div className="wh-filters wh-cat-filters" role="group" aria-label="Category">
         {LOG_FILTERS.map((item) => (
           <button
@@ -313,10 +317,6 @@ export default function WorkoutHistory({
             {item.label}
           </button>
         ))}
-      </div>
-      <div className="wh-actions">
-        <button type="button" className="wh-ghost" onClick={onLogWorkout}>+ Log workout</button>
-        <button type="button" className="wh-go" onClick={onStartSession}>start session</button>
       </div>
       {query.trim() && (
         <p className="wh-note">Search checks workouts that are already loaded.</p>
