@@ -1,19 +1,29 @@
 .incomplete-text {
+    box-sizing: border-box;
     display: flex;
-    flex-direction: row;
+    align-items: center;
     justify-content: center;
-    padding: 20px;
-    margin-top: 40px;
+    width: 100%;
+    min-height: calc(100dvh - var(--safe-area-top));
+    margin: 0;
+    padding: 48px 24px calc(48px + var(--tabbar-offset));
     text-align: center;
+}
 
-    @media screen and (max-width: 768px) {
-        flex-direction: column;
-        align-items: center;
-        width: auto;
-        line-height: 150%;
-        
+.incomplete-text > div {
+    max-width: 34rem;
+    line-height: 1.6;
+}
+
+@media (min-width: 641px) {
+    .incomplete-text {
+        min-height: calc(100dvh - var(--safe-area-top) - 72px);
+        padding: 64px 32px;
     }
+}
 
+.incomplete-action {
+    margin-top: 1.25rem;
 }
 
 .incomplete-link {

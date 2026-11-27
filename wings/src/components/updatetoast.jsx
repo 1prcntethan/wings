@@ -16,7 +16,7 @@ export function UpdateToast() {
         className="wings-toast__card"
         onClick={() => updateServiceWorker?.(true)}
       >
-        Wings updated, tap to reload
+        WINGS updated, tap to reload
       </button>
     </div>
   );

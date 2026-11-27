@@ -120,6 +120,7 @@ export function PushRmp() {
             Adv. Tuck Planche
           </Link> from time to time, without focusing on it.
         </div>
+        <div className="guide-heading">planche</div>
         <div className="guide-text">
           Can you train and go for planche instead? The short answer is yes. You
           can train planche progressions, leans, holds etc. and you would see
@@ -132,6 +133,7 @@ export function PushRmp() {
           (Disclaimer: this pathway will be different for everyone; some people
           will have much more success training planche than HSPU)
         </div>
+        <div className="guide-heading">handstand push-up</div>
         <div className="guide-text">
           Training HSPU will involve lots of <Link to="/tutorials/pikepu" className="guide-external-link">
             Pike Push-ups

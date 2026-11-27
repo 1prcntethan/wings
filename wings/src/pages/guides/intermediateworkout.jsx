@@ -39,6 +39,7 @@ export function IntermediateWorkout() {
           </ul>
         </div>
 
+        <div className="guide-heading">specificity</div>
         <div className="guide-text">
           The <strong>Law of Specificity</strong> is a universal rule that
           essentially states to practice what you want to improve at. This
@@ -49,6 +50,7 @@ export function IntermediateWorkout() {
           learn. If you want to planche, you have to train planche holds.
         </div>
 
+        <div className="guide-heading">overload</div>
         <div className="guide-text">
           Overload is how you will make progress. For example, in order to
           improve your planche, you have to{" "}
@@ -57,6 +59,7 @@ export function IntermediateWorkout() {
           be challenged in order for it to have new heights to adapt to.
         </div>
 
+        <div className="guide-heading">fatigue</div>
         <div className="guide-text">
           Fatigue Management is exactly what it sounds like: managing your
           body’s fatigue. This includes your physical fatigue, but also{" "}
@@ -71,6 +74,7 @@ export function IntermediateWorkout() {
           <strong>incorporate rest days, light days, or deload weeks</strong>{" "}
           into your routine.
         </div>
+        <div className="guide-heading">volume and intensity</div>
         <div className="guide-text">
           Next, we need to talk about volume vs intensity. Volume of course, is
           the amount of reps and movements you do. Intensity is the difficulty
@@ -94,6 +98,7 @@ export function IntermediateWorkout() {
           for each set.
         </div>
 
+        <div className="guide-heading">rpe</div>
         <div className="guide-text">
           Finally, we’ll be using RPE, or{" "}
           <strong>rate of perceived exhaustion</strong>, to subjectively measure
@@ -127,6 +132,7 @@ export function IntermediateWorkout() {
           amount of energy or create fatigue before you even start your first
           set.
         </div>
+        <div className="guide-heading">most specific</div>
         <div className="guide-text">
           Your first set should always be the{" "}
           <strong>MOST SPECIFIC exercise relevant to your target skill</strong>.
@@ -146,6 +152,7 @@ export function IntermediateWorkout() {
           this first set when you’re most fresh, but remember it will affect
           your performance on this first set.
         </div>
+        <div className="guide-heading">next exercise</div>
         <div className="guide-text">
           Regardless, after you finish your most specific and intense exercise,
           you will be slightly fatigued, and will have to move down to your
@@ -157,6 +164,7 @@ export function IntermediateWorkout() {
           . <strong>3-4 sets of this</strong> is a safe amount of volume, and
           you can move on to the next exercise.
         </div>
+        <div className="guide-heading">less specific</div>
         <div className="guide-text">
           Your third exercise will likely be even less specific, and it can
           actually be focused on{" "}
@@ -168,6 +176,7 @@ export function IntermediateWorkout() {
           everything after this third exercise can actually be{" "}
           <strong>considered accessory</strong>.
         </div>
+        <div className="guide-heading">accessories</div>
         <div className="guide-text">
           Next, you can choose <strong>accessory exercises</strong> that target
           specific skills or attributes of your target skill. For planche, you
@@ -180,6 +189,7 @@ export function IntermediateWorkout() {
           may look like pushups or pike pushups. On pull days, this may look
           like pullups or rows.
         </div>
+        <div className="guide-heading">example</div>
         <div className="guide-text">
           Putting all of these together, here’s an example workout for front
           lever:
@@ -196,6 +206,7 @@ export function IntermediateWorkout() {
           <br />
           Pull-ups max x 2
         </div>
+        <div className="guide-heading">intensity</div>
         <div className="guide-text">
           Throughout the workout, make sure you’re managing your intensity and
           keeping it as constant as possible. Also, sometimes less is more; you

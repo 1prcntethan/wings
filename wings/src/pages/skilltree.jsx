@@ -21,6 +21,7 @@ import { designPreviewRequested, loadDesignPreview } from "../utilites/designpre
 import { SkillContext } from "./skillcontext.js";
 import { reportError } from "../config/sentry.js";
 import { Loading } from "../components/loading";
+import Navbar from "../components/navbar";
 
 const SkillMap = lazy(() =>
   import("./skillmap.jsx").then((module) => ({ default: module.SkillMap })),
@@ -341,6 +342,7 @@ export function SkillTree() {
         },
       }}
     >
+      {view === "list" && <Navbar />}
       <div
         className={view === "map" ? "skill-tree" : "skill-board"}
         data-screen={view === "map" ? "skills-map" : "skills-list"}

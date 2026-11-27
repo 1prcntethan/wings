@@ -19,6 +19,7 @@ export function GeneralNutrition() {
       <LineDivider />
 
       <div className="guide-container">
+        <div className="guide-heading">protein</div>
         <div className="guide-text">
           Nutrition and diet is one of the core contributors to your success in
           calisthenics. The most important factor to consider is your protein
@@ -37,6 +38,7 @@ export function GeneralNutrition() {
           intake throughout the day.
         </div>
 
+        <div className="guide-heading">carbohydrates</div>
         <div className="guide-text">
           Carbohydrates are also extremely important for your training. These
           will provide you the energy you need for intense workouts. In general,
@@ -50,6 +52,7 @@ export function GeneralNutrition() {
           well, and in general are unhealthy.
         </div>
 
+        <div className="guide-heading">fats</div>
         <div className="guide-text">
           Fats are the last macro that you’ll need daily. These contribute to
           overall health, hormone production, and energy. Choose{" "}
@@ -58,6 +61,7 @@ export function GeneralNutrition() {
           get them naturally through most foods.
         </div>
 
+        <div className="guide-heading">hydration</div>
         <div className="guide-text">
           There is one more thing you also need. <strong>Hydration!!</strong>{" "}
           Most people do not drink enough water, and this can lead to reduced
@@ -67,6 +71,7 @@ export function GeneralNutrition() {
           drink water throughout the day and stay hydrated.
         </div>
 
+        <div className="guide-heading">meal timing</div>
         <div className="guide-text">
           For more intermediate athletes, pre/post-workout meals may be
           beneficial for performance and muscle growth. Pre-workout meals are
@@ -94,6 +99,7 @@ export function GeneralNutrition() {
           right amount of calories.
         </div>
 
+        <div className="guide-heading">supplements</div>
         <div className="guide-text">
           In terms of supplements, the most commonly used supplement will be
           protein shakes and protein powder. With such high protein goals, if
@@ -129,6 +135,7 @@ export function GeneralNutrition() {
           marginally better performance.
         </div>
 
+        <div className="guide-heading">body weight</div>
         <div className="guide-text">
           As a calisthenics athlete, you should aim to be as light as possible
           while trying to be as strong as possible. This is the recipe for

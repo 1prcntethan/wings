@@ -34,7 +34,6 @@ const Homepage = lazyNamed(() => import("./pages/home"), "Homepage");
 const Training = lazyNamed(() => import("./pages/training"), "Training");
 const Tutorials = lazyNamed(() => import("./pages/tutorials"), "Tutorials");
 const Terminology = lazyNamed(() => import("./pages/terminology"), "Terminology");
-const SkillVis = lazyNamed(() => import("./pages/skillvis"), "SkillVis");
 const Incomplete = lazyNamed(() => import("./pages/incomplete"), "Incomplete");
 const NotFound = lazyNamed(() => import("./pages/notfound"), "NotFound");
 const HowTo = lazyNamed(() => import("./pages/howto"), "HowTo");
@@ -157,7 +156,7 @@ function App() {
             <Route path="/tutorials" element={<Tutorials />} />
             <Route path="/terminology" element={<Terminology />} />
             <Route path="/skilltree" element={<SkillTree />} />
-            <Route path="/skillvis" element={<SkillVis />} />
+            <Route path="/skillvis" element={<Navigate to="/tutorials/incomplete" replace />} />
             <Route path="/howtouseguide" element={<HowTo />} />
             <Route path="/install" element={<Install />} />
             <Route path="/about" element={<About />} />

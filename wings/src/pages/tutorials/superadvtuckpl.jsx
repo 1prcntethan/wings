@@ -140,6 +140,7 @@ export function SuperAdvTuckPL() {
         </div>
       </div>
       {svgDivider.get("3")}
+      <YTTutorial identifier="super-adv-tuck-pl" />
       <Footer />
     </>
   );

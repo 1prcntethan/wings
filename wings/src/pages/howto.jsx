@@ -21,14 +21,12 @@ export function HowTo() {
             will help you understand the content better and follow along with
             the tutorials.
           </li>
-          <br />
           <li>
             <strong>explore the skills:</strong> Browse through the tutorials
             section to find exercises that interest you. Each skill has a
             dedicated page with detailed instructions and tips, and linked YT
             videos of examples.
           </li>
-          <br />
           <li>
             <strong>follow the progression charts:</strong> Use the progression
             charts to understand the steps needed to master each skill. Start
@@ -37,26 +35,22 @@ export function HowTo() {
             the BASE SKILL is the very first step in learning the current skill,
             while the TARGET SKILL is the final goal. The REGRESSION and
             PROGRESSION are the closest in difficulty to the current skill.
+            <img
+              className="howto-img"
+              src="progressionchartEX.png"
+              alt="progression chart"
+            />
           </li>
-          <br />
-          <img
-            className="howto-img"
-            src="progressionchartEX.png"
-            alt="progression chart"
-          />
-          <br />
           <li>
             <strong>learn from the guides:</strong> Look through the guides in
             the training section for more detailed information on training
             techniques, nutrition, skill pathways, and other important topics.
           </li>
-          <br />
           <li>
             <strong>use the skill tree:</strong> The skill tree provides useful
             information to help you easily see the path to your desired skill.
             Follow the arrows and key to figure out where to start your journey.
           </li>
-          <br />
           <li>
             <strong>track your progress:</strong> Make an account to track your
             progress and see how far you've come in your journey! The skill tree
@@ -64,8 +58,6 @@ export function HowTo() {
             <i>in progress</i>, or <i>mastered</i>, which earns RP (rank
             points). Log your streak daily to gain RP and level up your rank!
           </li>
-          <br />
-
           <li>
             <strong>rank calculations:</strong> 1000 points total. Skills make
             up a max of 750 points, with streaks/logging making up a max of 250

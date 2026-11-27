@@ -176,6 +176,7 @@ export function BeginnerGuide() {
           <br />
           Squats (Bodyweight Squats)
         </div>
+        <div className="guide-heading">basics first</div>
         <div className="guide-text">
           This is actually a common mistake many beginners make; they want to
           learn skills and jump right into the progressions. The problem with
@@ -184,6 +185,7 @@ export function BeginnerGuide() {
           building muscle and conditioning your body first allows you to hold
           these progressions for meaningful amounts of time.
         </div>
+        <div className="guide-heading">hypertrophy</div>
         <div className="guide-text">
           Additionally, you want to lean toward the hypertrophy side of training
           when first starting out. This is to gain a baseline of muscle, which
@@ -192,6 +194,7 @@ export function BeginnerGuide() {
           shift toward the strength training rep ranges, and begin skill
           training.
         </div>
+        <div className="guide-heading">goals</div>
         <div className="guide-text">
           Here are some general goals for each exercise to start:
           <br />
@@ -237,12 +240,14 @@ export function BeginnerGuide() {
           implement. This workout will be done roughly 3 times a week, resting
           as your body sees fit. 3-5 minute rest between sets!
         </div>
+        <div className="guide-heading">warm-up</div>
         <div className="guide-text">
           For warm-up, try wrist stretches and exercises, arm circles for the
           shoulders, and dynamic lunging stretches for the legs.
           <br />
           Start training right away with this beginner workout plan!
         </div>
+        <div className="guide-heading">push</div>
         <div className="guide-text">
           PUSH
           <br />3 x 12 of the hardest push-up variation you can do 12 of. (Knee
@@ -256,6 +261,7 @@ export function BeginnerGuide() {
           </Link>
           , etc.)
         </div>
+        <div className="guide-heading">pull</div>
         <div className="guide-text">
           PULL <br />3 x 12 of the hardest pulling exercise you can do 12 of. (
           <Link to="/tutorials/invertedrow" className="guide-external-link">
@@ -271,6 +277,7 @@ export function BeginnerGuide() {
           </Link>
           )
         </div>
+        <div className="guide-heading">core</div>
         <div className="guide-text">
           CORE <br />4{" "}
           <Link to="/tutorials/hollowbody" className="guide-external-link">
@@ -282,6 +289,7 @@ export function BeginnerGuide() {
           </Link>{" "}
           & leg raises are alternative exercises)
         </div>
+        <div className="guide-heading">legs</div>
         <div className="guide-text">
           LEGS <br />3 x 12 body weight squats (use a chair/assistance if too
           hard)
@@ -328,6 +336,7 @@ export function BeginnerGuide() {
           without exercising, having a good diet is beneficial to your physical
           health and mental health in many ways.
         </div>
+        <div className="guide-heading">protein</div>
         <div className="guide-text">
           Protein is probably the most important factor for building muscle and
           strength in calisthenics.{" "}
@@ -350,6 +359,7 @@ export function BeginnerGuide() {
             AthleanX Protein Calculator
           </a>
         </div>
+        <div className="guide-heading">carbs and fats</div>
         <div className="guide-text">
           For carbohydrates/fats, aim to eat as <strong>healthy</strong> as
           possible. This means sticking to complex carbohydrates (brown rice,
@@ -363,6 +373,7 @@ export function BeginnerGuide() {
           bad diet, or tarnish your relationship with food. And always remember
           to listen to your body.
         </div>
+        <div className="guide-heading">body composition</div>
         <div className="guide-text">
           Body composition is a <strong>huge factor</strong> when learning
           calisthenics skills. Since the difficulty is based on your bodyweight,

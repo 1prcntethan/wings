@@ -128,6 +128,7 @@ export function GymVsCalisthenics() {
           hypertrophy.
         </div>
 
+        <div className="guide-heading">skill</div>
         <div className="guide-text">
           Another difference between the training styles is the element of
           skill. With workouts in the gym, it’s super easy and simple to{" "}
@@ -147,6 +148,7 @@ export function GymVsCalisthenics() {
           practice.
         </div>
 
+        <div className="guide-heading">compound and isolation</div>
         <div className="guide-text">
           As previously mentioned, progressions often require the addition of
           more muscle groups, bringing us to another difference between gym
